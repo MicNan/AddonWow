@@ -49,6 +49,7 @@ ns.ApplyDefaults = ApplyDefaults
 -- Stampa
 ---------------------------------------------------------------------------
 local PREFIX = "|cff33ff99RotAssist|r: "
+local LOG_MAX = 600
 
 local function Format(msg, ...)
     local n = select("#", ...)
@@ -58,13 +59,29 @@ local function Format(msg, ...)
     return tostring(msg):format(unpack(args, 1, n))
 end
 
+-- Registro salvato in RotAssistDB.log (scritto su disco al /reload o al logout):
+-- permette di analizzare probe, debug ed errori leggendo il file SavedVariables.
+function ns:Log(text)
+    local db = self.db
+    if not db then return end
+    db.log = db.log or {}
+    text = tostring(text):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+    local stamp = (date and date("%H:%M:%S")) or ""
+    table.insert(db.log, ("%s %.1f %s"):format(stamp, GetTime and GetTime() or 0, text))
+    while #db.log > LOG_MAX do table.remove(db.log, 1) end
+end
+
 function ns:Print(msg, ...)
-    print(PREFIX .. Format(msg, ...))
+    local text = Format(msg, ...)
+    print(PREFIX .. text)
+    self:Log(text)
 end
 
 function ns:Debug(msg, ...)
     if self.db and self.db.debug then
-        print("|cff888888[RA]|r " .. Format(msg, ...))
+        local text = Format(msg, ...)
+        print("|cff888888[RA]|r " .. text)
+        self:Log("[debug] " .. text)
     end
 end
 
@@ -73,6 +90,7 @@ function ns:ReportError(err)
     err = tostring(err)
     if reported[err] then return end
     reported[err] = true
+    self:Log("[errore] " .. err .. (debugstack and ("\n" .. debugstack(2, 6, 0)) or ""))
     if self.db and self.db.debug then
         self:Print("|cffff5555errore interno:|r %s", err)
     elseif not reported._hinted then

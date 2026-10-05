@@ -17,6 +17,9 @@ local HELP = {
     "/rotassist minimap - mostra/nasconde l'icona sulla minimappa",
     "/rotassist wowhead [spellID] - link Wowhead del suggerimento attuale (o dello spellID)",
     "/rotassist reset - riporta i riquadri al centro",
+    "/rotassist info - versione, client, spec (utile nei log)",
+    "/rotassist note <testo> - aggiunge una nota al registro",
+    "/rotassist log [clear] - stato o svuotamento del registro (salvato al /reload)",
 }
 
 local MODES = { AUTO = true, ST = true, AOE = true }
@@ -169,8 +172,10 @@ function ns:ShowWowheadLink(spellID)
 end
 
 local function Handler(msg)
-    msg = (msg or ""):lower()
-    local cmd, arg = msg:match("^(%S*)%s*(.-)$")
+    local cmd, rawArg = (msg or ""):match("^(%S*)%s*(.-)$")
+    cmd = (cmd or ""):lower()
+    rawArg = rawArg or ""
+    local arg = rawArg:lower()
     if cmd == "show" then ns:Set("shown", true)
     elseif cmd == "hide" then ns:Set("shown", false)
     elseif cmd == "toggle" then ns:Set("shown", not ns.db.shown)
@@ -193,6 +198,21 @@ local function Handler(msg)
     elseif cmd == "why" then ns:PrintWhy()
     elseif cmd == "probe" then ns:Probe()
     elseif cmd == "config" or cmd == "options" then ns:OpenSettings()
+    elseif cmd == "log" then
+        if arg == "clear" then
+            ns.db.log = {}
+            ns:Print("registro svuotato.")
+        else
+            ns:Print("registro: %d righe. Fai /reload per scriverlo su disco. /rotassist log clear per svuotarlo.", #(ns.db.log or {}))
+        end
+    elseif cmd == "note" then
+        ns:Print("NOTA: %s", rawArg)
+    elseif cmd == "info" then
+        local ok, build, _, _, iface = pcall(GetBuildInfo)
+        ns:Print("versione %s | client %s (interface %s) | locale %s | classe %s | spec %s (%s) | hero %s",
+            C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ns.name, "Version") or "?",
+            ok and build or "?", ok and iface or "?", GetLocale and GetLocale() or "?", tostring(A.PlayerClass()),
+            ns.activeSpec and ns.activeSpec.name or "-", tostring(ns.specID), tostring(ns.hero))
     elseif cmd == "wowhead" or cmd == "wh" then
         ns:ShowWowheadLink(tonumber(arg))
     elseif cmd == "minimap" then
