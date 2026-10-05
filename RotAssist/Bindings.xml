@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="ROTASSIST_TOGGLEMODE" header="ROTASSIST" category="ADDONS">
+        if RotAssist and RotAssist.CycleMode then RotAssist:CycleMode() end
+    </Binding>
+</Bindings>

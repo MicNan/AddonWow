@@ -1,0 +1,11 @@
+# cache locale dello strumento Wowhead
+tools/.cache/
+node_modules/
+
+# file di sistema / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
