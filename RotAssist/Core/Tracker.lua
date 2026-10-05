@@ -146,7 +146,48 @@ end
 function T:OnGlow(spellID, shown)
     if type(spellID) ~= "number" then return end
     self.glows[spellID] = shown or nil
+    local spec = Spec()
+    local alias = spec and spec.aliases and spec.aliases[spellID]
+    if alias then self.glows[alias] = shown or nil end
     ns:Debug("glow %s %s (%d)", shown and "ON " or "OFF", A.SpellName(spellID), spellID)
+end
+
+---------------------------------------------------------------------------
+-- Pronto / non pronto tenendo conto del GCD.
+-- In 12.1 isOnGCD risulta nil fuori dall'evento SPELL_UPDATE_COOLDOWN e
+-- start/duration sono segreti: durante il GCD ogni abilita' appare "attiva".
+-- Il GCD invece e' sempre leggibile (spell 61304 in whitelist), quindi un
+-- "non pronto" letto durante il GCD e' ambiguo e va risolto con il modello.
+---------------------------------------------------------------------------
+local function GCDActive()
+    return (A.GCD()) > 0
+end
+
+-- Lettura grezza usata dalla sincronizzazione: nil se ambigua per il GCD.
+local function RawReady(spellID)
+    local r = A.IsReady(spellID)
+    if r == false and GCDActive() then return nil end
+    return r
+end
+
+function T:IsReady(spellID)
+    local r = A.IsReady(spellID)
+    if r ~= false then return r end
+    local gcdRem = A.GCD()
+    if gcdRem <= 0 then return false end
+    -- siamo nel GCD: decidiamo con il modello
+    local c = self.charges[spellID]
+    if c then return c.cur > 0 end
+    local s, len = self.cdStart[spellID], CooldownLength(self, spellID)
+    if s and len then return (s + len - GetTime()) <= gcdRem + 0.05 end
+    local spec = Spec()
+    if spec and spec.track and spec.track.cooldowns and spec.track.cooldowns[spellID] then
+        if self.wasReady[spellID] ~= nil then return self.wasReady[spellID] end
+        return nil
+    end
+    -- abilita' senza cooldown proprio (es. Cobra Shot): era solo il GCD
+    if not BaseValue(spellID, "cd") and not BaseValue(spellID, "recharge") then return true end
+    return nil
 end
 
 ---------------------------------------------------------------------------
@@ -179,7 +220,7 @@ function T:SyncCharges(now)
                 if info.isActive == false then
                     c.cur, c.start = c.max, nil          -- cariche piene
                 else
-                    local ready = A.IsReady(id)
+                    local ready = RawReady(id)
                     if ready == false then
                         c.cur = 0                        -- nessuna carica
                         c.start = c.start or now
@@ -226,7 +267,7 @@ function T:SyncCooldowns(now)
     local spec = Spec()
     if not (spec and spec.track and spec.track.cooldowns) then return end
     for id in pairs(spec.track.cooldowns) do
-        local ready = A.IsReady(id)
+        local ready = RawReady(id)
         local _, onGCD, start, dur = A.CooldownInfo(id)
         if start and dur and dur > 2 and not onGCD then
             -- valore leggibile: inizio e durata reali
@@ -249,7 +290,7 @@ end
 
 -- Secondi al prossimo utilizzo: 0 se pronto, nil se non stimabile.
 function T:CooldownRemaining(spellID)
-    local ready = A.IsReady(spellID)
+    local ready = self:IsReady(spellID)
     if ready == true then return 0 end
     local _, onGCD, start, dur = A.CooldownInfo(spellID)
     if start and dur and not onGCD then

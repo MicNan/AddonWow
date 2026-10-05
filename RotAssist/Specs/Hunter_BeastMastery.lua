@@ -61,6 +61,9 @@ ns:RegisterSpec(253, {
     },
     defaultHero = "PL",
 
+    -- ID alternativi visti in gioco (glow/cast) ricondotti all'ID principale.
+    aliases = { [259489] = KC },   -- Kill Command: secondo ID nel glow (registro 05/10)
+
     -- Abilita' che esistono solo come override di un'altra.
     overrideOf = { [WA] = BW },
     petSpells  = { [S.PRIMAL_RAGE] = true },

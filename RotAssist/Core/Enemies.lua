@@ -19,7 +19,21 @@ ns:On("NAME_PLATE_UNIT_REMOVED", function(_, unit)
 end)
 ns:On("PLAYER_ENTERING_WORLD", function() wipe(E.plates) end)
 
--- Restituisce numero di nemici in combattimento e flag "incerto".
+-- Il mob e' "ingaggiato"? Vero se e' in combattimento oppure se il giocatore
+-- e' nella sua tabella di minaccia. Il secondo controllo serve per i manichini
+-- di addestramento, che risultano NON in combattimento anche mentre li si
+-- attacca (verificato in gioco il 05/10/2026).
+local function Engaged(unit)
+    local fighting = A.UnitInCombat(unit)
+    if fighting then return true end
+    local ok, threat = pcall(UnitThreatSituation, "player", unit)
+    threat = ok and A.Plain(threat)
+    if type(threat) == "number" then return true end
+    if fighting == nil then return nil end
+    return false
+end
+
+-- Restituisce numero di nemici ingaggiati e flag "incerto".
 function E:Count()
     local n, unknown = 0, false
     for unit in pairs(self.plates) do
@@ -28,10 +42,10 @@ function E:Count()
             unknown = true
         elseif hostile then
             local dead = A.UnitIsDead(unit)
-            local fighting = A.UnitInCombat(unit)
-            if fighting == nil or dead == nil then
+            local engaged = Engaged(unit)
+            if engaged == nil or dead == nil then
                 unknown = true
-            elseif fighting and not dead then
+            elseif engaged and not dead then
                 n = n + 1
             end
         end

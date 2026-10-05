@@ -77,6 +77,7 @@ function ns:Probe()
     try("UnitCanAttack(target)", UnitCanAttack, "player", "target")
     try("UnitAffectingCombat(target)", UnitAffectingCombat, "target")
     try("UnitClassification(target)", UnitClassification, "target")
+    try("UnitThreatSituation(player,target)", UnitThreatSituation, "player", "target")
     if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         local ok3, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "target", 1, "HARMFUL")
         if ok3 then

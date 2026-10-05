@@ -62,7 +62,7 @@ function CD:Update()
         local icon = self.icons[i]
         local id = A.Override(def.spell)
         icon.tex:SetTexture(A.SpellTexture(id))
-        local ready = A.IsReady(id)
+        local ready = ns.Tracker:IsReady(id)
         icon.tex:SetDesaturated(ready == false)
         icon:SetGlow(ready == true)
         A.ApplyCooldown(icon.cd, id)

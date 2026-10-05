@@ -69,7 +69,7 @@ end
 -- Lanciabile adesso? true / false / nil (non so)
 function E:Castable(spec, spellID)
     if not self:IsKnown(spec, spellID) then return false, "non conosciuto" end
-    local ready = A.IsReady(spellID)
+    local ready = T:IsReady(spellID)
     if ready == false then return false, "in cooldown" end
     local usable, noPower = A.IsUsable(spellID)
     if usable == false and noPower ~= true then return false, "non utilizzabile" end
@@ -86,7 +86,7 @@ E.predicates = P
 
 P.ready = function(ctx, id) return (E:Castable(ctx.spec, id)) end
 P.notReady = function(ctx, id)
-    local r = A.IsReady(id)
+    local r = T:IsReady(id)
     if r == nil then return nil end
     return not r
 end
