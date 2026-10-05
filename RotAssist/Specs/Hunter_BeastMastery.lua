@@ -61,6 +61,10 @@ ns:RegisterSpec(253, {
     },
     defaultHero = "PL",
 
+    -- Abilita' ad area: se Assisted Combat le suggerisce, ci sono piu' bersagli
+    -- (nel test su un solo manichino non ha mai suggerito Wild Thrash).
+    aoeHints = { [WT] = true },
+
     -- ID alternativi visti in gioco (glow/cast) ricondotti all'ID principale.
     aliases = { [259489] = KC },   -- Kill Command: secondo ID nel glow (registro 05/10)
 

@@ -96,7 +96,9 @@ function M:Update(result, ctx)
     if ctx then
         local label = L["MODE_" .. ctx.mode] or ctx.mode
         if ns.db.mode == "AUTO" then
-            label = ("%s %s (%s)"):format(L.MODE_AUTO, label, ns.Enemies.lastUnknown and "?" or tostring(ctx.targets or "?"))
+            local n = ns.Enemies.lastUnknown and "?" or tostring(ctx.targets or "?")
+            if ctx.modeSource == "Assisted Combat" then n = "AC" end
+            label = ("%s %s (%s)"):format(L.MODE_AUTO, label, n)
         end
         f.mode:SetText(label)
     end

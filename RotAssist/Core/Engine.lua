@@ -256,7 +256,11 @@ function E:Recommend(spec, ctx)
     local nativeID, nativeWhy = nil, "disattivato"
     local src = ns.db.source
     if src ~= "RULES" then
-        nativeID, nativeWhy = A.NativeSuggestion()
+        if ctx.native ~= nil or ctx.nativeWhy ~= nil then
+            nativeID, nativeWhy = ctx.native, ctx.nativeWhy   -- gia' letto nel tick
+        else
+            nativeID, nativeWhy = A.NativeSuggestion()
+        end
     end
     res.native, res.nativeWhy = nativeID, nativeWhy
 

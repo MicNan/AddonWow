@@ -63,14 +63,22 @@ end
 ---------------------------------------------------------------------------
 -- Modalita' ST / AoE
 ---------------------------------------------------------------------------
-function ns:ResolveMode(count, unknown)
+-- Durata dell'indizio AoE ricavato da Assisted Combat (secondi).
+local AOE_HINT_TIME = 8
+
+-- Restituisce modalita', numero di bersagli e origine della decisione.
+function ns:ResolveMode(count, unknown, aoeHint)
     local db = self.db
-    if db.mode == "ST" then return "ST", 1 end
-    if db.mode == "AOE" then return "AOE", math.max(count or 0, db.aoeThreshold) end
+    if db.mode == "ST" then return "ST", 1, "manuale" end
+    if db.mode == "AOE" then return "AOE", math.max(count or 0, db.aoeThreshold), "manuale" end
     local targets = count
     if unknown and (count or 0) <= 1 then targets = nil end
-    if count and count >= db.aoeThreshold then return "AOE", targets end
-    return "ST", targets
+    if count and count >= db.aoeThreshold then return "AOE", targets, "nameplate" end
+    -- Le nameplate non bastano (es. manichini: non risultano in combattimento
+    -- e non hanno minaccia leggibile). Se Assisted Combat ha appena suggerito
+    -- un'abilita' ad area, ci fidiamo del suo conteggio interno.
+    if aoeHint then return "AOE", math.max(count or 0, db.aoeThreshold), "Assisted Combat" end
+    return "ST", targets, "nameplate"
 end
 
 ---------------------------------------------------------------------------
@@ -83,9 +91,22 @@ function ns:Tick()
     local now = GetTime()
     T:Sync(now)
 
+    -- suggerimento nativo letto una volta per tick: serve anche come indizio AoE
+    local native, nativeWhy = A.NativeSuggestion()
+    if native and spec.aoeHints and spec.aoeHints[native] then
+        -- l'indizio copre almeno il cooldown dell'abilita' ad area + margine,
+        -- cosi' resta valido tra un suggerimento e il successivo
+        local learned = self.db.learned[native]
+        local base = spec.base and spec.base[native]
+        local len = (learned and learned.cd) or (base and base.cd) or 0
+        self.aoeHintUntil = now + math.max(AOE_HINT_TIME, len + 4)
+    end
+    local aoeHint = self.aoeHintUntil and now < self.aoeHintUntil and A.InCombat()
+
     local count, unknown = Enemies:Count()
-    local mode, targets = self:ResolveMode(count, unknown)
+    local mode, targets, modeSource = self:ResolveMode(count, unknown, aoeHint)
     local ctx = Engine:NewContext(spec, self.hero, mode, targets, now)
+    ctx.native, ctx.nativeWhy, ctx.modeSource = native, nativeWhy, modeSource
     local result = Engine:Recommend(spec, ctx)
     self.lastResult, self.lastCtx = result, ctx
 
@@ -103,10 +124,10 @@ function ns:Tick()
         if key ~= lastKey then
             lastKey = key
             if p then
-                self:Debug("-> %s [%s] %s | nativo: %s | %s %s nemici", A.SpellName(p.spell),
+                self:Debug("-> %s [%s] %s | nativo: %s | %s %s nemici (%s)", A.SpellName(p.spell),
                     p.source == "native" and "Assisted Combat" or "regola", p.reason or "",
                     result.native and A.SpellName(result.native) or tostring(result.nativeWhy),
-                    mode, tostring(targets or "?"))
+                    mode, tostring(targets or "?"), tostring(modeSource))
             else
                 self:Debug("-> nessun suggerimento (nativo: %s)", tostring(result.nativeWhy))
             end
@@ -158,7 +179,7 @@ ns:On("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", function(_, spellID) T:OnGlow(A.Plai
 ns:On("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE", function(_, spellID) T:OnGlow(A.Plain(spellID), false) end)
 
 ns:On("PLAYER_REGEN_DISABLED", function() ns:RefreshVisibility() end)
-ns:On("PLAYER_REGEN_ENABLED", function() ns:RefreshVisibility() end)
+ns:On("PLAYER_REGEN_ENABLED", function() ns.aoeHintUntil = nil; ns:RefreshVisibility() end)
 ns:On("PLAYER_TARGET_CHANGED", function() ns:RefreshVisibility() end)
 ns:On("ENCOUNTER_START", function() ns.inEncounter = true end)
 ns:On("ENCOUNTER_END", function() ns.inEncounter = false end)
