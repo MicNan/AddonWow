@@ -10,10 +10,15 @@
 --     talent = spellID,      -- regola attiva solo se il talento e' conosciuto
 --     notTalent = spellID,   -- regola attiva solo se il talento NON e' conosciuto
 --     onUnknown = "match",   -- se un dato e' segreto/ignoto: "match" o "skip" (default)
+--     needsResource = true,  -- spender: richiede risorsa sufficiente adesso
+--     hero = "PL",           -- regola valida solo per questo hero talent
 --     disabled = "motivo",   -- regola documentata ma non valutabile
 --     note = "testo per il debug" }
--- Una condizione {"not", {...}} nega la condizione interna.
+-- Combinatori: {"not", c}, {"and", c1, c2, ...}, {"or", c1, c2, ...}.
 -- Gli argomenti in secondi accettano numeri oppure "gcd", "2gcd", ...
+-- Un'abilita' senza risorsa (IsSpellUsable, leggibile in combattimento) non
+-- viene mai suggerita.
+-- Modalita': ST, CLEAVE (se la spec definisce cleaveAt e una lista CLEAVE), AOE.
 --
 -- Logica a tre valori: ogni predicato restituisce true, false oppure nil
 -- (= non so, dato segreto). Nessun predicato confronta valori segreti.
@@ -71,9 +76,11 @@ function E:Castable(spec, spellID)
     if not self:IsKnown(spec, spellID) then return false, "non conosciuto" end
     local ready = T:IsReady(spellID)
     if ready == false then return false, "in cooldown" end
+    -- IsSpellUsable e' leggibile in combattimento (verificato in gioco il 05/10):
+    -- senza risorsa la regola non vale e si passa alla successiva
     local usable, noPower = A.IsUsable(spellID)
-    if usable == false and noPower ~= true then return false, "non utilizzabile" end
-    -- risorsa insufficiente: la consideriamo comunque (sara' pronta a breve)
+    if noPower == true then return false, "risorsa insufficiente" end
+    if usable == false then return false, "non utilizzabile" end
     if ready == nil then return nil, "cooldown ignoto" end
     return true
 end
@@ -134,6 +141,28 @@ P.targetsLT = function(ctx, n)
 end
 P.glow = function(ctx, id) return T.glows[id] == true end
 P.overrideIs = function(ctx, base, ov) return A.Override(base) == ov end
+-- contatori ricostruiti dai cast (es. stack di Stormkeeper, Tip of the Spear)
+P.counterGE = function(ctx, key, n) return (T.counters[key] or 0) >= n end
+P.counterLT = function(ctx, key, n) return (T.counters[key] or 0) < n end
+-- stack di un'aura del giocatore: solo per aure in whitelist (es. Maelstrom
+-- Weapon) o fuori dalle restrizioni; altrimenti nil
+P.stacksGE = function(ctx, auraID, n)
+    local s = A.PlayerAuraStacks(auraID, ctx.spec.whitelistedAuras and ctx.spec.whitelistedAuras[auraID])
+    if s == nil then return nil end
+    return s >= n
+end
+P.stacksLT = function(ctx, auraID, n)
+    local s = A.PlayerAuraStacks(auraID, ctx.spec.whitelistedAuras and ctx.spec.whitelistedAuras[auraID])
+    if s == nil then return nil end
+    return s < n
+end
+-- risorsa sufficiente secondo IsSpellUsable (leggibile in combattimento)
+P.usable = function(ctx, id)
+    local usable = A.IsUsable(id)
+    if usable == nil then return nil end
+    return usable and true or false
+end
+
 P.powerGE = function(ctx, powerType, n)
     local v = A.Power(powerType)
     if v == nil then return nil end
@@ -151,18 +180,40 @@ end
 local function Describe(c)
     if type(c) ~= "table" then return tostring(c) end
     if c[1] == "not" then return "not(" .. Describe(c[2]) .. ")" end
+    if c[1] == "and" or c[1] == "or" then
+        local parts = {}
+        for i = 2, #c do parts[#parts + 1] = Describe(c[i]) end
+        return c[1] .. "(" .. table.concat(parts, ", ") .. ")"
+    end
     local parts = { tostring(c[1]) }
     for i = 2, #c do parts[#parts + 1] = tostring(c[i]) end
     return table.concat(parts, " ")
 end
 E.Describe = Describe
 
-local function EvalCond(c, ctx)
+local EvalCond
+
+-- {"and", c1, c2, ...} / {"or", c1, c2, ...} con logica a tre valori
+local function EvalGroup(c, ctx, isAnd)
+    local unknown = false
+    for i = 2, #c do
+        local r = EvalCond(c[i], ctx)
+        if isAnd and r == false then return false end
+        if not isAnd and r == true then return true end
+        if r == nil then unknown = true end
+    end
+    if unknown then return nil end
+    return isAnd
+end
+
+EvalCond = function(c, ctx)
     if c[1] == "not" then
         local r = EvalCond(c[2], ctx)
         if r == nil then return nil end
         return not r
     end
+    if c[1] == "and" then return EvalGroup(c, ctx, true) end
+    if c[1] == "or" then return EvalGroup(c, ctx, false) end
     local fn = P[c[1]]
     if not fn then return nil end
     local ok, r = pcall(fn, ctx, c[2], c[3], c[4])
@@ -207,6 +258,11 @@ function E:CheckRule(rule, ctx)
 
     local castable, why = self:Castable(spec, rule.spell)
     if castable == false then return "fail", why end
+    -- spender: serve la risorsa adesso (IsSpellUsable non e' segreto in 12.1)
+    if rule.needsResource then
+        local usable, noPower = A.IsUsable(rule.spell)
+        if usable == false or noPower == true then return "fail", "risorsa insufficiente" end
+    end
 
     local rAll, whyAll = EvalAll(rule.conds, ctx)
     local rAny, whyAny = EvalAny(rule.any, ctx)
@@ -230,6 +286,11 @@ function E:GetList(spec, hero, mode)
     if not p then return nil end
     local set = (hero and p[hero]) or p[spec.defaultHero or "default"] or p.default
     if not set then return nil end
+    -- AoE dedicata solo con un talento chiave (es. Trick Shots per Marksmanship)
+    if mode == "AOE" and spec.aoeRequires and not A.IsKnown(spec.aoeRequires) then mode = "ST" end
+    if mode == "CLEAVE" and not set.CLEAVE then
+        return set.ST
+    end
     return set[mode] or set.ST
 end
 
@@ -255,6 +316,8 @@ function E:Recommend(spec, ctx)
 
     local nativeID, nativeWhy = nil, "disattivato"
     local src = ns.db.source
+    -- spec di supporto (es. Restoration): Assisted Combat suggerirebbe danni
+    if spec.nativeMode == "off" then src = "RULES" end
     if src ~= "RULES" then
         if ctx.native ~= nil or ctx.nativeWhy ~= nil then
             nativeID, nativeWhy = ctx.native, ctx.nativeWhy   -- gia' letto nel tick

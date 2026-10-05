@@ -20,6 +20,7 @@ local T = {
     cdStart  = {},   -- [spellID] = inizio stimato del cooldown
     wasReady = {},   -- [spellID] = ultimo stato pronto/non pronto osservato
     glows    = {},   -- [spellID] = true mentre il pulsante brilla
+    counters = {},   -- [chiave]  = numero (stack ricostruiti dai cast)
 }
 ns.Tracker = T
 
@@ -27,7 +28,7 @@ local function Spec() return ns.activeSpec end
 
 function T:Reset()
     for _, t in pairs({ self.lastCast, self.timers, self.flags, self.charges,
-                        self.cdStart, self.wasReady, self.glows }) do
+                        self.cdStart, self.wasReady, self.glows, self.counters }) do
         wipe(t)
     end
     local spec = Spec()
@@ -93,16 +94,33 @@ local function EffectAllowed(e)
     if e.hero and e.hero ~= ns.hero then return false end
     if e.talent and not A.IsKnown(e.talent) then return false end
     if e.minTargets then
-        local n = ns.Enemies and ns.Enemies.lastCount
+        -- conteggio finale dell'ultimo tick (nameplate o indizio di Assisted Combat)
+        local n = (ns.lastCtx and ns.lastCtx.targets) or (ns.Enemies and ns.Enemies.lastCount)
         if not n or n < e.minTargets then return false end
     end
     return true
 end
 
+-- Tipi di effetto dichiarabili nei dati delle spec (onCast / onAnyCast):
+--   timer      { key, duration, pandemic = 0.3 }  avvia/rinnova un timer; con
+--              'pandemic' la durata residua (fino al 30%) si somma alla nuova
+--   clearTimer { key }
+--   flag       { key, value }
+--   counter    { key, add = n | set = n, max, min = 0 }
+--   resetCharges { spell }
+-- Filtri comuni: hero, talent, minTargets.
 function T:ApplyEffect(e, now)
     if not EffectAllowed(e) then return end
     if e.type == "timer" then
-        self:StartTimer(e.key, self:AuraDuration(e.key, e.duration), now)
+        local dur = self:AuraDuration(e.key, e.duration)
+        if e.pandemic then
+            dur = dur + math.min(self:TimerRemaining(e.key), dur * e.pandemic)
+        end
+        self:StartTimer(e.key, dur, now)
+    elseif e.type == "counter" then
+        local v = e.set or ((self.counters[e.key] or 0) + (e.add or 0))
+        if e.max then v = math.min(v, e.max) end
+        self.counters[e.key] = math.max(e.min or 0, v)
     elseif e.type == "clearTimer" then
         self.timers[e.key] = nil
     elseif e.type == "flag" then
@@ -136,11 +154,35 @@ function T:OnCast(spellID)
         c.cur = math.max(0, c.cur - 1)
     end
 
+    -- effetti di "qualsiasi cast" (es. consumo di Master of the Elements):
+    -- applicati prima di quelli specifici, cosi' un cast puo' consumare e
+    -- riattivare lo stesso flag (Lava Burst dopo Lava Burst)
+    if spec.onAnyCast then
+        for _, e in ipairs(spec.onAnyCast) do
+            if not (e.except and e.except[id]) and not (e.only and not e.only[id]) then
+                self:ApplyEffect(e, now)
+            end
+        end
+    end
+
     local effects = spec.onCast and spec.onCast[id]
     if effects then
         for _, e in ipairs(effects) do self:ApplyEffect(e, now) end
     end
     ns:Debug("cast %s (%d)", A.SpellName(id), id)
+end
+
+-- Cambio bersaglio: i timer legati al bersaglio (es. Flame Shock) non sono
+-- piu' affidabili, perche' l'identita' del bersaglio puo' essere segreta.
+function T:OnTargetChanged()
+    local spec = Spec()
+    if not (spec and spec.targetTimers) then return end
+    for _, key in ipairs(spec.targetTimers) do self.timers[key] = nil end
+end
+
+-- Fine combattimento: i contatori ricostruiti ripartono da zero.
+function T:OnCombatEnd()
+    wipe(self.counters)
 end
 
 function T:OnGlow(spellID, shown)

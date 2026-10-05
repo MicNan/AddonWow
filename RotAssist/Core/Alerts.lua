@@ -95,6 +95,44 @@ C.timerExpiring = function(p)
     end
 end
 
+-- Incantamento temporaneo dell'arma mancante (es. Windfury / Flametongue /
+-- Earthliving). mainHand/offHand: quali mani controllare.
+C.weaponImbueMissing = function(p)
+    if p.spell and not A.IsKnown(p.spell) then return nil end
+    local hasMain, hasOff = A.WeaponEnchants()
+    if p.mainHand and hasMain == false then
+        return { text = p.text or L.IMBUE_MISSING:format(A.SpellName(p.spell)), icon = p.icon or p.spell }
+    end
+    if p.offHand and hasOff == false then
+        local dual = C_PaperDollInfo and C_PaperDollInfo.OffhandHasWeapon
+        local ok, hasWeapon = A.Call(dual)
+        if ok and A.Plain(hasWeapon) then
+            local off = p.offSpell or p.spell
+            return { text = p.textOff or L.IMBUE_MISSING:format(A.SpellName(off)), icon = off }
+        end
+    end
+end
+
+-- Un proprio buff (es. Earth Shield) assente da TUTTI i membri del gruppo
+-- (giocatore escluso). Non serve sapere chi e' il tank: nelle istanze il ruolo
+-- puo' essere segreto. Solo in gruppo e quando le aure sono leggibili.
+C.groupAuraMissing = function(p)
+    if p.spell and not A.IsKnown(p.spell) then return nil end
+    local inRaid = IsInRaid and IsInRaid()
+    local n = (GetNumGroupMembers and GetNumGroupMembers()) or 0
+    if n <= 1 then return nil end
+    local prefix, count = inRaid and "raid" or "party", inRaid and n or (n - 1)
+    for i = 1, count do
+        local unit = prefix .. i
+        if A.UnitExists(unit) and not (inRaid and UnitIsUnit and UnitIsUnit(unit, "player")) then
+            local found = A.FindAura(unit, p.auras, p.filter or "HELPFUL|PLAYER")
+            if found == nil then return nil end   -- non leggibile: nessun avviso
+            if found then return nil end
+        end
+    end
+    return { text = p.text or L.BUFF_MISSING:format(A.SpellName(p.auras[1])), icon = p.icon or p.auras[1] }
+end
+
 -- Risorsa vicina al massimo (solo se leggibile)
 C.resourceNearMax = function(p)
     local cur, max = A.Power(p.powerType)

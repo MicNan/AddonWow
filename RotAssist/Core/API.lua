@@ -308,6 +308,30 @@ function A.Power(powerType)
     return ok and Plain(cur) or nil, ok2 and Plain(max) or nil
 end
 
+-- Stack di un'aura del giocatore (0 se assente) oppure nil se non leggibile.
+-- In 12.1 le API delle aure restituiscono segreti oppure nil durante le
+-- restrizioni: un "nil" e' quindi affidabile come "assente" solo per le aure
+-- in whitelist (whitelisted = true, es. Maelstrom Weapon) o senza restrizioni.
+function A.PlayerAuraStacks(auraID, whitelisted)
+    if not (C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID) then return nil end
+    local ok, aura = pcall(C_UnitAuras.GetPlayerAuraBySpellID, auraID)
+    if not ok or issecretvalue(aura) then return nil end
+    if type(aura) ~= "table" then
+        if whitelisted or not A.AurasRestricted() then return 0 end
+        return nil
+    end
+    local n = Plain(aura.applications)
+    if n == nil then return nil end
+    return (n == 0) and 1 or n   -- aure senza stack riportano 0 applicazioni
+end
+
+-- Incantamenti temporanei delle armi: hasMain, hasOff (nil se segreti).
+function A.WeaponEnchants()
+    local ok, hasMain, _, _, _, hasOff = Call(GetWeaponEnchantInfo)
+    if not ok then return nil end
+    return Plain(hasMain), Plain(hasOff)
+end
+
 ---------------------------------------------------------------------------
 -- Aure (solo quando NON sono segrete: fuori combattimento e fuori istanze
 -- ristrette). Restituisce: trovata (true/false) e scadenza, oppure nil.

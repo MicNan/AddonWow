@@ -18,7 +18,10 @@ ns.inEncounter = false
 local function DetectHero(spec)
     if not spec.heroTalents then return nil end
     for _, h in ipairs(spec.heroTalents) do
-        if A.IsKnown(h.spell) then return h.key end
+        if h.spell and A.IsKnown(h.spell) then return h.key end
+        for _, id in ipairs(h.spells or {}) do
+            if A.IsKnown(id) then return h.key end
+        end
     end
     return nil
 end
@@ -66,19 +69,37 @@ end
 -- Durata dell'indizio AoE ricavato da Assisted Combat (secondi).
 local AOE_HINT_TIME = 8
 
+-- Soglia AoE: quella della guida per la spec (es. Elemental 4+), altrimenti
+-- quella delle opzioni. 'cleaveAt' attiva la modalita' intermedia CLEAVE.
+function ns:Thresholds(spec)
+    local aoeAt = (spec and spec.aoeAt) or self.db.aoeThreshold
+    local cleaveAt = spec and spec.cleaveAt
+    return aoeAt, cleaveAt
+end
+
+local function ModeFor(n, aoeAt, cleaveAt)
+    if n >= aoeAt then return "AOE" end
+    if cleaveAt and n >= cleaveAt then return "CLEAVE" end
+    return "ST"
+end
+
 -- Restituisce modalita', numero di bersagli e origine della decisione.
-function ns:ResolveMode(count, unknown, aoeHint)
+-- hintTargets: bersagli minimi dedotti da Assisted Combat (nil se nessun indizio)
+function ns:ResolveMode(spec, count, unknown, hintTargets)
     local db = self.db
+    local aoeAt, cleaveAt = self:Thresholds(spec)
     if db.mode == "ST" then return "ST", 1, "manuale" end
-    if db.mode == "AOE" then return "AOE", math.max(count or 0, db.aoeThreshold), "manuale" end
+    if db.mode == "AOE" then return "AOE", math.max(count or 0, aoeAt), "manuale" end
     local targets = count
     if unknown and (count or 0) <= 1 then targets = nil end
-    if count and count >= db.aoeThreshold then return "AOE", targets, "nameplate" end
+    local n = count or 0
     -- Le nameplate non bastano (es. manichini: non risultano in combattimento
     -- e non hanno minaccia leggibile). Se Assisted Combat ha appena suggerito
     -- un'abilita' ad area, ci fidiamo del suo conteggio interno.
-    if aoeHint then return "AOE", math.max(count or 0, db.aoeThreshold), "Assisted Combat" end
-    return "ST", targets, "nameplate"
+    if hintTargets and hintTargets > n then
+        return ModeFor(hintTargets, aoeAt, cleaveAt), hintTargets, "Assisted Combat"
+    end
+    return ModeFor(n, aoeAt, cleaveAt), targets, "nameplate"
 end
 
 ---------------------------------------------------------------------------
@@ -93,18 +114,21 @@ function ns:Tick()
 
     -- suggerimento nativo letto una volta per tick: serve anche come indizio AoE
     local native, nativeWhy = A.NativeSuggestion()
-    if native and spec.aoeHints and spec.aoeHints[native] then
-        -- l'indizio copre almeno il cooldown dell'abilita' ad area + margine,
-        -- cosi' resta valido tra un suggerimento e il successivo
+    local hint = native and spec.aoeHints and spec.aoeHints[native]
+    if hint then
+        -- aoeHints[id] = true (soglia AoE) oppure numero minimo di bersagli.
+        -- L'indizio copre almeno il cooldown dell'abilita' + margine, cosi'
+        -- resta valido tra un suggerimento e il successivo.
         local learned = self.db.learned[native]
         local base = spec.base and spec.base[native]
         local len = (learned and learned.cd) or (base and base.cd) or 0
         self.aoeHintUntil = now + math.max(AOE_HINT_TIME, len + 4)
+        self.aoeHintTargets = (type(hint) == "number") and hint or (self:Thresholds(spec))
     end
-    local aoeHint = self.aoeHintUntil and now < self.aoeHintUntil and A.InCombat()
+    local hintTargets = self.aoeHintUntil and now < self.aoeHintUntil and A.InCombat() and self.aoeHintTargets or nil
 
     local count, unknown = Enemies:Count()
-    local mode, targets, modeSource = self:ResolveMode(count, unknown, aoeHint)
+    local mode, targets, modeSource = self:ResolveMode(spec, count, unknown, hintTargets)
     local ctx = Engine:NewContext(spec, self.hero, mode, targets, now)
     ctx.native, ctx.nativeWhy, ctx.modeSource = native, nativeWhy, modeSource
     local result = Engine:Recommend(spec, ctx)
@@ -179,8 +203,15 @@ ns:On("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", function(_, spellID) T:OnGlow(A.Plai
 ns:On("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE", function(_, spellID) T:OnGlow(A.Plain(spellID), false) end)
 
 ns:On("PLAYER_REGEN_DISABLED", function() ns:RefreshVisibility() end)
-ns:On("PLAYER_REGEN_ENABLED", function() ns.aoeHintUntil = nil; ns:RefreshVisibility() end)
-ns:On("PLAYER_TARGET_CHANGED", function() ns:RefreshVisibility() end)
+ns:On("PLAYER_REGEN_ENABLED", function()
+    ns.aoeHintUntil = nil
+    T:OnCombatEnd()
+    ns:RefreshVisibility()
+end)
+ns:On("PLAYER_TARGET_CHANGED", function()
+    T:OnTargetChanged()
+    ns:RefreshVisibility()
+end)
 ns:On("ENCOUNTER_START", function() ns.inEncounter = true end)
 ns:On("ENCOUNTER_END", function() ns.inEncounter = false end)
 ns:On("UNIT_PET", function() A.ClearKnownCache(); UI.Cooldowns:Build(ns.activeSpec) end, "player")

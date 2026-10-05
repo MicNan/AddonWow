@@ -108,15 +108,25 @@ end
 function M:UpdateBars(spec)
     local f = self.frame
     if not f then return end
-    local showRes = ns.db.showResource and spec and spec.resource
+    local showRes = ns.db.showResource and spec and (spec.resource or spec.stackBar)
     f.resource:SetShown(showRes and true or false)
-    if showRes then
+    if showRes and spec.stackBar then
+        -- stack di un'aura in whitelist (es. Maelstrom Weapon): valore leggibile
+        local sb = spec.stackBar
+        local stacks = A.PlayerAuraStacks(sb.aura, true) or 0
+        f.resource:SetMinMaxValues(0, sb.max)
+        f.resource:SetValue(stacks)
+        f.resource.text:SetText(stacks > 0 and tostring(stacks) or "")
+        if stacks >= (sb.full or sb.max) then f.resource:SetStatusBarColor(1, 0.85, 0.1)
+        else f.resource:SetStatusBarColor(0.2, 0.55, 1) end
+    elseif showRes then
         local pt = spec.resource
         pcall(function()
             f.resource:SetMinMaxValues(0, UnitPowerMax("player", pt))
             f.resource:SetValue(UnitPower("player", pt))
         end)
         pcall(f.resource.text.SetText, f.resource.text, UnitPower("player", pt))
+        if spec.resourceWarn then self:ColorResourceBar(pt, spec.resourceWarn) end
     end
 
     local showPet = ns.db.showResource and spec and spec.petBar and A.UnitExists("pet") == true
@@ -135,6 +145,38 @@ function M:UpdateBars(spec)
             self:ColorPetBarByCurve(threshold)
         end
     end
+end
+
+-- Risorsa vicina al massimo (es. Maelstrom di Elemental): se il valore e'
+-- leggibile coloriamo noi, altrimenti proviamo la curva colore nativa con
+-- UnitPowerPercent. Firma da verificare in gioco: in caso di errore la barra
+-- resta del colore base.
+function M:ColorResourceBar(powerType, warnPct)
+    local bar = self.frame.resource
+    local cur, max = A.Power(powerType)
+    local normal, warn = { 0.25, 0.5, 1 }, { 1, 0.35, 0.1 }
+    if cur and max and max > 0 then
+        local c = (cur / max >= warnPct) and warn or normal
+        bar:SetStatusBarColor(c[1], c[2], c[3])
+        return
+    end
+    if not (C_CurveUtil and C_CurveUtil.CreateColorCurve and UnitPowerPercent and CreateColor) then return end
+    if not self.resCurve or self.resCurvePct ~= warnPct then
+        local ok, curve = pcall(C_CurveUtil.CreateColorCurve)
+        if not ok or not curve then return end
+        local okAdd = pcall(function()
+            curve:AddPoint(0, CreateColor(normal[1], normal[2], normal[3]))
+            curve:AddPoint(math.max(0, warnPct - 0.01), CreateColor(normal[1], normal[2], normal[3]))
+            curve:AddPoint(warnPct, CreateColor(warn[1], warn[2], warn[3]))
+            curve:AddPoint(1, CreateColor(warn[1], warn[2], warn[3]))
+        end)
+        if not okAdd then return end
+        self.resCurve, self.resCurvePct = curve, warnPct
+    end
+    pcall(function()
+        local color = UnitPowerPercent("player", powerType, false, self.resCurve)
+        if type(color) == "table" and color.GetRGB then bar:SetStatusBarColor(color:GetRGB()) end
+    end)
 end
 
 -- In combattimento la vita del pet e' segreta: proviamo a colorare la barra

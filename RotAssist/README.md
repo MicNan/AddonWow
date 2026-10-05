@@ -3,9 +3,21 @@
 Supporto alla rotazione per Hunter e Shaman. Mostra cosa premere, **non lancia mai nulla**:
 nessuna funzione protetta, nessun input simulato.
 
-Lo stato attuale contiene il **core completo** e il modulo **Beast Mastery**. Le altre spec
-funzionano già in modalità "Generico", che mostra solo il suggerimento di Assisted Combat;
-i loro moduli dedicati arriveranno nei prossimi passi.
+## Spec supportate
+
+Tutte le priorità vengono dalle guide Icy Veins 12.1.
+
+| Spec | Hero talent | Modalità | Stato |
+|---|---|---|---|
+| Beast Mastery | Pack Leader, Dark Ranger | ST, AoE | provata in gioco (manichini) |
+| Marksmanship | Sentinel, Dark Ranger | ST, AoE (con Trick Shots) | solo simulazione |
+| Survival | Sentinel, Pack Leader | ST, AoE | solo simulazione |
+| Elemental | Farseer, Stormbringer | ST, CLEAVE (2-3), AoE (4+) | solo simulazione |
+| Enhancement | Stormbringer, Totemic | ST, AoE | solo simulazione |
+| Restoration | Farseer, Totemic | promemoria di cura (niente Assisted Combat) | solo simulazione |
+
+Le altre classi e spec usano la modalità "Generico", che mostra solo il suggerimento di
+Assisted Combat.
 
 ## Strategia (sintesi della Fase 1)
 
@@ -46,6 +58,11 @@ RotAssist/
   UI/Launcher.lua            icona minimappa (trascinabile) + voce nel menu AddOns della minimappa
   Specs/Generic.lua          ripiego: solo Assisted Combat
   Specs/Hunter_BeastMastery.lua   dati BM: spellID, priorità PL/DR × ST/AoE, avvisi, cooldown
+  Specs/Hunter_Marksmanship.lua   dati MM: Sentinel/Dark Ranger, Precise Shots e Trick Shots dai cast
+  Specs/Hunter_Survival.lua       dati SV: Sentinel/Pack Leader, Tip of the Spear contato dai cast
+  Specs/Shaman_Elemental.lua      dati Ele: Farseer/Stormbringer, ST/CLEAVE/AoE, Flame Shock stimato
+  Specs/Shaman_Enhancement.lua    dati Enh: Stormbringer/Totemic, stack di Maelstrom Weapon (whitelist)
+  Specs/Shaman_Restoration.lua    promemoria di cura, scudi, incantamento dell'arma
   Config/Settings.lua        pannello Opzioni > AddOns > RotAssist (Settings API)
   Config/Slash.lua           /rotassist (alias /rota)
 ```
@@ -166,6 +183,23 @@ Attiva `/console scriptErrors 1` e prova questi casi:
 Non deve comparire nessun errore. Se compare "errore interno (ignorato)", esegui
 `/rotassist debug` e mandami il testo.
 
+## Piano di test: altre spec
+
+Per ogni spec la procedura è la stessa:
+
+1. `/reload`, poi `/rotassist log clear`, `/rotassist info` e `/rotassist debug on`.
+2. Un minuto su un bersaglio, poi su un gruppo di mob (delve o open world).
+3. Durante il combattimento lancia `/rotassist probe` e `/rotassist why`.
+4. Alla fine `/rotassist debug off` e `/reload`.
+
+| Spec | Cosa controllare in particolare |
+|---|---|
+| **Elemental** | Flame Shock rinnovato verso i 6 s; Lava Burst subito dopo Lava Surge (glow); Master of the Elements seguito da uno spender; modalità `CLEAVE` con 2-3 mob e `AOE` da 4; barra del Maelstrom arancione sopra l'85%; avvisi Lightning Shield e Flame Shock. |
+| **Enhancement** | la barra mostra gli stack di Maelstrom Weapon in combattimento (in probe: "Maelstrom Weapon stack" non segreto); spender a 10 stack; Windstrike durante Ascendance; avvisi Windfury/Flametongue sull'arma. |
+| **Restoration** | promemoria Healing Stream Totem a cariche piene e Stormstream Totem; nessun suggerimento di danno; fuori combattimento gli avvisi Water Shield, Earth Shield (su di te e su un alleato) ed Earthliving. |
+| **Marksmanship** | dopo Aimed Shot viene suggerito Arcane Shot (Precise Shots); con 3+ mob, Multi-Shot prima di Aimed Shot/Rapid Fire (Trick Shots); Moonlight Chakram negli ultimi 5 s di Trueshot (Sentinel). |
+| **Survival** | Kill Command quando Tip of the Spear è finito; Raptor Swipe solo con Tip; Wildfire Bomb vicino alle 2 cariche; avvisi pet. |
+
 ## Limiti noti
 
 - **Le stime dai cast non vedono i reset.** Non vengono rilevati i reset dei cooldown e delle
@@ -180,6 +214,24 @@ Non deve comparire nessun errore. Se compare "errore interno (ignorato)", esegui
 - **Icone 2 e 3:** sono "le prossime regole soddisfatte adesso", non una simulazione del futuro.
 - **Durate da verificare in gioco:** Beast Cleave (6 s) e le ricariche base di Barbed Shot e
   Kill Command. Si correggono da sole fuori combattimento.
+- **Stime che si possono sbagliare:**
+  - **Flame Shock:** il timer si azzera quando cambi bersaglio e non considera il raddoppio
+    della durata con Fire Elemental.
+  - **Stack di Stormkeeper e Tip of the Spear:** sono contati sui tuoi cast; non vedono le
+    cariche aggiunte o tolte dai proc.
+  - **Precise Shots e Trick Shots:** si accendono e si spengono in base ai tuoi cast.
+- **Indizi dal glow da confermare:**
+  - Hot Hand sul pulsante di Lava Lash;
+  - Lock and Load su Aimed Shot;
+  - Howl of the Pack Leader su Kill Command (Survival).
+- **Non leggibili, quindi lasciati ad Assisted Combat:**
+  - Maelstrom di Elemental (overcap);
+  - buff del set 4p;
+  - stack di Tempest;
+  - Sentinel's Mark e Spotter's Mark sui bersagli;
+  - Bullseye.
+- **Restoration:** non sceglie chi curare, ricorda solo le abilità da non sprecare. Earth Shield
+  sugli alleati si controlla fuori combattimento e solo in gruppo.
 
 ## Wowhead
 
