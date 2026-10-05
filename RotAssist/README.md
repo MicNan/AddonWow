@@ -266,6 +266,10 @@ node tools/wowhead.mjs search withering fire
 Trova lo spellID dato il nome inglese. Ci sono anche `spell <id...>`, `--ptr` per i dati del PTR
 e `--refresh` per ignorare la cache.
 
+Lo strumento è pensato per l'uso personale durante lo sviluppo. Fa poche richieste, con una
+pausa tra l'una e l'altra e una cache locale, al servizio pubblico dei tooltip di Wowhead. Non
+usarlo per scaricare dati in massa e rispetta i termini d'uso di Wowhead.
+
 La prima verifica ha già trovato un errore: lo spellID di Withering Fire preso da Icy Veins
 (430715) non esiste più ed è stato corretto in **466990**.
 

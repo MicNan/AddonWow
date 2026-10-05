@@ -1,0 +1,67 @@
+# RotAssist – supporto alla rotazione per WoW Midnight (12.1)
+
+Addon per World of Warcraft retail (Midnight, patch 12.1) che **mostra** quale abilità
+premere per Hunter e Shaman. **Non lancia mai nulla**: non usa funzioni protette e non
+simula input, nel rispetto dei Termini di Servizio di Blizzard.
+
+## Perché un wrapper sopra Assisted Combat
+
+In Midnight Blizzard ha introdotto i *secret values*: in combattimento risorse, aure e tempi
+di cooldown sono leggibili dagli addon solo come valori da **mostrare**, non da usare per
+decidere. Per questo motivo i motori di rotazione classici come Hekili non funzionano più.
+
+RotAssist parte dal suggerimento nativo di **Assisted Combat**
+(`C_AssistedCombat.GetNextCastSpell`). Sopra aggiunge le liste di priorità delle guide
+**Icy Veins 12.1**, valutate solo su segnali leggibili:
+- cooldown pronto o no;
+- i tuoi cast;
+- il bagliore dei proc;
+- risorse in whitelist (per esempio Maelstrom Weapon).
+
+## Spec supportate
+
+| Classe | Spec | Hero talent |
+|---|---|---|
+| Hunter | Beast Mastery, Marksmanship, Survival | Pack Leader, Dark Ranger, Sentinel |
+| Shaman | Elemental, Enhancement | Farseer, Stormbringer, Totemic |
+| Shaman | Restoration (promemoria di cura) | Farseer, Totemic |
+
+## Funzionalità
+
+- **Riquadro dei suggerimenti:** icona grande per la prossima abilità più le due successive,
+  con modalità bersaglio singolo / CLEAVE / AoE automatica o manuale.
+- **Riquadro dei cooldown maggiori:** si illumina quando sono pronti, senza forzarne l'uso.
+- **Avvisi:**
+  - Hunter: pet morto o non in attacco, vita del pet, Hunter's Mark.
+  - Shaman: Flame Shock, scudi, incantamenti dell'arma.
+- **Comandi e interfaccia:**
+  - `/rotassist` per tutti i comandi;
+  - pannello nelle Opzioni di gioco;
+  - icona sulla minimappa;
+  - modalità debug che spiega ogni suggerimento.
+
+## Installazione
+
+Copia la cartella [`RotAssist`](RotAssist) in `World of Warcraft\_retail_\Interface\AddOns\`.
+Documentazione completa, piano di test e limiti noti sono in
+[RotAssist/README.md](RotAssist/README.md).
+
+## Struttura del repository
+
+| Percorso | Contenuto |
+|---|---|
+| `RotAssist/` | l'addon (Lua + XML, nessuna libreria esterna) |
+| `tools/wowhead.mjs` | strumento di sviluppo che verifica gli spellID sui tooltip di Wowhead |
+| `docs/` | dati e analisi raccolti per i moduli |
+
+## Fonti e crediti
+
+- **Priorità delle rotazioni:** guide [Icy Veins](https://www.icy-veins.com) per la patch 12.1,
+  riassunte e adattate (le fonti sono citate in ogni modulo).
+- **Dati sugli incantesimi:** verificati sui tooltip di [Wowhead](https://www.wowhead.com).
+
+RotAssist non è affiliato né approvato da Blizzard Entertainment, Icy Veins o Wowhead.
+
+## Licenza
+
+[MIT](LICENSE)
