@@ -40,17 +40,31 @@ RotAssist parte dal suggerimento nativo di **Assisted Combat**
   - icona sulla minimappa;
   - modalità debug che spiega ogni suggerimento.
 
+## RotAssist Companion
+
+Secondo addon del repository, indipendente da RotAssist e attivo solo fuori dal combattimento.
+Le sue schede coprono:
+- **Delve:** delve attive con le abbondanti in evidenza, chiavi, compagno.
+- **Eventi:** eventi sulla mappa, world quest, festività.
+- **Settimanale:** Great Vault, Traveler's Log, reset.
+- **Levelling:** XP/ora e zone adatte al tuo livello.
+
+Ogni riga offre un waypoint e un link Wowhead. Dettagli in
+[RotAssist_Companion/README.md](RotAssist_Companion/README.md).
+
 ## Installazione
 
 Copia la cartella [`RotAssist`](RotAssist) in `World of Warcraft\_retail_\Interface\AddOns\`.
+Se vuoi anche il Companion, copia nello stesso posto [`RotAssist_Companion`](RotAssist_Companion).
 Documentazione completa, piano di test e limiti noti sono in
-[RotAssist/README.md](RotAssist/README.md).
+[RotAssist/README.md](RotAssist/README.md) e [RotAssist_Companion/README.md](RotAssist_Companion/README.md).
 
 ## Struttura del repository
 
 | Percorso | Contenuto |
 |---|---|
-| `RotAssist/` | l'addon (Lua + XML, nessuna libreria esterna) |
+| `RotAssist/` | l'addon di rotazione (Lua + XML, nessuna libreria esterna) |
+| `RotAssist_Companion/` | l'addon per delve, eventi, settimanali e levelling |
 | `docs/` | dati e analisi raccolti per i moduli |
 | `tests/` | test in WoW simulato: sintassi Lua 5.1 e scenari con i dati nascosti del combattimento |
 
