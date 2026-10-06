@@ -95,6 +95,7 @@ e lo si aggiunge al `.toc`. Non serve toccare il core.
 | `/rotassist config` | apre il pannello opzioni |
 | `/rotassist minimap` | mostra o nasconde l'icona sulla minimappa (la voce nel menu AddOns resta sempre) |
 | `/rotassist reset` | riporta i riquadri al centro |
+| `/rotassist verify` | controlla gli spellID di tutti i moduli con i dati del client |
 | `/rotassist wowhead [spellID]` | mostra il link Wowhead del suggerimento attuale (o dello spellID) |
 
 ## Piano di test: Beast Mastery
@@ -233,51 +234,26 @@ Per ogni spec la procedura è la stessa:
 - **Restoration:** non sceglie chi curare, ricorda solo le abilità da non sprecare. Earth Shield
   sugli alleati si controlla fuori combattimento e solo in gruppo.
 
-## Wowhead
+## Verifica degli spellID e link Wowhead
 
-Gli addon di WoW **non possono accedere a Internet**. Il collegamento a Wowhead passa quindi
-da due strade.
+**Verifica in gioco:** `/rotassist verify` controlla tutti gli spellID dei moduli usando i dati
+del client, quindi senza fonti esterne e sempre allineato alla patch che stai giocando. Ogni ID
+deve esistere e il nome deve corrispondere alla chiave del modulo. "Nome diverso?" è solo un
+avviso: spesso la chiave è un nostro alias.
 
-**In gioco:** `/rotassist wowhead` (alias `/rotassist wh`) mostra l'URL Wowhead del suggerimento
-attuale in un riquadro già selezionato, pronto per Ctrl+C. L'URL è nella lingua del client, per
-esempio `wowhead.com/it/...`. Si può anche indicare uno spellID: `/rotassist wh 191634`.
+**Link Wowhead:** gli addon di WoW non possono accedere a Internet.
+`/rotassist wowhead` (alias `/rotassist wh`) mostra l'URL Wowhead del suggerimento attuale in
+un riquadro già selezionato, pronto per Ctrl+C. L'URL è nella lingua del client, per esempio
+`wowhead.com/it/...`. Si può anche indicare uno spellID: `/rotassist wh 191634`.
 
-**Strumento di sviluppo** `tools/wowhead.mjs` (Node 18+, nessuna dipendenza), da lanciare dalla
-cartella del progetto:
-
-```bash
-node tools/wowhead.mjs verify
-```
-
-Controlla tutti gli spellID dei moduli (`local S = {...}` in `Specs/*.lua`): esistenza, nome,
-cooldown, cariche e ricarica.
-
-```bash
-node tools/wowhead.mjs gen
-```
-
-Rigenera `RotAssist/Core/SpellData.lua`. Contiene i valori base senza talenti, che l'addon usa
-solo come ultimo ripiego.
-
-```bash
-node tools/wowhead.mjs search withering fire
-```
-
-Trova lo spellID dato il nome inglese. Ci sono anche `spell <id...>`, `--ptr` per i dati del PTR
-e `--refresh` per ignorare la cache.
-
-Lo strumento è pensato per l'uso personale durante lo sviluppo. Fa poche richieste, con una
-pausa tra l'una e l'altra e una cache locale, al servizio pubblico dei tooltip di Wowhead. Non
-usarlo per scaricare dati in massa e rispetta i termini d'uso di Wowhead.
-
-La prima verifica ha già trovato un errore: lo spellID di Withering Fire preso da Icy Veins
-(430715) non esiste più ed è stato corretto in **466990**.
+`Core/SpellData.lua` contiene i valori base (senza talenti) di cooldown e cariche. L'addon li usa
+solo come ultimo ripiego, dopo i valori appresi in gioco e quelli indicati nei moduli.
 
 ## Cosa aggiornare a ogni patch
 
 1. Il campo `## Interface` nel `.toc`.
 2. Gli spellID e le priorità in `Specs/*.lua`, confrontandoli con la guida Icy Veins aggiornata.
-   Poi esegui `node tools/wowhead.mjs verify --refresh` e `node tools/wowhead.mjs gen`.
+   Poi esegui `/rotassist verify` in gioco.
 3. La pagina wiki "Patch X.Y/API changes", controllando le voci su secret values, `C_AssistedCombat`,
    `C_Spell` e `C_UnitAuras`.
 4. L'output di `/rotassist probe` in combattimento, per vedere se qualcosa è diventato segreto

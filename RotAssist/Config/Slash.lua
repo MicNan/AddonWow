@@ -13,6 +13,7 @@ local HELP = {
     "/rotassist debug [on|off] - spiega in chat i suggerimenti",
     "/rotassist why - valutazione completa delle regole (ultimo aggiornamento)",
     "/rotassist probe - verifica quali API sono segrete adesso",
+    "/rotassist verify - controlla gli spellID di tutti i moduli con i dati del client",
     "/rotassist config - apre il pannello opzioni",
     "/rotassist minimap - mostra/nasconde l'icona sulla minimappa",
     "/rotassist wowhead [spellID] - link Wowhead del suggerimento attuale (o dello spellID)",
@@ -116,6 +117,32 @@ function ns:Probe()
     self:Print("nemici contati: %d%s", n, unknown and " (incerto: dati segreti)" or "")
 end
 
+-- Verifica degli spellID di tutti i moduli con i dati del client (nessuna
+-- fonte esterna): ogni ID deve esistere e il nome deve somigliare alla chiave.
+function ns:VerifySpells()
+    local function norm(s) return (tostring(s):lower():gsub("[^%a%d]", "")) end
+    local total, missing, renamed = 0, 0, 0
+    for specID, spec in pairs(self.specs) do
+        for key, id in pairs(spec.spells or {}) do
+            total = total + 1
+            local ok, name = pcall(C_Spell.GetSpellName, id)
+            name = ok and A.Plain(name)
+            if not name then
+                missing = missing + 1
+                self:Print("|cffff5555NON TROVATO|r %s %s = %d", spec.name or specID, key, id)
+            else
+                local k, n = norm(key):gsub("buff$", ""), norm(name)
+                if not n:find(k, 1, true) and not k:find(n, 1, true) then
+                    renamed = renamed + 1
+                    self:Print("|cffffcc00nome diverso?|r %s %s = %d -> %s", spec.name or specID, key, id, name)
+                end
+            end
+        end
+    end
+    self:Print("verifica: %d spellID, %d non trovati, %d con nome diverso (spesso solo un alias).",
+        total, missing, renamed)
+end
+
 function ns:PrintWhy()
     local r = self.lastResult
     if not r then self:Print("nessuna valutazione disponibile.") return end
@@ -198,6 +225,7 @@ local function Handler(msg)
         ns:Print("debug %s", v and "attivo" or "disattivato")
     elseif cmd == "why" then ns:PrintWhy()
     elseif cmd == "probe" then ns:Probe()
+    elseif cmd == "verify" then ns:VerifySpells()
     elseif cmd == "config" or cmd == "options" then ns:OpenSettings()
     elseif cmd == "log" then
         if arg == "clear" then

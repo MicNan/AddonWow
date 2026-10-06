@@ -9,3 +9,6 @@ desktop.ini
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# strumento di sviluppo locale (non pubblicato): tools/wowhead.mjs
+tools/wowhead.mjs

@@ -1,5 +1,5 @@
--- RotAssist - SpellData (GENERATO da tools/wowhead.mjs gen: non modificare a mano)
--- Valori BASE dai tooltip di Wowhead (dataEnv 1), senza talenti.
+-- RotAssist - SpellData (generato localmente: non modificare a mano)
+-- Dati di gioco: valori BASE dei tooltip degli incantesimi (senza talenti).
 -- Usati solo come ultimo ripiego: hanno precedenza i valori appresi in gioco
 -- e quelli dichiarati in 'base' nei moduli spec.
 -- Generato il 2026-10-05.

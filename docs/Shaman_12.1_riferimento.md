@@ -5,7 +5,7 @@ Fonti:
   - [Elemental](https://www.icy-veins.com/wow/elemental-shaman-pve-dps-rotation-cooldowns-abilities), aggiornata il 10 ago 2026;
   - [Enhancement](https://www.icy-veins.com/wow/enhancement-shaman-pve-dps-rotation-cooldowns-abilities), aggiornata il 23 ago 2026;
   - [Restoration](https://www.icy-veins.com/wow/restoration-shaman-pve-healing-rotation-cooldowns-abilities), aggiornata il 10 ago 2026.
-- **Spell ID:** tutti verificati su Wowhead il 5 ott 2026 con `node tools/wowhead.mjs spell ...`.
+- **Spell ID:** tutti verificati il 5 ott 2026; in gioco si ricontrollano con `/rotassist verify`.
 - **Priorità:** sono riassunte con parole nostre. Per il testo completo e aggiornato fa fede la guida.
 
 ## Legenda della colonna "Segnale in combattimento"
@@ -172,9 +172,9 @@ Il riquadro mostra solo se sono pronti, senza suggerirne l'uso.
 | Maelstrom vicino al massimo | Ele | ❌ come logica; ✅ barra colorata con curva nativa (come la barra del pet) |
 | Maelstrom Weapon a 10 stack | Enh | ✅ glow della barra o dell'icona |
 
-## Spell ID verificati (Wowhead, live, 5 ott 2026)
+## Spell ID verificati (live, 5 ott 2026)
 
-| Abilità | ID | Base Wowhead (senza talenti) |
+| Abilità | ID | Valori base (senza talenti) |
 |---|---|---|
 | Stormkeeper | 191634 | cd 60 s, cast 1,5 s |
 | Ascendance (Ele / Enh / Resto) | 114050 / 114051 / 114052 | cd 180 s |

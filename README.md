@@ -51,14 +51,14 @@ Documentazione completa, piano di test e limiti noti sono in
 | Percorso | Contenuto |
 |---|---|
 | `RotAssist/` | l'addon (Lua + XML, nessuna libreria esterna) |
-| `tools/wowhead.mjs` | strumento di sviluppo che verifica gli spellID sui tooltip di Wowhead |
 | `docs/` | dati e analisi raccolti per i moduli |
 
 ## Fonti e crediti
 
 - **Priorità delle rotazioni:** guide [Icy Veins](https://www.icy-veins.com) per la patch 12.1,
   riassunte e adattate (le fonti sono citate in ogni modulo).
-- **Dati sugli incantesimi:** verificati sui tooltip di [Wowhead](https://www.wowhead.com).
+- **Dati sugli incantesimi:** dati di gioco di Blizzard, verificati in gioco con `/rotassist verify`;
+  i link agli incantesimi puntano a [Wowhead](https://www.wowhead.com).
 
 RotAssist non è affiliato né approvato da Blizzard Entertainment, Icy Veins o Wowhead.
 
