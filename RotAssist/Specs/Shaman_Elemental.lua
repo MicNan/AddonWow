@@ -23,7 +23,6 @@
 -- (non modellato) e il rilevamento dell'hero talent.
 
 local _, ns = ...
-local L = ns.L
 
 local S = {
     LIGHTNING_BOLT  = 188196,
@@ -156,10 +155,10 @@ ns:RegisterSpec(262, {
     alerts = {
         { type = "timerExpiring", key = "flameShock", spell = FS, within = 5.4,
           needsTarget = true, inCombatOnly = true,
-          textMissing = L.FS_MISSING, textExpiring = L.FS_EXPIRING },
+          textMissingKey = "FS_MISSING", textExpiringKey = "FS_EXPIRING" },
         { type = "playerAuraMissing", key = "ls", auras = { S.LIGHTNING_SHIELD }, spell = S.LIGHTNING_SHIELD },
         { type = "playerAuraMissing", key = "es", auras = { S.EARTH_SHIELD, S.EARTH_SHIELD_SELF },
-          talent = S.ELEMENTAL_ORBIT, icon = S.EARTH_SHIELD, text = L.ES_SELF_MISSING },
+          talent = S.ELEMENTAL_ORBIT, icon = S.EARTH_SHIELD, textKey = "ES_SELF_MISSING" },
         { type = "playerAuraMissing", key = "sky", auras = { S.SKYFURY }, spell = S.SKYFURY },
     },
 

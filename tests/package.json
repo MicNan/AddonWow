@@ -1,0 +1,14 @@
+{
+  "name": "addonwow-tests",
+  "private": true,
+  "description": "Test in WoW simulato per RotAssist (sintassi Lua 5.1 + scenari con secret values)",
+  "scripts": {
+    "test": "npm run syntax && npm run rotassist",
+    "syntax": "node check.js ../RotAssist",
+    "rotassist": "node run.js ../RotAssist scenario.lua && node run.js ../RotAssist scenario_specs.lua"
+  },
+  "devDependencies": {
+    "fengari": "^0.1.4",
+    "luaparse": "^0.3.1"
+  }
+}

@@ -1,7 +1,7 @@
 ## Interface: 120100, 120105
 ## Title: RotAssist
 ## Notes: Supporto alla rotazione per Hunter e Shaman basato su Assisted Combat. Mostra cosa premere, non lancia mai nulla.
-## Version: 0.2.0
+## Version: 0.3.0
 ## SavedVariablesPerCharacter: RotAssistDB
 ## IconTexture: Interface\Icons\Ability_Hunter_BestialDiscipline
 ## Category: Combat
@@ -19,6 +19,7 @@ Core\Engine.lua
 Core\Alerts.lua
 
 UI\Glow.lua
+UI\Keybinds.lua
 UI\MainFrame.lua
 UI\CooldownFrame.lua
 UI\AlertFrame.lua

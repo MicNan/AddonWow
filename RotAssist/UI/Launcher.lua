@@ -18,7 +18,7 @@ UI.Launcher = LN
 function ns:HandleLauncherClick(button)
     if button == "RightButton" then
         self:Set("locked", not self.db.locked)
-        self:Print(self.db.locked and "riquadri bloccati." or "riquadri sbloccati: trascinali, poi blocca di nuovo.")
+        self:Print(self.db.locked and L.MSG_LOCKED or L.MSG_UNLOCKED)
     elseif button == "MiddleButton" then
         self:CycleMode()
     elseif IsShiftKeyDown and IsShiftKeyDown() then
@@ -28,7 +28,7 @@ function ns:HandleLauncherClick(button)
     end
 end
 
-local function OnOff(v) return v and "|cff55ff55si'|r" or "|cffff5555no|r" end
+local function OnOff(v) return v and ("|cff55ff55" .. L.TT_YES .. "|r") or ("|cffff5555" .. L.TT_NO .. "|r") end
 
 function ns:FillTooltip(tt)
     local db = self.db

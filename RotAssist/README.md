@@ -44,7 +44,7 @@ RotAssist/
   RotAssist.toc              Interface 120100, 120105; SavedVariablesPerCharacter: RotAssistDB
   Bindings.xml               tasto "Cambia modalità (Auto/ST/AoE)"
   Core/Init.lua              namespace, default, stampa, dispatcher eventi (pcall)
-  Core/Locale.lua            testi dell'interfaccia (italiano)
+  Core/Locale.lua            testi dell'interfaccia (italiano e inglese)
   Core/API.lua               UNICO accesso alle API Blizzard: pcall + secret values -> nil
   Core/Tracker.lua           stato ricostruito: cast, timer buff, modello cariche, cooldown appresi
   Core/Enemies.lua           conteggio nemici dalle nameplate (euristico)
@@ -52,6 +52,7 @@ RotAssist/
   Core/Alerts.lua            libreria di tipi di avviso riutilizzabili
   Core/Core.lua              rilevamento spec/hero talent, eventi, ciclo di aggiornamento (10 Hz)
   UI/Glow.lua                icone, bagliore, trascinamento
+  UI/Keybinds.lua            tasto assegnato sulle icone (barre Blizzard, ElvUI, Bartender4)
   UI/MainFrame.lua           icona grande + 2 piccole, modalità, barra risorsa, barra pet
   UI/CooldownFrame.lua       cooldown maggiori (si illuminano quando pronti)
   UI/AlertFrame.lua          avvisi
@@ -95,6 +96,7 @@ e lo si aggiunge al `.toc`. Non serve toccare il core.
 | `/rotassist config` | apre il pannello opzioni |
 | `/rotassist minimap` | mostra o nasconde l'icona sulla minimappa (la voce nel menu AddOns resta sempre) |
 | `/rotassist reset` | riporta i riquadri al centro |
+| `/rotassist lang auto|it|en` | lingua dell'interfaccia (auto = lingua del client) |
 | `/rotassist verify` | controlla gli spellID di tutti i moduli con i dati del client |
 | `/rotassist wowhead [spellID]` | mostra il link Wowhead del suggerimento attuale (o dello spellID) |
 

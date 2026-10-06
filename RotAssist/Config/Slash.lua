@@ -2,26 +2,8 @@
 -- /rotassist (alias /rota)
 
 local _, ns = ...
-local A = ns.API
+local A, L = ns.API, ns.L
 
-local HELP = {
-    "/rotassist show | hide | toggle - mostra/nasconde",
-    "/rotassist lock | unlock - blocca/sblocca i riquadri",
-    "/rotassist scale <0.5-2> - scala",
-    "/rotassist mode auto|st|aoe - modalita' bersagli (anche da tasto)",
-    "/rotassist source hybrid|native|rules - fonte del suggerimento",
-    "/rotassist debug [on|off] - spiega in chat i suggerimenti",
-    "/rotassist why - valutazione completa delle regole (ultimo aggiornamento)",
-    "/rotassist probe - verifica quali API sono segrete adesso",
-    "/rotassist verify - controlla gli spellID di tutti i moduli con i dati del client",
-    "/rotassist config - apre il pannello opzioni",
-    "/rotassist minimap - mostra/nasconde l'icona sulla minimappa",
-    "/rotassist wowhead [spellID] - link Wowhead del suggerimento attuale (o dello spellID)",
-    "/rotassist reset - riporta i riquadri al centro",
-    "/rotassist info - versione, client, spec (utile nei log)",
-    "/rotassist note <testo> - aggiunge una nota al registro",
-    "/rotassist log [clear] - stato o svuotamento del registro (salvato al /reload)",
-}
 
 local MODES = { AUTO = true, ST = true, AOE = true }
 local SOURCES = { HYBRID = true, NATIVE = true, RULES = true }
@@ -29,7 +11,7 @@ local SOURCES = { HYBRID = true, NATIVE = true, RULES = true }
 function ns:CycleMode()
     local nextMode = { AUTO = "ST", ST = "AOE", AOE = "AUTO" }
     self:Set("mode", nextMode[self.db.mode] or "AUTO")
-    self:Print("modalita': %s", self.db.mode)
+    self:Print(L.MSG_MODE, self.db.mode)
 end
 
 local function Describe(v)
@@ -176,13 +158,13 @@ function ns:ShowWowheadLink(spellID)
         spellID = r and r.primary and r.primary.spell
     end
     if type(spellID) ~= "number" then
-        self:Print("nessun suggerimento attivo: usa /rotassist wowhead <spellID>.")
+        self:Print(L.MSG_NO_SUGGESTION)
         return
     end
     local url = self:WowheadURL(spellID)
     if StaticPopupDialogs and StaticPopup_Show then
         StaticPopupDialogs.ROTASSIST_WOWHEAD = StaticPopupDialogs.ROTASSIST_WOWHEAD or {
-            text = "Wowhead - %s\n(Ctrl+C per copiare)",
+            text = L.WOWHEAD_POPUP,
             button1 = OKAY or "OK",
             hasEditBox = true,
             editBoxWidth = 340,
@@ -194,6 +176,7 @@ function ns:ShowWowheadLink(spellID)
             EditBoxOnEscapePressed = function(eb) eb:GetParent():Hide() end,
             timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
         }
+        StaticPopupDialogs.ROTASSIST_WOWHEAD.text = L.WOWHEAD_POPUP
         if pcall(StaticPopup_Show, "ROTASSIST_WOWHEAD", A.SpellName(spellID), nil, url) then return end
     end
     self:Print("%s: %s", A.SpellName(spellID), url)
@@ -208,21 +191,21 @@ local function Handler(msg)
     elseif cmd == "hide" then ns:Set("shown", false)
     elseif cmd == "toggle" then ns:Set("shown", not ns.db.shown)
     elseif cmd == "lock" then ns:Set("locked", true)
-    elseif cmd == "unlock" then ns:Set("locked", false); ns:Print("riquadri sbloccati: trascinali, poi /rotassist lock.")
+    elseif cmd == "unlock" then ns:Set("locked", false); ns:Print(L.MSG_UNLOCKED)
     elseif cmd == "scale" then
         local v = tonumber(arg)
-        if v and v >= 0.5 and v <= 2 then ns:Set("scale", v) else ns:Print("uso: /rotassist scale 0.5-2") end
+        if v and v >= 0.5 and v <= 2 then ns:Set("scale", v) else ns:Print(L.MSG_SCALE_USAGE) end
     elseif cmd == "mode" then
         local m = arg:upper()
-        if MODES[m] then ns:Set("mode", m); ns:Print("modalita': %s", m) else ns:CycleMode() end
+        if MODES[m] then ns:Set("mode", m); ns:Print(L.MSG_MODE, m) else ns:CycleMode() end
     elseif cmd == "source" then
         local s = arg:upper()
-        if SOURCES[s] then ns:Set("source", s); ns:Print("fonte: %s", s) else ns:Print("uso: /rotassist source hybrid|native|rules") end
+        if SOURCES[s] then ns:Set("source", s); ns:Print(L.MSG_SOURCE, s) else ns:Print(L.MSG_SOURCE_USAGE) end
     elseif cmd == "debug" then
         local v
         if arg == "on" then v = true elseif arg == "off" then v = false else v = not ns.db.debug end
         ns:Set("debug", v)
-        ns:Print("debug %s", v and "attivo" or "disattivato")
+        ns:Print(v and L.MSG_DEBUG_ON or L.MSG_DEBUG_OFF)
     elseif cmd == "why" then ns:PrintWhy()
     elseif cmd == "probe" then ns:Probe()
     elseif cmd == "verify" then ns:VerifySpells()
@@ -230,31 +213,34 @@ local function Handler(msg)
     elseif cmd == "log" then
         if arg == "clear" then
             ns.db.log = {}
-            ns:Print("registro svuotato.")
+            ns:Print(L.MSG_LOG_CLEARED)
         else
-            ns:Print("registro: %d righe. Fai /reload per scriverlo su disco. /rotassist log clear per svuotarlo.", #(ns.db.log or {}))
+            ns:Print(L.MSG_LOG_STATUS, #(ns.db.log or {}))
         end
     elseif cmd == "note" then
-        ns:Print("NOTA: %s", rawArg)
+        ns:Print(L.MSG_NOTE, rawArg)
     elseif cmd == "info" then
         local ok, build, _, _, iface = pcall(GetBuildInfo)
         ns:Print("versione %s | client %s (interface %s) | locale %s | classe %s | spec %s (%s) | hero %s",
             C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ns.name, "Version") or "?",
             ok and build or "?", ok and iface or "?", GetLocale and GetLocale() or "?", tostring(A.PlayerClass()),
             ns.activeSpec and ns.activeSpec.name or "-", tostring(ns.specID), tostring(ns.hero))
+    elseif cmd == "lang" or cmd == "language" then
+        if arg == "auto" or arg == "it" or arg == "en" then ns:Set("language", arg)
+        else ns:Print(L.MSG_LANG_USAGE) end
     elseif cmd == "wowhead" or cmd == "wh" then
         ns:ShowWowheadLink(tonumber(arg))
     elseif cmd == "minimap" then
         ns:Set("showMinimap", not ns.db.showMinimap)
-        ns:Print("icona minimappa %s", ns.db.showMinimap and "visibile" or "nascosta (resta nel menu AddOns)")
+        ns:Print(ns.db.showMinimap and L.MSG_MINIMAP_SHOWN or L.MSG_MINIMAP_HIDDEN)
     elseif cmd == "reset" then
         for _, k in ipairs({ "pos", "cdPos", "alertPos" }) do
             ns.db[k] = CopyTable(ns.defaults[k])
         end
         ns:OnSettingChanged("scale", ns.db.scale)
-        ns:Print("posizioni ripristinate.")
+        ns:Print(L.MSG_POS_RESET)
     else
-        for _, line in ipairs(HELP) do ns:Print(line) end
+        for _, line in ipairs(L.HELP) do ns:Print(line) end
     end
 end
 

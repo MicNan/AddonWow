@@ -15,7 +15,7 @@ function AF:Create()
     f:SetSize(220, ROW * MAX)
     f:SetFrameStrata("MEDIUM")
     UI.MakeMovable(f, "alertPos")
-    UI.AddMoverBackground(f, "RotAssist - avvisi")
+    UI.AddMoverBackground(f, ns.L.DRAG_ALERTS)
     for i = 1, MAX do
         local row = CreateFrame("Frame", nil, f)
         row:SetSize(220, ROW - 2)

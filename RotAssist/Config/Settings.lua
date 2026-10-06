@@ -19,7 +19,14 @@ function ns:OnSettingChanged(key, value)
         ns.UI.Launcher:ApplySettings()
     end
     if key == "debug" and value then
-        self:Print("debug attivo: /rotassist why per il dettaglio delle regole.")
+        self:Print(L.MSG_DEBUG_HINT)
+    end
+    if key == "language" then
+        self:SetLanguage(value)
+        self:Print(L.MSG_LANG, self.lang)
+    end
+    if key == "showKeybinds" then
+        ns.Keybinds.dirty = true
     end
     self:RefreshVisibility()
 end
@@ -41,7 +48,7 @@ function ns:OpenSettings()
         local id = self.settingsCategory.GetID and self.settingsCategory:GetID() or self.settingsCategory
         if pcall(Settings.OpenToCategory, id) then return end
     end
-    self:Print("pannello opzioni non disponibile: usa i comandi /rotassist.")
+    self:Print(L.MSG_NO_SETTINGS)
 end
 
 function ns:RegisterSettings()
@@ -102,7 +109,11 @@ function ns:RegisterSettings()
     Checkbox("showAlerts", L.OPT_ALERTS)
     Checkbox("showResource", L.OPT_RESOURCE)
     Checkbox("alertSound", L.OPT_SOUND)
+    Checkbox("showKeybinds", L.OPT_KEYBINDS)
     Checkbox("showMinimap", L.OPT_MINIMAP)
+    Dropdown("language", L.OPT_LANGUAGE, nil, {
+        { "auto", L.OPT_LANG_AUTO }, { "it", L.OPT_LANG_IT }, { "en", L.OPT_LANG_EN },
+    })
     Checkbox("debug", L.OPT_DEBUG)
 
     Settings.RegisterAddOnCategory(category)

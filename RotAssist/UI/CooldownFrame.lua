@@ -17,7 +17,7 @@ function CD:Create()
     f:SetSize(SIZE, SIZE)
     f:SetFrameStrata("MEDIUM")
     UI.MakeMovable(f, "cdPos")
-    UI.AddMoverBackground(f, "RotAssist - cooldown")
+    UI.AddMoverBackground(f, ns.L.DRAG_COOLDOWNS)
     self.frame = f
     self:ApplySettings()
     return f

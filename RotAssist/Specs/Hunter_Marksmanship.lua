@@ -16,7 +16,6 @@
 -- Senza il talento Trick Shots la guida usa la lista ST anche in AoE.
 
 local _, ns = ...
-local L = ns.L
 
 local S = {
     AIMED_SHOT      = 19434,
@@ -123,7 +122,7 @@ ns:RegisterSpec(254, {
 
     alerts = {
         { type = "targetAuraMissing", key = "hm", auras = { S.HUNTERS_MARK }, icon = S.HUNTERS_MARK,
-          castSpell = S.HUNTERS_MARK, text = L.HUNTERS_MARK_MISSING,
+          castSpell = S.HUNTERS_MARK, textKey = "HUNTERS_MARK_MISSING",
           classifications = { worldboss = true, elite = true, rareelite = true } },
     },
 

@@ -15,6 +15,13 @@ local AL = { checks = {} }
 ns.Alerts = AL
 local C = AL.checks
 
+-- Testo di un avviso: chiave di localizzazione (campo ...Key) o testo diretto
+local function Txt(p, field)
+    local key = p[field .. "Key"]
+    if key then return L[key] end
+    return p[field]
+end
+
 local combatStart = 0
 ns:On("PLAYER_REGEN_DISABLED", function() combatStart = GetTime() end)
 
@@ -68,7 +75,7 @@ C.targetAuraMissing = function(p)
     end
     local found = A.FindAura("target", p.auras, p.filter or "HARMFUL|PLAYER")
     if found == false then
-        return { text = p.text or L.DEBUFF_MISSING:format(A.SpellName(p.auras[1])), icon = p.icon or p.auras[1] }
+        return { text = Txt(p, "text") or L.DEBUFF_MISSING:format(A.SpellName(p.auras[1])), icon = p.icon or p.auras[1] }
     end
 end
 
@@ -78,7 +85,7 @@ C.playerAuraMissing = function(p)
     if p.spell and not A.IsKnown(p.spell) then return nil end
     local found = A.FindAura("player", p.auras, p.filter or "HELPFUL")
     if found == false then
-        return { text = p.text or L.BUFF_MISSING:format(A.SpellName(p.auras[1])), icon = p.icon or p.auras[1] }
+        return { text = Txt(p, "text") or L.BUFF_MISSING:format(A.SpellName(p.auras[1])), icon = p.icon or p.auras[1] }
     end
 end
 
@@ -89,9 +96,9 @@ C.timerExpiring = function(p)
     if p.needsTarget and not HostileTarget() then return nil end
     local rem = T:TimerRemaining(p.key)
     if rem <= 0 then
-        return { text = p.textMissing or L.DEBUFF_MISSING:format(A.SpellName(p.spell)), icon = p.icon or p.spell }
+        return { text = Txt(p, "textMissing") or L.DEBUFF_MISSING:format(A.SpellName(p.spell)), icon = p.icon or p.spell }
     elseif rem < (p.within or 4) then
-        return { text = p.textExpiring or L.DEBUFF_EXPIRING:format(A.SpellName(p.spell)), icon = p.icon or p.spell }
+        return { text = Txt(p, "textExpiring") or L.DEBUFF_EXPIRING:format(A.SpellName(p.spell)), icon = p.icon or p.spell }
     end
 end
 
@@ -101,14 +108,14 @@ C.weaponImbueMissing = function(p)
     if p.spell and not A.IsKnown(p.spell) then return nil end
     local hasMain, hasOff = A.WeaponEnchants()
     if p.mainHand and hasMain == false then
-        return { text = p.text or L.IMBUE_MISSING:format(A.SpellName(p.spell)), icon = p.icon or p.spell }
+        return { text = Txt(p, "text") or L.IMBUE_MISSING:format(A.SpellName(p.spell)), icon = p.icon or p.spell }
     end
     if p.offHand and hasOff == false then
         local dual = C_PaperDollInfo and C_PaperDollInfo.OffhandHasWeapon
         local ok, hasWeapon = A.Call(dual)
         if ok and A.Plain(hasWeapon) then
             local off = p.offSpell or p.spell
-            return { text = p.textOff or L.IMBUE_MISSING:format(A.SpellName(off)), icon = off }
+            return { text = Txt(p, "textOff") or L.IMBUE_MISSING:format(A.SpellName(off)), icon = off }
         end
     end
 end
@@ -130,14 +137,14 @@ C.groupAuraMissing = function(p)
             if found then return nil end
         end
     end
-    return { text = p.text or L.BUFF_MISSING:format(A.SpellName(p.auras[1])), icon = p.icon or p.auras[1] }
+    return { text = Txt(p, "text") or L.BUFF_MISSING:format(A.SpellName(p.auras[1])), icon = p.icon or p.auras[1] }
 end
 
 -- Risorsa vicina al massimo (solo se leggibile)
 C.resourceNearMax = function(p)
     local cur, max = A.Power(p.powerType)
     if cur and max and max > 0 and (max - cur) <= (p.margin or 10) then
-        return { text = p.text, icon = p.icon }
+        return { text = Txt(p, "text"), icon = p.icon }
     end
 end
 

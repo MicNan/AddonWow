@@ -79,6 +79,7 @@ local function SetIcon(icon, entry)
     icon:Show()
     icon.tex:SetTexture(A.SpellTexture(entry.spell))
     icon.badge:SetText(entry.source == "native" and L.SRC_NATIVE or L.SRC_RULE)
+    icon.hotkey:SetText(ns.Keybinds:Get(entry.spell, entry.rule and entry.rule.spell) or "")
     A.ApplyCooldown(icon.cd, entry.spell)
 end
 

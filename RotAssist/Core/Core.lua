@@ -174,8 +174,13 @@ end
 ns:On("ADDON_LOADED", function(_, name)
     if name ~= ns.name then return end
     RotAssistDB = RotAssistDB or {}
+    -- chi usava gia' RotAssist (interfaccia solo in italiano) resta in italiano
+    if RotAssistDB.dbVersion and RotAssistDB.language == nil then
+        RotAssistDB.language = "it"
+    end
     ns.ApplyDefaults(RotAssistDB, ns.defaults)
     ns.db = RotAssistDB
+    ns:SetLanguage(ns.db.language)
 
     UI.Main:Create()
     UI.Cooldowns:Create()

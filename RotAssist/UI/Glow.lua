@@ -47,6 +47,14 @@ function ns.UI.CreateIcon(parent, size)
     f.cd:SetDrawEdge(false)
     f.badge = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     f.badge:SetPoint("TOPRIGHT", -2, -2)
+    -- tasto assegnato (sopra lo swipe del cooldown)
+    f.hotkeyLayer = CreateFrame("Frame", nil, f)
+    f.hotkeyLayer:SetAllPoints()
+    local level = f.cd:GetFrameLevel()
+    f.hotkeyLayer:SetFrameLevel((type(level) == "number" and level or 0) + 2)
+    f.hotkey = f.hotkeyLayer:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+    f.hotkey:SetPoint("BOTTOMRIGHT", -2, 2)
+    f.hotkey:SetTextColor(1, 1, 1)
     return f
 end
 

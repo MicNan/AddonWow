@@ -13,7 +13,6 @@
 -- Water Shield ed Earthliving si controllano fuori dal combattimento.
 
 local _, ns = ...
-local L = ns.L
 
 local S = {
     RIPTIDE         = 61295,
@@ -85,9 +84,9 @@ ns:RegisterSpec(264, {
     alerts = {
         { type = "playerAuraMissing", key = "ws", auras = { S.WATER_SHIELD }, spell = S.WATER_SHIELD },
         { type = "playerAuraMissing", key = "es", auras = { S.EARTH_SHIELD, S.EARTH_SHIELD_SELF },
-          spell = S.EARTH_SHIELD, icon = S.EARTH_SHIELD, text = L.ES_SELF_MISSING },
+          spell = S.EARTH_SHIELD, icon = S.EARTH_SHIELD, textKey = "ES_SELF_MISSING" },
         { type = "groupAuraMissing", key = "esally", auras = { S.EARTH_SHIELD }, spell = S.EARTH_SHIELD,
-          icon = S.EARTH_SHIELD, text = L.ES_ALLY_MISSING },
+          icon = S.EARTH_SHIELD, textKey = "ES_ALLY_MISSING" },
         { type = "weaponImbueMissing", key = "imbue", spell = S.EARTHLIVING_WEAPON, mainHand = true },
         { type = "playerAuraMissing", key = "sky", auras = { S.SKYFURY }, spell = S.SKYFURY },
     },

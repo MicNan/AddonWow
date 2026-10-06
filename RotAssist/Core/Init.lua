@@ -24,6 +24,8 @@ ns.defaults = {
     alertSound      = false,
     debug           = false,
     showMinimap     = true,
+    showKeybinds    = true,
+    language        = "auto",     -- auto | it | en
     minimapAngle    = 225,
     updateRate      = 0.1,
     pos      = { point = "CENTER", x = 0,   y = -180 },
@@ -92,10 +94,10 @@ function ns:ReportError(err)
     reported[err] = true
     self:Log("[errore] " .. err .. (debugstack and ("\n" .. debugstack(2, 6, 0)) or ""))
     if self.db and self.db.debug then
-        self:Print("|cffff5555errore interno:|r %s", err)
+        self:Print(self.L.MSG_INTERNAL_ERROR_DETAIL, err)
     elseif not reported._hinted then
         reported._hinted = true
-        self:Print("si e' verificato un errore interno (ignorato). Usa /rotassist debug per i dettagli.")
+        self:Print(self.L.MSG_INTERNAL_ERROR)
     end
 end
 

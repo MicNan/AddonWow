@@ -14,7 +14,6 @@
 -- Hot Hand / Whirling Fire: si usa il glow di Lava Lash come indizio (VERIFICARE).
 
 local _, ns = ...
-local L = ns.L
 
 local S = {
     STORMSTRIKE     = 17364,
@@ -124,7 +123,7 @@ ns:RegisterSpec(263, {
           mainHand = true, offHand = true },
         { type = "playerAuraMissing", key = "ls", auras = { S.LIGHTNING_SHIELD }, spell = S.LIGHTNING_SHIELD },
         { type = "playerAuraMissing", key = "es", auras = { S.EARTH_SHIELD, S.EARTH_SHIELD_SELF },
-          talent = S.ELEMENTAL_ORBIT, icon = S.EARTH_SHIELD, text = L.ES_SELF_MISSING },
+          talent = S.ELEMENTAL_ORBIT, icon = S.EARTH_SHIELD, textKey = "ES_SELF_MISSING" },
         { type = "playerAuraMissing", key = "sky", auras = { S.SKYFURY }, spell = S.SKYFURY },
     },
 

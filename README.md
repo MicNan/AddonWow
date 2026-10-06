@@ -52,6 +52,23 @@ Documentazione completa, piano di test e limiti noti sono in
 |---|---|
 | `RotAssist/` | l'addon (Lua + XML, nessuna libreria esterna) |
 | `docs/` | dati e analisi raccolti per i moduli |
+| `tests/` | test in WoW simulato: sintassi Lua 5.1 e scenari con i dati nascosti del combattimento |
+
+## Test
+
+Con Node.js installato, dalla cartella `tests/`:
+
+```bash
+npm install
+```
+
+```bash
+npm test
+```
+
+Il primo comando installa le dipendenze (solo la prima volta). Il secondo controlla la sintassi
+di tutti i file e fa girare l'addon in un WoW simulato, in cui risorse, aure e cooldown sono
+nascosti come in combattimento.
 
 ## Fonti e crediti
 

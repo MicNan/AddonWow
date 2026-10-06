@@ -121,7 +121,7 @@ ns:RegisterSpec(253, {
         { type = "petNotAttacking", icon = KC, grace = 3 },
         { type = "petHealthLow", threshold = 0.40, icon = S.MEND_PET },
         { type = "targetAuraMissing", auras = { S.HUNTERS_MARK }, icon = S.HUNTERS_MARK,
-          castSpell = S.HUNTERS_MARK, text = ns.L.HUNTERS_MARK_MISSING,
+          castSpell = S.HUNTERS_MARK, textKey = "HUNTERS_MARK_MISSING",
           classifications = { worldboss = true, elite = true, rareelite = true } },
     },
 
