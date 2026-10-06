@@ -1,7 +1,7 @@
 ## Interface: 120100, 120105
 ## Title: RotAssist Companion
-## Notes: Delve, eventi, world quest, obiettivi settimanali e levelling, con waypoint e link Wowhead. Solo fuori combattimento.
-## Version: 0.1.0
+## Notes: Delve, eventi, world quest, settimanali, levelling e strategie per l'oro, con percorso piu' veloce (portali) e link Wowhead. Solo fuori combattimento.
+## Version: 0.2.0
 ## SavedVariablesPerCharacter: RotAssistCompanionDB
 ## IconTexture: Interface\Icons\INV_Misc_Map_01
 ## Category: Quests
@@ -17,6 +17,9 @@ Data\Delves.lua
 Data\Events.lua
 Data\Weekly.lua
 Data\Leveling.lua
+Data\Travel.lua
+Data\GoldStrategies.lua
+Data\Gold.lua
 
 UI\Panel.lua
 UI\Launcher.lua

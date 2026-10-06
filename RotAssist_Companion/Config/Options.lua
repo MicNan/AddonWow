@@ -11,7 +11,8 @@ function ns:OnSettingChanged(key, value)
         self:SetLanguage(value)
         self:Print(self.L.MSG_LANG, self.lang)
     end
-    if key == "onlyBountiful" then ns.Panel:Refresh() end
+    if key == "onlyBountiful" or key == "playerType" then ns.Panel:Refresh() end
+    if key == "playerType" then self:Print(self.L.MSG_PROFILE, self.L["PROFILE_" .. tostring(value)]) end
 end
 
 function ns:Set(key, value)
@@ -52,6 +53,15 @@ function ns:RegisterSettings()
     Checkbox("showMinimap", L.OPT_MINIMAP)
     Checkbox("notifyLogin", L.OPT_NOTIFY)
     Checkbox("onlyBountiful", L.OPT_ONLY_BOUNTIFUL)
+    local profile = Register("playerType", VT.String or "string", L.OPT_PROFILE)
+    local function ProfileOptions()
+        local c = Settings.CreateControlTextContainer()
+        for _, key in ipairs(ns.Gold.PROFILES) do c:Add(key, L["PROFILE_" .. key]) end
+        return c:GetData()
+    end
+    local createDropdown = Settings.CreateDropdown or Settings.CreateDropDown
+    createDropdown(category, profile, ProfileOptions)
+
     local lang = Register("language", VT.String or "string", L.OPT_LANGUAGE)
     local function LangOptions()
         local c = Settings.CreateControlTextContainer()
@@ -62,6 +72,16 @@ function ns:RegisterSettings()
     create(category, lang, LangOptions)
 
     Settings.RegisterAddOnCategory(category)
+end
+
+-- Profilo per le strategie sull'oro: occasionale -> medio -> assiduo
+function ns:CycleProfile()
+    local list, current = ns.Gold.PROFILES, self.db.playerType or "medium"
+    local nextKey = list[1]
+    for i, key in ipairs(list) do
+        if key == current then nextKey = list[i % #list + 1] end
+    end
+    self:Set("playerType", nextKey)
 end
 
 ---------------------------------------------------------------------------
@@ -86,6 +106,13 @@ local TAB_ALIASES = {
     eventi = "events", events = "events", event = "events",
     settimanale = "weekly", weekly = "weekly",
     levelling = "leveling", leveling = "leveling", level = "leveling",
+    oro = "gold", gold = "gold", soldi = "gold",
+}
+
+local PROFILE_ALIASES = {
+    occasionale = "casual", casual = "casual",
+    medio = "medium", medium = "medium", regular = "medium",
+    assiduo = "hardcore", hardcore = "hardcore", dedicated = "hardcore",
 }
 
 local function Handler(msg)
@@ -97,6 +124,10 @@ local function Handler(msg)
         ns.Panel:Show(TAB_ALIASES[cmd])
     elseif cmd == "aggiorna" or cmd == "refresh" then
         ns.Panel:Show()
+    elseif cmd == "profilo" or cmd == "profile" then
+        if PROFILE_ALIASES[arg] then ns:Set("playerType", PROFILE_ALIASES[arg]) else ns:CycleProfile() end
+    elseif cmd == "stop" then
+        ns.Travel:Stop()
     elseif cmd == "riepilogo" or cmd == "summary" then
         ns:PrintSummary()
     elseif cmd == "config" or cmd == "options" then

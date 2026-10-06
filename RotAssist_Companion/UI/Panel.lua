@@ -1,10 +1,11 @@
 -- RotAssist Companion - Panel
--- Finestra con quattro schede (Delve, Eventi, Settimanale, Levelling).
+-- Finestra con cinque schede (Delve, Eventi, Settimanale, Levelling, Oro).
 -- Ogni scheda e' un elenco di righe prodotto da Data\*.lua:
 --   { header = "titolo" } oppure
 --   { text, right, icon | atlas, color = {r,g,b}, dim, tooltip = {...},
---     waypoint = { mapID, x, y, titolo }, link = {...}, linkTitle }
--- Clic sinistro: waypoint (se presente) altrimenti link; clic destro: link Wowhead.
+--     waypoint = { mapID, x, y, titolo }, link = {...}, linkTitle, wrap }
+-- Clic sinistro su una destinazione: percorso piu' veloce (DataTravel.lua);
+-- Maiusc + clic: solo waypoint; clic destro: link Wowhead.
 -- In combattimento l'elenco non viene aggiornato.
 
 local _, ns = ...
@@ -13,7 +14,7 @@ local A = ns.API
 local P = { rows = {}, tab = nil }
 ns.Panel = P
 
-local WIDTH, HEIGHT, ROW_H = 460, 500, 20
+local WIDTH, HEIGHT, ROW_H = 480, 520, 20
 local AUTO_REFRESH = 30
 
 local TABS = {
@@ -21,6 +22,7 @@ local TABS = {
     { key = "events",   label = "TAB_EVENTS",   source = function() return ns.Events end },
     { key = "weekly",   label = "TAB_WEEKLY",   source = function() return ns.Weekly end },
     { key = "leveling", label = "TAB_LEVELING", source = function() return ns.Leveling end },
+    { key = "gold",     label = "TAB_GOLD",     source = function() return ns.Gold end },
 }
 
 ---------------------------------------------------------------------------
@@ -39,7 +41,7 @@ local function ShowTooltip(row)
             else GameTooltip:AddLine(line, 0.8, 0.8, 0.8, true) end
         end
     end
-    if d.waypoint then GameTooltip:AddLine(ns.L.HINT_WAYPOINT, 0.5, 0.8, 1) end
+    if d.waypoint then GameTooltip:AddLine(ns.L.HINT_ROUTE, 0.5, 0.8, 1) end
     if d.link then GameTooltip:AddLine(ns.L.HINT_WOWHEAD, 0.5, 0.8, 1) end
     GameTooltip:Show()
 end
@@ -50,7 +52,11 @@ local function OnRowClick(row, button)
     local ok, err = pcall(function()
         if button == "LeftButton" and d.waypoint then
             local w = d.waypoint
-            ns:SetWaypoint(w[1], w[2], w[3], w[4])
+            if IsShiftKeyDown and IsShiftKeyDown() then
+                ns:SetWaypoint(w[1], w[2], w[3], w[4])
+            else
+                ns.Travel:Start({ mapID = w[1], x = w[2], y = w[3], name = w[4] })
+            end
         elseif d.link then
             ns:ShowLink(d.linkTitle or d.text, d.link)
         end
@@ -85,6 +91,7 @@ local function FillRow(row, d)
     if d.header then
         row.icon:Hide()
         row.text:SetFontObject("GameFontNormal")
+        row.text:SetWordWrap(false)
         row.text:SetText(d.header)
         row.right:SetText("")
         row:EnableMouse(false)
@@ -103,6 +110,9 @@ local function FillRow(row, d)
     end
     row.text:SetText(d.text or "")
     row.right:SetText(d.right or "")
+    -- righe lunghe (strategie): vanno a capo invece di essere troncate
+    row.text:SetWordWrap(d.wrap and true or false)
+    row.text:SetJustifyV(d.wrap and "TOP" or "MIDDLE")
     if d.color then
         row.text:SetTextColor(d.color[1], d.color[2], d.color[3])
     elseif d.dim then
@@ -153,7 +163,7 @@ function P:Create()
     -- elenco scorrevole
     local scroll = CreateFrame("ScrollFrame", "RotAssistCompanionScroll", f, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 12, -56)
-    scroll:SetPoint("BOTTOMRIGHT", -32, 40)
+    scroll:SetPoint("BOTTOMRIGHT", -32, 64)
     local content = CreateFrame("Frame", nil, scroll)
     content:SetSize(WIDTH - 48, 10)
     scroll:SetScrollChild(content)
@@ -168,6 +178,26 @@ function P:Create()
 
     f.status = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     f.status:SetPoint("RIGHT", f.refresh, "LEFT", -8, 0)
+
+    -- percorso in corso
+    f.route = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    f.route:SetPoint("BOTTOMLEFT", 14, 40)
+    f.route:SetPoint("RIGHT", f, "RIGHT", -100, 0)
+    f.route:SetJustifyH("LEFT")
+    f.route:SetTextColor(0.5, 0.85, 1)
+    f.routeCancel = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    f.routeCancel:SetSize(80, 20)
+    f.routeCancel:SetPoint("BOTTOMRIGHT", -10, 36)
+    f.routeCancel:SetText(L.BTN_CANCEL_ROUTE)
+    f.routeCancel:SetScript("OnClick", function() ns.Travel:Stop() end)
+    f.routeCancel:Hide()
+
+    -- profilo di gioco (scheda Oro)
+    f.profile = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    f.profile:SetSize(160, 22)
+    f.profile:SetPoint("BOTTOMLEFT", 10, 10)
+    f.profile:SetScript("OnClick", function() ns:CycleProfile() end)
+    f.profile:Hide()
 
     f.bountiful = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
     f.bountiful:SetSize(22, 22)
@@ -242,7 +272,13 @@ function P:Render(rows)
         row:SetPoint("RIGHT", content, "RIGHT", 0, 0)
         FillRow(row, d)
         row:Show()
-        y = y + ROW_H
+        local h = ROW_H
+        if d.wrap then
+            local th = row.text:GetStringHeight()
+            if type(th) == "number" and th > 0 then h = math.max(ROW_H, th + 6) end
+        end
+        row:SetHeight(h)
+        y = y + h
     end
     content:SetHeight(math.max(10, y))
 end
@@ -262,6 +298,9 @@ function P:Refresh()
         if b.key == self.tab then b:Disable() else b:Enable() end
     end
     f.bountiful:SetShown(self.tab == "delves")
+    f.profile:SetShown(self.tab == "gold")
+    f.profile:SetText(L.BTN_PROFILE:format(L["PROFILE_" .. (ns.db.playerType or "medium")]))
+    self:UpdateRoute()
     f.bountiful:SetChecked(ns.db.onlyBountiful and true or false)
     if A.InCombat() then
         f.status:SetText(L.IN_COMBAT)
@@ -275,4 +314,13 @@ function P:Refresh()
     end
     self:Render(rows or {})
     f.status:SetText(L.UPDATED_AT:format(date and date("%H:%M") or ""))
+end
+
+-- Testo del percorso in corso (o niente)
+function P:UpdateRoute()
+    local f = self.frame
+    if not f then return end
+    local text = ns.Travel and ns.Travel:CurrentText()
+    f.route:SetText(text or "")
+    f.routeCancel:SetShown(text ~= nil)
 end

@@ -26,6 +26,14 @@ ns:On("PLAYER_ENTERING_WORLD", function(_, isInitialLogin, isReloadingUi)
     end
 end)
 
+-- navigatore: passa al passo successivo quando cambia la zona
+for _, ev in ipairs({ "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED", "PLAYER_ENTERING_WORLD" }) do
+    ns:On(ev, function() ns.Travel:Advance() end)
+end
+
+-- professione aperta: ricordiamo Concentrazione e conoscenza (scheda Oro)
+ns:On("TRADE_SKILL_SHOW", function() ns.Gold:OnTradeSkillShow(); ns.Panel:RequestRefresh() end)
+
 ns:On("PLAYER_XP_UPDATE", function(_, unit)
     if unit == nil or unit == "player" then ns.Leveling:OnXPUpdate() end
 end)

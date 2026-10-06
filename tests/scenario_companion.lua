@@ -81,9 +81,68 @@ end
 RotAssistCompanion_OnAddonCompartmentClick("x", "LeftButton")
 RotAssistCompanion_OnAddonCompartmentEnter("x", C.Panel.frame)
 
+-- ===================== Viaggio =====================
+local function Route(label, playerMap, faction, dest)
+    MOCK.playerMap, MOCK.faction = playerMap, faction
+    local steps = C.Travel:Plan(dest)
+    print(("--- percorso: %s (%d passi)"):format(label, #steps))
+    for i, st in ipairs(steps) do
+        print(("   %d. [%s] %s%s"):format(i, tostring(st.region), st.text, st.waypoint and "  [wp]" or ""))
+    end
+    return steps
+end
+local delve = { mapID = 2395, x = 0.4, y = 0.5, name = "Shadowguard Point" }
+local harandar = { mapID = 2413, x = 0.5, y = 0.5, name = "Evento Harandar" }
+MOCK.hearthCD = 999
+Route("Eversong -> Eversong", 2395, "Alliance", delve)
+Route("Stormwind -> Eversong", 84, "Alliance", delve)
+Route("Orgrimmar -> Harandar", 85, "Horde", harandar)
+MOCK.hearthCD = 0
+Route("Dornogal -> Eversong, pietra pronta", 2339, "Alliance", delve)
+MOCK.hearthCD = 999
+Route("Dornogal -> Eversong, pietra in ricarica", 2339, "Alliance", delve)
+Route("Voidstorm -> Eversong", 2405, "Horde", delve)
+Route("Thunder Bluff (Alleanza) -> Eversong", 88, "Alliance", delve)
+
+print("--- navigatore")
+MOCK.playerMap, MOCK.faction = 85, "Horde"
+C.Travel:Start(harandar)
+print("passo iniziale:", C.Travel.step, "waypoint:", MOCK.waypoint and (MOCK.waypoint.m .. " " .. MOCK.waypoint.x) or "-")
+MOCK.playerMap = 2393; MOCK.fire("ZONE_CHANGED_NEW_AREA")
+print("a Silvermoon -> passo:", C.Travel.step, "waypoint:", MOCK.waypoint and (MOCK.waypoint.m .. " " .. MOCK.waypoint.x) or "-")
+MOCK.playerMap = 2413; MOCK.fire("ZONE_CHANGED_NEW_AREA")
+print("a Harandar -> passo:", C.Travel.step, "testo pannello:", C.Panel.frame.route._text)
+SlashCmdList.ROTASSISTCOMPANION("stop")
+print("dopo stop:", tostring(C.Travel.route), "| testo:", C.Panel.frame.route._text)
+
+-- clic su una delve dal pannello = percorso
+MOCK.playerMap, MOCK.faction = 84, "Alliance"
+C.API.ClearCache()
+C.Panel:Show("delves")
+for _, row in ipairs(C.Panel.rows) do
+    if row._shown and row.data and row.data.waypoint then row._scripts.OnClick(row, "LeftButton") break end
+end
+print("clic sulla delve da Stormwind -> passi:", C.Travel.route and #C.Travel.route or 0)
+C.Travel:Stop()
+
+-- ===================== Oro =====================
+MOCK.fire("TRADE_SKILL_SHOW")
+for _, prof in ipairs({ "occasionale", "assiduo" }) do
+    SlashCmdList.ROTASSISTCOMPANION("profilo " .. prof)
+    Dump("gold")
+end
+SlashCmdList.ROTASSISTCOMPANION("profilo")
+print("profilo dopo il ciclo:", C.db.playerType)
+MOCK.profs = {}
+Dump("gold")
+MOCK.profs = { 1, 2 }
+
 -- API assenti (client diverso / patch futura): nessun errore
 C_AreaPoiInfo, C_TaskQuest, C_WeeklyRewards, C_PerksActivities, C_DelvesUI, C_Calendar, C_CurrencyInfo = nil
 C.API.ClearCache()
-for _, tab in ipairs({ "delves", "events", "weekly", "leveling" }) do Dump(tab) end
+C_TradeSkillUI, C_ProfSpecs, GetProfessions = nil
+for _, tab in ipairs({ "delves", "events", "weekly", "leveling", "gold" }) do Dump(tab) end
+MOCK.playerMap = 84
+C.Travel:Start(delve)
 
 print("ERRORI TOTALI:", #MOCK.errors)

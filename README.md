@@ -48,6 +48,10 @@ Le sue schede coprono:
 - **Eventi:** eventi sulla mappa, world quest, festività.
 - **Settimanale:** Great Vault, Traveler's Log, reset.
 - **Levelling:** XP/ora e zone adatte al tuo livello.
+- **Oro:** strategie per le tue professioni secondo il profilo (occasionale, medio, assiduo).
+
+Il clic su una destinazione calcola il **percorso più veloce**, portali compresi, con
+istruzioni passo per passo.
 
 Ogni riga offre un waypoint e un link Wowhead. Dettagli in
 [RotAssist_Companion/README.md](RotAssist_Companion/README.md).
@@ -64,7 +68,7 @@ Documentazione completa, piano di test e limiti noti sono in
 | Percorso | Contenuto |
 |---|---|
 | `RotAssist/` | l'addon di rotazione (Lua + XML, nessuna libreria esterna) |
-| `RotAssist_Companion/` | l'addon per delve, eventi, settimanali e levelling |
+| `RotAssist_Companion/` | l'addon per delve, eventi, settimanali, levelling, percorsi e strategie per l'oro |
 | `docs/` | dati e analisi raccolti per i moduli |
 | `tests/` | test in WoW simulato: sintassi Lua 5.1 e scenari con i dati nascosti del combattimento |
 

@@ -24,17 +24,28 @@ UISpecialFrames = {}
 BreakUpLargeNumbers = function(n) return tostring(math.floor(n)) end
 date = date or function() return "12:34" end
 
--- Mondo: Cosmic(946) -> continente Midnight (2400) -> zone 2401, 2402; Khaz Algar (2274) -> 2214
+-- Mondo con gli UiMapID reali (wago.tools, 12.1.5)
 MOCK.maps = {
-    [946]  = { mapID = 946,  name = "Cosmic",       mapType = 0, parentMapID = 0 },
-    [2400] = { mapID = 2400, name = "Quel'Thalas",  mapType = 2, parentMapID = 946 },
-    [2401] = { mapID = 2401, name = "Eversong Woods", mapType = 3, parentMapID = 2400 },
-    [2402] = { mapID = 2402, name = "Zul'Aman",     mapType = 3, parentMapID = 2400 },
-    [2274] = { mapID = 2274, name = "Khaz Algar",   mapType = 2, parentMapID = 946 },
+    [946]  = { mapID = 946,  name = "Cosmic",            mapType = 0, parentMapID = 0 },
+    [947]  = { mapID = 947,  name = "Azeroth",           mapType = 1, parentMapID = 946 },
+    [13]   = { mapID = 13,   name = "Eastern Kingdoms",  mapType = 2, parentMapID = 947 },
+    [12]   = { mapID = 12,   name = "Kalimdor",          mapType = 2, parentMapID = 947 },
+    [2537] = { mapID = 2537, name = "Quel'Thalas",       mapType = 2, parentMapID = 13 },
+    [2395] = { mapID = 2395, name = "Eversong Woods",    mapType = 3, parentMapID = 2537 },
+    [2393] = { mapID = 2393, name = "Silvermoon City",   mapType = 3, parentMapID = 2395 },
+    [2437] = { mapID = 2437, name = "Zul'Aman",          mapType = 3, parentMapID = 2537 },
+    [2413] = { mapID = 2413, name = "Harandar",          mapType = 3, parentMapID = 2537 },
+    [2405] = { mapID = 2405, name = "Voidstorm",         mapType = 3, parentMapID = 2537 },
+    [84]   = { mapID = 84,   name = "Stormwind City",    mapType = 3, parentMapID = 13 },
+    [85]   = { mapID = 85,   name = "Orgrimmar",         mapType = 3, parentMapID = 12 },
+    [88]   = { mapID = 88,   name = "Thunder Bluff",     mapType = 3, parentMapID = 12 },
+    [2274] = { mapID = 2274, name = "Khaz Algar",        mapType = 2, parentMapID = 947 },
+    [2248] = { mapID = 2248, name = "Isle of Dorn",      mapType = 3, parentMapID = 2274 },
+    [2339] = { mapID = 2339, name = "Dornogal",          mapType = 3, parentMapID = 2248 },
     [2214] = { mapID = 2214, name = "The Ringing Deeps", mapType = 3, parentMapID = 2274 },
 }
-MOCK.playerMap = 2401
-MOCK.levels = { [2401] = { 80, 83 }, [2402] = { 82, 85 }, [2214] = { 70, 80 } }
+MOCK.playerMap = 2395
+MOCK.levels = { [2395] = { 80, 83 }, [2437] = { 82, 85 }, [2214] = { 70, 80 } }
 
 C_Map = {
     GetBestMapForUnit = function() return MOCK.playerMap end,
@@ -69,18 +80,18 @@ MOCK.pois = {
 }
 C_AreaPoiInfo = {
     GetDelvesForMap = function(id)
-        if id == 2401 then return { 101, 102 } end
-        if id == 2402 then return { 101 } end       -- duplicato su un'altra mappa
+        if id == 2395 then return { 101, 102 } end
+        if id == 2437 then return { 101 } end       -- duplicato su un'altra mappa
         if id == 2214 then return { 103 } end
         return {}
     end,
-    GetEventsForMap = function(id) if id == 2402 then return { 201 } end return {} end,
+    GetEventsForMap = function(id) if id == 2437 then return { 201 } end return {} end,
     GetAreaPOIInfo = function(_, id) return MOCK.pois[id] end,
     GetAreaPOISecondsLeft = function(id) return 5400 end,
 }
 C_TaskQuest = {
     GetQuestsOnMap = function(id)
-        if id == 2401 then return { { questID = 9001, x = 0.1, y = 0.2, mapID = 2401 }, { questID = 9002, x = 0.3, y = 0.4, mapID = 2401 } } end
+        if id == 2395 then return { { questID = 9001, x = 0.1, y = 0.2, mapID = 2395 }, { questID = 9002, x = 0.3, y = 0.4, mapID = 2395 } } end
         if id == 2214 then return { { questID = 9100, x = 0.1, y = 0.1, mapID = 2214 } } end
         return {}
     end,
@@ -141,3 +152,29 @@ UnitLevel = function() return MOCK.level end
 GetXPExhaustion = function() return 5000 end
 GetMaxLevelForPlayerExpansion = function() return 90 end
 GetLocale = function() return "itIT" end
+
+-- Viaggio
+MOCK.faction, MOCK.bind, MOCK.hearthCD = "Alliance", "Silvermoon City", 0
+UnitFactionGroup = function() return MOCK.faction end
+GetBindLocation = function() return MOCK.bind end
+C_Container = { GetItemCooldown = function() if MOCK.hearthCD > 0 then return MOCK.now, MOCK.hearthCD, 1 end return 0, 0, 1 end }
+
+-- Professioni
+MOCK.profs = { 1, 2 }
+MOCK.profInfo = {
+    [1] = { "Alchemy", 101, 85, 100, 0, 0, 171 },
+    [2] = { "Herbalism", 102, 100, 100, 0, 0, 182 },
+}
+GetProfessions = function() return MOCK.profs[1], MOCK.profs[2], nil, nil, nil end
+GetProfessionInfo = function(i) local t = MOCK.profInfo[i]; if t then return table.unpack(t) end end
+C_TradeSkillUI = {
+    GetBaseProfessionInfo = function() return { professionID = 171 } end,
+    GetChildProfessionInfo = function() return { professionID = 2906 } end,
+    GetConcentrationCurrencyID = function(id) return 3200 end,
+}
+C_ProfSpecs = { GetCurrencyInfoForSkillLine = function() return { numAvailable = 5 } end }
+local _currency = C_CurrencyInfo.GetCurrencyInfo
+C_CurrencyInfo.GetCurrencyInfo = function(id)
+    if id == 3200 then return { name = "Concentration", quantity = 1000, maxQuantity = 1000 } end
+    return _currency(id)
+end
