@@ -175,13 +175,17 @@ function PR:StartScan()
 end
 
 -- Dati pronti: li elaboriamo a blocchi in OnUpdate per non bloccare il gioco.
--- Accettiamo anche dati arrivati dopo il timeout, se la richiesta e' recente.
+-- REPLICATE_ITEM_LIST_UPDATE arriva molte volte (anche mentre il client carica
+-- i dettagli degli oggetti): si elabora UNA sola volta per ogni richiesta.
+-- Il primo evento e' accettato anche se arriva dopo il timeout (entro
+-- LATE_ACCEPT secondi), gli eventi successivi vengono ignorati.
 function PR:OnReplicateReady()
-    local recent = self.requestedAt and (GetTime() - self.requestedAt) < LATE_ACCEPT
-    if self.processing or not (self.waiting or recent) then return end
+    if self.processing or not self.requestedAt then return end
+    if GetTime() - self.requestedAt > LATE_ACCEPT then self.requestedAt = nil return end
     local total = A.Call(C_AuctionHouse.GetNumReplicateItems) or 0
-    ns:Log(("[scan] dati ricevuti dopo %.1f s: %d aste"):format(GetTime() - (self.requestedAt or GetTime()), total))
+    ns:Log(("[scan] dati ricevuti dopo %.1f s: %d aste"):format(GetTime() - self.requestedAt, total))
     if total == 0 then return end           -- arriveranno con l'evento successivo
+    self.requestedAt = nil                  -- da qui in poi gli altri eventi si ignorano
     self.waiting, self.processing, self.scanning = false, true, true
     local acc, index = {}, 0
     local frame = self.worker or CreateFrame("Frame")

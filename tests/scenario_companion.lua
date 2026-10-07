@@ -189,6 +189,11 @@ local w = C.Prices.worker
 while w and w._scripts.OnUpdate do w._scripts.OnUpdate(w, 0.016) end
 print("prezzo Sunfire Silk dopo i dati in ritardo:", C.Prices:Get(1003), "| pulsante:", C.Prices.button._text)
 C_AuctionHouse.ReplicateItems = realReplicate
+local before = #C.db.log
+for _ = 1, 50 do MOCK.fire("REPLICATE_ITEM_LIST_UPDATE") end   -- raffica di eventi dopo la fine
+local w2 = C.Prices.worker
+print("eventi ripetuti -> nuova elaborazione avviata:", tostring(w2 and w2._scripts.OnUpdate ~= nil),
+      "| righe di registro aggiunte:", #C.db.log - before)
 print("ultime righe del registro:")
 for i = math.max(1, #C.db.log - 5), #C.db.log do print("   " .. C.db.log[i]) end
 

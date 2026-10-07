@@ -46,7 +46,7 @@ ns:On("BAG_UPDATE_DELAYED", function()
     ns.Panel:RequestRefresh()
 end)
 -- dati degli oggetti arrivati dal server: i nomi mancanti si completano
-ns:On("GET_ITEM_INFO_RECEIVED", function() ns.Panel:RequestRefresh() end)
+ns:On("GET_ITEM_INFO_RECEIVED", function() ns.Panel:RequestRefresh(5) end)
 
 ns:On("PLAYER_XP_UPDATE", function(_, unit)
     if unit == nil or unit == "player" then ns.Leveling:OnXPUpdate() end

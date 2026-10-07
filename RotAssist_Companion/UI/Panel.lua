@@ -292,10 +292,10 @@ function P:Render(rows)
 end
 
 -- Aggiornamento richiesto da un evento: raggruppato (al massimo uno ogni 2 s).
-function P:RequestRefresh()
+function P:RequestRefresh(delay)
     if self.pending or not (self.frame and self.frame:IsShown()) then return end
     self.pending = true
-    ns:After(2, function() P.pending = false; P:Refresh() end)
+    ns:After(delay or 2, function() P.pending = false; P:Refresh() end)
 end
 
 function P:Refresh()
