@@ -178,3 +178,71 @@ C_CurrencyInfo.GetCurrencyInfo = function(id)
     if id == 3200 then return { name = "Concentration", quantity = 1000, maxQuantity = 1000 } end
     return _currency(id)
 end
+
+-- Casa d'aste, oggetti e borse (scheda Asta)
+time = function() return 1790000000 + math.floor(MOCK.now) end
+GetNormalizedRealmName = function() return "PozzodellEternita" end
+GetServerExpansionLevel = function() return 11 end
+Enum.ItemClass = { Tradegoods = 7, Questitem = 12 }
+Enum.TooltipDataType = { Item = 0 }
+MOCK.tooltipHooks = {}
+TooltipDataProcessor = { AddTooltipPostCall = function(kind, fn) table.insert(MOCK.tooltipHooks, fn) end }
+
+-- id = { name, quality, sellPrice, classID, subclassID, bindType, expansion, reagent }
+MOCK.items = {
+    [1001] = { "Sunbloom", 1, 500, 7, 9, 0, 11, true },
+    [1002] = { "Voidsteel Ore", 1, 300, 7, 7, 0, 11, true },
+    [1003] = { "Sunfire Silk", 1, 100, 7, 5, 0, 11, true },
+    [1004] = { "Mycobloom", 1, 400, 7, 9, 0, 10, true },
+    [1005] = { "Broken Fang", 0, 1500, 15, 0, 0, 11, false },
+    [1006] = { "Blade of the Sun", 4, 50000, 2, 7, 2, 11, false },
+    [1007] = { "Bound Helm", 3, 20000, 4, 1, 1, 11, false },
+    [1008] = { "Quest Letter", 1, 0, 12, 0, 1, 11, false },
+    [1009] = { "Thin Leather", 1, 200, 7, 6, 0, 11, true },
+    [1010] = { "Not Cached", 1, 100, 7, 9, 0, 11, true },
+}
+MOCK.uncached = { [1010] = true }
+C_Item = {
+    GetItemInfo = function(id)
+        local t = MOCK.items[id]
+        if not t or MOCK.uncached[id] then return nil end
+        return t[1], "[" .. t[1] .. "]", t[2], 100, 1, "", "", 200, "", 5000 + id, t[3], t[4], t[5], t[6], t[7], nil, t[8]
+    end,
+    GetItemInfoInstant = function(id)
+        local t = MOCK.items[id]
+        if not t then return nil end
+        return id, "", "", "", 5000 + id, t[4], t[5]
+    end,
+    RequestLoadItemDataByID = function(id) MOCK.requested = (MOCK.requested or 0) + 1 end,
+}
+
+-- aste: { itemID, quantita', prezzo totale della pila }
+MOCK.auctions = {
+    { 1001, 200, 200 * 250000.0 }, { 1001, 4800, 4800 * 260000.0 },
+    { 1002, 20000, 20000 * 150000.0 },
+    { 1003, 800, 800 * 20000.0 },
+    { 1004, 3000, 3000 * 300000.0 },
+    { 1006, 1, 8000000 }, { 1006, 2, 2 * 9000000 },
+    { 1009, 100000, 100000 * 500.0 },
+}
+C_AuctionHouse = {
+    ReplicateItems = function() MOCK.fire("REPLICATE_ITEM_LIST_UPDATE") end,
+    GetNumReplicateItems = function() return #MOCK.auctions end,
+    GetReplicateItemInfo = function(i)
+        local a = MOCK.auctions[i + 1]
+        return "x", 1, a[2], 1, true, 1, "", 0, 0, a[3], 0, nil, nil, nil, nil, 0, a[1], true
+    end,
+}
+AuctionHouseFrame = CreateFrame("Frame")
+
+-- borse: bag -> { {itemID, count, bound}, ... }
+MOCK.bags = {
+    [0] = { { 1001, 40 }, { 1002, 20 }, { 1005, 3 }, { 1006, 1 } },
+    [1] = { { 1007, 1, true }, { 1008, 1, true }, { 1009, 20 }, { 1010, 5 } },
+}
+C_Container.GetContainerNumSlots = function(bag) return MOCK.bags[bag] and #MOCK.bags[bag] or 0 end
+C_Container.GetContainerItemInfo = function(bag, slot)
+    local s = MOCK.bags[bag] and MOCK.bags[bag][slot]
+    if not s then return nil end
+    return { itemID = s[1], stackCount = s[2], isBound = s[3] or false, hasNoValue = MOCK.items[s[1]][3] == 0 }
+end

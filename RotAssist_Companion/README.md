@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.2.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.3.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -16,6 +16,7 @@ confermate in gioco (vedi "Da verificare in gioco").
 | **Settimanale** | Great Vault per tipo (dungeon, raid, delve e mondo) con avviso "ricompense da ritirare", Traveler's Log del mese, tempo ai reset | `C_WeeklyRewards`, `C_PerksActivities`, `C_DateAndTime` |
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, livelli consigliati della zona, zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
 | **Oro** | le tue professioni con Concentrazione e punti conoscenza da spendere; strategie per fare oro adatte al tuo **profilo** (occasionale, medio, assiduo) e alle tue professioni | `GetProfessions`, `C_TradeSkillUI`, `C_ProfSpecs` |
+| **Asta** | oggetti delle borse da mettere all'asta o vendere al vendor; materiali di Midnight da farmare per il tuo profilo; sessione di farm con oro all'ora reale | `C_AuctionHouse.ReplicateItems`, `C_Container`, `C_Item` |
 
 Il levelling è volutamente leggero: per le guide passo per passo esistono addon dedicati,
 come RestedXP.
@@ -90,6 +91,43 @@ suggerisce quali prendere.
 Le strategie sono scritte per questo addon e non riportano cifre in oro, perché prezzi e domanda
 cambiano da reame a reame: la scheda ricorda sempre di controllare la casa d'aste.
 
+## Asta: cosa vendere e cosa farmare
+
+I prezzi vengono dalla **scansione completa** della casa d'aste:
+- Con la casa d'aste aperta compare il pulsante **"RotAssist: scansione prezzi"**.
+- Blizzard consente una scansione ogni 15 minuti per account.
+- I prezzi vengono salvati per reame e valgono per tutti i tuoi personaggi.
+
+Se la scansione ha più di 3 giorni e hai **Auctionator** o **TSM**, si usano i loro prezzi.
+
+**Borse.** Per ogni oggetto la scheda confronta il prezzo d'asta, al netto della commissione
+del 5%, con il prezzo del vendor:
+- **All'asta:** quando rende almeno 1 oro e il 25% in più del vendor.
+- **Al vendor:** oggetti vincolati, grigi, oggetti senza prezzo d'asta, oppure quando l'asta
+  renderebbe poco di più.
+
+Il tooltip di ogni oggetto mostra prezzo d'asta, prezzo del vendor e guadagno a pezzo.
+
+**Da farmare.** Dopo la scansione, l'addon individua da solo i **materiali dell'espansione
+attuale** in vendita: erbe, minerali, pelli, stoffe, carne e pesce, elementali, materiali
+d'incantamento. Li ordina in base al profilo:
+
+| Profilo | Classifica |
+|---|---|
+| **Occasionale** | materiali che puoi raccogliere con le tue professioni (o chiunque), con mercato non vuoto, per valore unitario |
+| **Medio** | stessi materiali, per valore pesato sulla profondità del mercato |
+| **Assiduo** | tutti i materiali (in grigio quelli che richiedono una professione che non hai), per **oro all'ora misurato** dove c'è una sessione, altrimenti per valore e profondità |
+
+**Sessione di farm.** Avviala con il pulsante in basso nella scheda o con `/rac farm`. L'addon
+conta cosa entra nelle borse e ne mostra il valore e l'oro all'ora. Se la sessione dura almeno
+5 minuti, la resa di ogni materiale viene ricordata e usata nella classifica.
+
+**Limiti**
+- I prezzi sono una fotografia dell'ultima scansione.
+- La casa d'aste mostra cosa è in vendita, non cosa si vende davvero; la profondità del mercato
+  è solo un'approssimazione.
+- L'addon consiglia: comprare e mettere all'asta restano clic tuoi, come con Auctionator.
+
 ## Comandi
 
 | Comando | Effetto |
@@ -98,6 +136,9 @@ cambiano da reame a reame: la scheda ricorda sempre di controllare la casa d'ast
 | `/rac delve` · `eventi` · `settimanale` · `levelling` · `oro` | apre la scheda (anche in inglese: `delves`, `events`, `weekly`, `leveling`, `gold`) |
 | `/rac profilo occasionale|medio|assiduo` | profilo per le strategie sull'oro (senza argomento passa al successivo) |
 | `/rac stop` | annulla il percorso in corso |
+| `/rac asta` | apre la scheda Asta |
+| `/rac scan` | scansione dei prezzi (con la casa d'aste aperta) |
+| `/rac farm` | avvia o ferma la sessione di farm |
 | `/rac aggiorna` | aggiorna subito i dati |
 | `/rac riepilogo` | riepilogo in chat: delve abbondanti, chiavi, Great Vault |
 | `/rac config` | pannello opzioni |
@@ -135,6 +176,9 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
    Dornogal verso le capitali, che oggi hanno solo un'indicazione testuale.
 7. **Concentrazione e conoscenza:** si leggono dopo aver aperto la professione una volta; da
    verificare che il valore resti aggiornato anche a finestra chiusa.
+
+8. **Asta:** durata della scansione completa sul tuo reame e riconoscimento dei materiali di
+   Midnight (categoria ed espansione degli oggetti).
 
 ## Installazione
 

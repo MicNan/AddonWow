@@ -53,6 +53,7 @@ function ns:RegisterSettings()
     Checkbox("showMinimap", L.OPT_MINIMAP)
     Checkbox("notifyLogin", L.OPT_NOTIFY)
     Checkbox("onlyBountiful", L.OPT_ONLY_BOUNTIFUL)
+    Checkbox("tooltipPrices", L.OPT_TOOLTIP_PRICES)
     local profile = Register("playerType", VT.String or "string", L.OPT_PROFILE)
     local function ProfileOptions()
         local c = Settings.CreateControlTextContainer()
@@ -107,6 +108,7 @@ local TAB_ALIASES = {
     settimanale = "weekly", weekly = "weekly",
     levelling = "leveling", leveling = "leveling", level = "leveling",
     oro = "gold", gold = "gold", soldi = "gold",
+    asta = "market", aste = "market", auction = "market", market = "market",
 }
 
 local PROFILE_ALIASES = {
@@ -126,6 +128,10 @@ local function Handler(msg)
         ns.Panel:Show()
     elseif cmd == "profilo" or cmd == "profile" then
         if PROFILE_ALIASES[arg] then ns:Set("playerType", PROFILE_ALIASES[arg]) else ns:CycleProfile() end
+    elseif cmd == "scan" or cmd == "scansione" then
+        ns.Prices:StartScan()
+    elseif cmd == "farm" then
+        ns.Market:ToggleSession()
     elseif cmd == "stop" then
         ns.Travel:Stop()
     elseif cmd == "riepilogo" or cmd == "summary" then

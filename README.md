@@ -49,6 +49,8 @@ Le sue schede coprono:
 - **Settimanale:** Great Vault, Traveler's Log, reset.
 - **Levelling:** XP/ora e zone adatte al tuo livello.
 - **Oro:** strategie per le tue professioni secondo il profilo (occasionale, medio, assiduo).
+- **Asta:** cosa mettere all'asta e cosa vendere al vendor, quali materiali farmare, oro all'ora
+  misurato.
 
 Il clic su una destinazione calcola il **percorso più veloce**, portali compresi, con
 istruzioni passo per passo.

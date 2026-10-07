@@ -16,7 +16,8 @@ ns.defaults = {
     minimapAngle  = 200,
     notifyLogin   = true,        -- riepilogo in chat all'accesso
     onlyBountiful = false,       -- scheda Delve: solo le abbondanti
-    playerType    = "medium",    -- strategie sull'oro: casual | medium | hardcore
+    playerType    = "medium",
+    tooltipPrices = true,        -- prezzi d'asta e vendor nei tooltip degli oggetti    -- strategie sull'oro: casual | medium | hardcore
     tab           = "delves",    -- ultima scheda aperta
     pos           = { point = "CENTER", x = 0, y = 60 },
 }

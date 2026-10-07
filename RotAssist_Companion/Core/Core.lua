@@ -13,6 +13,7 @@ ns:On("ADDON_LOADED", function(_, name)
 
     ns.Panel:Create()
     ns.Launcher:Create()
+    ns.Market:HookTooltips()
     local ok, err = pcall(ns.RegisterSettings, ns)
     if not ok then ns:ReportError(err) end
 end)
@@ -33,6 +34,19 @@ end
 
 -- professione aperta: ricordiamo Concentrazione e conoscenza (scheda Oro)
 ns:On("TRADE_SKILL_SHOW", function() ns.Gold:OnTradeSkillShow(); ns.Panel:RequestRefresh() end)
+
+-- casa d'aste: pulsante di scansione e dati della scansione completa
+ns:On("AUCTION_HOUSE_SHOW", function() ns.Prices:OnAuctionHouseShow() end)
+ns:On("AUCTION_HOUSE_CLOSED", function() ns.Prices:OnAuctionHouseClosed() end)
+ns:On("REPLICATE_ITEM_LIST_UPDATE", function() ns.Prices:OnReplicateReady() end)
+
+-- borse cambiate: sessione di farm e consigli asta/vendor
+ns:On("BAG_UPDATE_DELAYED", function()
+    ns.Market:OnBagUpdate()
+    ns.Panel:RequestRefresh()
+end)
+-- dati degli oggetti arrivati dal server: i nomi mancanti si completano
+ns:On("GET_ITEM_INFO_RECEIVED", function() ns.Panel:RequestRefresh() end)
 
 ns:On("PLAYER_XP_UPDATE", function(_, unit)
     if unit == nil or unit == "player" then ns.Leveling:OnXPUpdate() end

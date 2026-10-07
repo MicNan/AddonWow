@@ -1,5 +1,5 @@
 -- RotAssist Companion - Panel
--- Finestra con cinque schede (Delve, Eventi, Settimanale, Levelling, Oro).
+-- Finestra con sei schede (Delve, Eventi, Settimanale, Levelling, Oro, Asta).
 -- Ogni scheda e' un elenco di righe prodotto da Data\*.lua:
 --   { header = "titolo" } oppure
 --   { text, right, icon | atlas, color = {r,g,b}, dim, tooltip = {...},
@@ -14,7 +14,7 @@ local A = ns.API
 local P = { rows = {}, tab = nil }
 ns.Panel = P
 
-local WIDTH, HEIGHT, ROW_H = 480, 520, 20
+local WIDTH, HEIGHT, ROW_H = 540, 540, 20
 local AUTO_REFRESH = 30
 
 local TABS = {
@@ -23,6 +23,7 @@ local TABS = {
     { key = "weekly",   label = "TAB_WEEKLY",   source = function() return ns.Weekly end },
     { key = "leveling", label = "TAB_LEVELING", source = function() return ns.Leveling end },
     { key = "gold",     label = "TAB_GOLD",     source = function() return ns.Gold end },
+    { key = "market",   label = "TAB_MARKET",   source = function() return ns.Market end },
 }
 
 ---------------------------------------------------------------------------
@@ -199,6 +200,13 @@ function P:Create()
     f.profile:SetScript("OnClick", function() ns:CycleProfile() end)
     f.profile:Hide()
 
+    -- sessione di farm (scheda Asta)
+    f.farm = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    f.farm:SetSize(180, 22)
+    f.farm:SetPoint("BOTTOMLEFT", 10, 10)
+    f.farm:SetScript("OnClick", function() ns.Market:ToggleSession() end)
+    f.farm:Hide()
+
     f.bountiful = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
     f.bountiful:SetSize(22, 22)
     f.bountiful:SetPoint("BOTTOMLEFT", 10, 10)
@@ -299,6 +307,8 @@ function P:Refresh()
     end
     f.bountiful:SetShown(self.tab == "delves")
     f.profile:SetShown(self.tab == "gold")
+    f.farm:SetShown(self.tab == "market")
+    f.farm:SetText(ns.Market.session and L.BTN_FARM_STOP or L.BTN_FARM_START)
     f.profile:SetText(L.BTN_PROFILE:format(L["PROFILE_" .. (ns.db.playerType or "medium")]))
     self:UpdateRoute()
     f.bountiful:SetChecked(ns.db.onlyBountiful and true or false)

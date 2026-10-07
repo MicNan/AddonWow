@@ -137,11 +137,60 @@ MOCK.profs = {}
 Dump("gold")
 MOCK.profs = { 1, 2 }
 
+-- ===================== Asta =====================
+local function Pump()
+    local w = C.Prices.worker
+    local guard = 0
+    while w and w._scripts.OnUpdate and guard < 100 do w._scripts.OnUpdate(w, 0.016); guard = guard + 1 end
+end
+C:Set("playerType", "medium")
+print("--- asta prima della scansione")
+Dump("market")
+SlashCmdList.ROTASSISTCOMPANION("scan")            -- casa d'aste chiusa
+MOCK.fire("AUCTION_HOUSE_SHOW")
+SlashCmdList.ROTASSISTCOMPANION("scan")
+Pump()
+print("oggetti nel database:", (function() local n = 0 for _ in pairs(C.Prices:DB().items) do n = n + 1 end return n end)(),
+      "| prezzo Sunbloom:", C.Prices:Get(1001), "| indice farm:", (function() local n = 0 for _ in pairs(C.Prices:DB().farmIndex) do n = n + 1 end return n end)())
+SlashCmdList.ROTASSISTCOMPANION("scan")            -- entro 15 minuti: limite
+for _, prof in ipairs({ "occasionale", "medio", "assiduo" }) do
+    SlashCmdList.ROTASSISTCOMPANION("profilo " .. prof)
+    Dump("market")
+end
+
+print("--- sessione di farm")
+SlashCmdList.ROTASSISTCOMPANION("farm")
+MOCK.bags[0][1][2] = 70                              -- +30 Sunbloom
+MOCK.fire("BAG_UPDATE_DELAYED")
+MOCK.now = MOCK.now + 600
+Dump("market")
+SlashCmdList.ROTASSISTCOMPANION("farm")
+print("resa salvata Sunbloom:", C.db.farmRates and C.db.farmRates[1001] and C.db.farmRates[1001].rate)
+SlashCmdList.ROTASSISTCOMPANION("profilo assiduo")
+Dump("market")
+
+print("--- tooltip")
+local lines = {}
+local tip = { AddDoubleLine = function(_, a, b) lines[#lines + 1] = a .. " = " .. b end,
+              AddLine = function(_, a) lines[#lines + 1] = a end }
+for _, fn in ipairs(MOCK.tooltipHooks) do fn(tip, { id = 1001 }); fn(tip, { id = 1009 }); fn(tip, { id = 99999 }) end
+for _, l in ipairs(lines) do print("   " .. l) end
+
+print("--- Auctionator come riserva (scansione vecchia)")
+C.Prices:DB().time = time() - 5 * 86400
+Auctionator = { API = { v1 = {
+    GetAuctionPriceByItemID = function(_, id) if id == 1003 then return 33333 end end,
+    GetAuctionAgeByItemID = function() return 1 end } } }
+print("Sunfire Silk:", C.Prices:Get(1003))
+print("Sunbloom (solo scansione vecchia):", C.Prices:Get(1001))
+MOCK.fire("AUCTION_HOUSE_CLOSED")
+
 -- API assenti (client diverso / patch futura): nessun errore
 C_AreaPoiInfo, C_TaskQuest, C_WeeklyRewards, C_PerksActivities, C_DelvesUI, C_Calendar, C_CurrencyInfo = nil
 C.API.ClearCache()
 C_TradeSkillUI, C_ProfSpecs, GetProfessions = nil
-for _, tab in ipairs({ "delves", "events", "weekly", "leveling", "gold" }) do Dump(tab) end
+C_AuctionHouse, C_Item, TooltipDataProcessor = nil
+for _, tab in ipairs({ "delves", "events", "weekly", "leveling", "gold", "market" }) do Dump(tab) end
 MOCK.playerMap = 84
 C.Travel:Start(delve)
 

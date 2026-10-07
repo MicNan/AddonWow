@@ -121,6 +121,13 @@ function A.TimeText(seconds)
     return L.T_MINUTES:format(math.max(1, m))
 end
 
+function A.Money(copper)
+    copper = math.floor(tonumber(copper) or 0)
+    if copper >= 10000 then return A.Number(math.floor(copper / 10000)) .. "g" end
+    if copper >= 100 then return math.floor(copper / 100) .. "s" end
+    return copper .. "c"
+end
+
 function A.Number(n)
     n = tonumber(n) or 0
     if BreakUpLargeNumbers then
@@ -183,6 +190,7 @@ function ns:WowheadURL(link)
     if link.quest then return ("https://www.wowhead.com/%squest=%d"):format(loc, link.quest) end
     if link.spell then return ("https://www.wowhead.com/%sspell=%d"):format(loc, link.spell) end
     if link.currency then return ("https://www.wowhead.com/%scurrency=%d"):format(loc, link.currency) end
+    if link.item then return ("https://www.wowhead.com/%sitem=%d"):format(loc, link.item) end
     return ("https://www.wowhead.com/%ssearch?q=%s"):format(loc, UrlEncode(link.search or ""))
 end
 
