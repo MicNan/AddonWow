@@ -140,7 +140,9 @@ local function ShortestPath(startRegion, goalRegion, faction, hearthHub)
     return path
 end
 
--- Passi del percorso verso { mapID, x, y, name }.
+-- Passi del percorso verso { mapID, x, y, name, note }.
+-- x e y sono facoltativi: senza coordinate l'ultimo passo indica solo la zona
+-- (piu' 'note', per esempio la sottozona) e non imposta un waypoint.
 -- Ogni passo: { text, region = regione in cui si esegue, waypoint = {...} | nil }
 function T:Plan(dest)
     local L = ns.L
@@ -148,10 +150,14 @@ function T:Plan(dest)
     local here = A.PlayerMap()
     local startRegion, goalRegion = self:RegionOf(here), self:RegionOf(dest.mapID)
     local destZone = A.ZoneName(dest.mapID)
-    local final = {
-        text = L.TRAVEL_FLY:format(dest.name or "?", destZone), region = goalRegion,
-        waypoint = { dest.mapID, dest.x, dest.y, dest.name },
-    }
+    local final = { region = goalRegion }
+    if dest.x and dest.y then
+        final.text = L.TRAVEL_FLY:format(dest.name or "?", destZone)
+        final.waypoint = { dest.mapID, dest.x, dest.y, dest.name }
+    else
+        final.text = L.TRAVEL_ZONE:format(destZone, dest.name or "?")
+    end
+    if dest.note then final.text = final.text .. " - " .. dest.note end
     if not startRegion or not goalRegion or startRegion == goalRegion then
         steps[1] = final
         return steps

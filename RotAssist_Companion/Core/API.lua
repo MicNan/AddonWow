@@ -184,13 +184,14 @@ local function UrlEncode(s)
     return (tostring(s):gsub("[^%w%-_%.~ ]", function(c) return ("%%%02X"):format(c:byte()) end):gsub(" ", "+"))
 end
 
--- link = { quest = id } | { spell = id } | { search = "testo" }
+-- link = { quest = id } | { spell = id } | { npc = id } | { search = "testo" }
 function ns:WowheadURL(link)
     local loc = (GetLocale and WOWHEAD_LOCALE[GetLocale()]) or ""
     if link.quest then return ("https://www.wowhead.com/%squest=%d"):format(loc, link.quest) end
     if link.spell then return ("https://www.wowhead.com/%sspell=%d"):format(loc, link.spell) end
     if link.currency then return ("https://www.wowhead.com/%scurrency=%d"):format(loc, link.currency) end
     if link.item then return ("https://www.wowhead.com/%sitem=%d"):format(loc, link.item) end
+    if link.npc then return ("https://www.wowhead.com/%snpc=%d"):format(loc, link.npc) end
     return ("https://www.wowhead.com/%ssearch?q=%s"):format(loc, UrlEncode(link.search or ""))
 end
 

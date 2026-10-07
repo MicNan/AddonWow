@@ -51,6 +51,8 @@ Le sue schede coprono:
 - **Oro:** strategie per le tue professioni secondo il profilo (occasionale, medio, assiduo).
 - **Asta:** cosa mettere all'asta e cosa vendere al vendor, quali materiali farmare, oro all'ora
   misurato.
+- **Pet:** pet da cacciatore rari di Midnight con anteprima 3D, requisiti, percorso con i portali
+  e avviso quando compaiono sulla minimappa.
 
 Il clic su una destinazione calcola il **percorso più veloce**, portali compresi, con
 istruzioni passo per passo.
@@ -70,7 +72,7 @@ Documentazione completa, piano di test e limiti noti sono in
 | Percorso | Contenuto |
 |---|---|
 | `RotAssist/` | l'addon di rotazione (Lua + XML, nessuna libreria esterna) |
-| `RotAssist_Companion/` | l'addon per delve, eventi, settimanali, levelling, percorsi e strategie per l'oro |
+| `RotAssist_Companion/` | l'addon per delve, eventi, settimanali, levelling, percorsi, oro, asta e pet da cacciatore |
 | `docs/` | dati e analisi raccolti per i moduli |
 | `tests/` | test in WoW simulato: sintassi Lua 5.1 e scenari con i dati nascosti del combattimento |
 

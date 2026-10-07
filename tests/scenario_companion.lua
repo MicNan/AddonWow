@@ -19,7 +19,8 @@ local function Dump(tab)
         if row._shown and row.data then
             local d = row.data
             print(d.header and ("  # " .. d.header) or ("    " .. tostring(d.text) .. (d.right and ("  | " .. d.right) or "")
-                .. (d.waypoint and "  [wp]" or "") .. (d.link and "  [link]" or "")))
+                .. (d.waypoint and "  [wp]" or "") .. (d.dest and (d.dest.x and "  [dest]" or "  [zona]") or "")
+                .. (d.link and "  [link]" or "")))
         end
     end
 end
@@ -103,6 +104,8 @@ MOCK.hearthCD = 999
 Route("Dornogal -> Eversong, pietra in ricarica", 2339, "Alliance", delve)
 Route("Voidstorm -> Eversong", 2405, "Horde", delve)
 Route("Thunder Bluff (Alleanza) -> Eversong", 88, "Alliance", delve)
+Route("Stormwind -> Harandar senza coordinate", 84, "Alliance",
+      { mapID = 2413, name = "Ancient Devilsaptor", note = "Nordrassil Roots" })
 
 print("--- navigatore")
 MOCK.playerMap, MOCK.faction = 85, "Horde"
@@ -206,12 +209,104 @@ print("Sunfire Silk:", C.Prices:Get(1003))
 print("Sunbloom (solo scansione vecchia):", C.Prices:Get(1001))
 MOCK.fire("AUCTION_HOUSE_CLOSED")
 
+-- ===================== Pet =====================
+print("--- pet da cacciatore")
+MOCK.playerMap, MOCK.faction = 84, "Alliance"
+SlashCmdList.ROTASSISTCOMPANION("pet")
+Dump("pets")
+local function PetRow(npc)
+    for _, row in ipairs(C.Panel.rows) do
+        if row._shown and row.data and row.data.preview and (not npc or row.data.preview.npc == npc) then return row end
+    end
+end
+-- anteprima 3D al passaggio del mouse
+local r = PetRow(248741)
+r._scripts.OnEnter(r)
+local pv = C.Pets.preview
+print("anteprima visibile:", pv and pv._shown, "| npc:", pv and pv.npc, "| testo 'modello non disponibile':", pv and pv.missing._shown)
+local tipLines = {}
+GameTooltip.AddLine = function(_, t) tipLines[#tipLines + 1] = t end
+r._scripts.OnEnter(PetRow(252851))
+print("tooltip di Ancient Devilsaptor:")
+for _, l in ipairs(tipLines) do print("   " .. l) end
+GameTooltip.AddLine = nil
+-- clic: rare senza coordinate (Harandar, portale da Silvermoon) e link Wowhead
+r = PetRow(252851)
+r._scripts.OnClick(r, "LeftButton")
+print("percorso verso Ancient Devilsaptor:", C.Travel.route and #C.Travel.route or 0, "| ultimo passo:", C.Travel.route and C.Travel.route[#C.Travel.route].text)
+r._scripts.OnClick(r, "RightButton")
+C.Travel:Stop()
+-- Maiusc + clic su un rare con coordinate: solo waypoint
+MOCK.shift = true
+r = PetRow(255348)
+r._scripts.OnClick(r, "LeftButton")
+MOCK.shift = false
+print("waypoint Dame Bloodshed:", MOCK.tomtom)
+
+-- stalla e pet evocato
+C_StableInfo = {
+    GetActivePetList = function() return { { creatureID = 248741, name = "Rhazul" }, { creatureID = 99999 } } end,
+    GetStabledPetList = function() return { { creatureID = 255348 } } end,
+}
+MOCK.fire("PET_STABLE_SHOW")
+UnitGUID = function(u) if u == "pet" then return "Pet-0-3110-0-0-250086-0100ABCDEF" end end
+MOCK.fire("UNIT_PET", "player")
+print("posseduti: Rhazul", C.Pets:Owned(248741), "| Dame Bloodshed", C.Pets:Owned(255348), "| Stumpy (evocato)", C.Pets:Owned(250086), "| Terrinor", C.Pets:Owned(250876))
+
+-- rare sulla minimappa
+C_VignetteInfo = {
+    GetVignettes = function() return { "vg1", "vg2", "vg3" } end,
+    GetVignetteInfo = function(g)
+        if g == "vg1" then return { objectGUID = "Creature-0-3110-2552-1234-250582-00001ABCD", name = "Bloated Snapdragon" } end
+        if g == "vg2" then return { objectGUID = "GameObject-0-3110-2552-1234-555555-0000" } end
+        return nil
+    end,
+    GetVignettePosition = function(g, m) return { x = 0.31, y = 0.62 } end,
+}
+MOCK.playerMap = 2395
+MOCK.now = MOCK.now + 10
+local logBefore = #C.db.log
+MOCK.fire("VIGNETTES_UPDATED")
+MOCK.fire("VIGNETTES_UPDATED")                       -- entro 2 s: ignorato
+MOCK.now = MOCK.now + 3
+MOCK.fire("VIGNETTE_MINIMAP_UPDATED", "vg1", true)   -- gia' segnalato: niente secondo avviso
+local alerts = 0
+for i = logBefore + 1, #C.db.log do if C.db.log[i]:find("Bloated Snapdragon (Lizard)", 1, true) then alerts = alerts + 1 end end
+print("avvisi in chat:", alerts, "(atteso 1) | posizione salvata:", C.db.petSeen[250582] and C.db.petSeen[250582].x)
+Dump("pets")
+print("destinazione Bloated Snapdragon (vista):", C.Pets:Destination(C.Pets.byNpc[250582]).x)
+
+-- filtri
+for _ = 1, 3 do
+    C.Panel.frame.petFilter._scripts.OnClick(C.Panel.frame.petFilter)
+    local n = 0
+    for _, row in ipairs(C.Panel.rows) do if row._shown and row.data and row.data.preview then n = n + 1 end end
+    print("filtro", C.Pets.filter, "->", n, "pet | pulsante:", C.Panel.frame.petFilter._text)
+end
+
+-- non cacciatore / cacciatore non Beast Mastery
+local realClass = UnitClass
+UnitClass = function() return "Mage", "MAGE" end
+Dump("pets")
+UnitClass = realClass
+MOCK.specID = 254
+C.Panel:Refresh()
+for _, row in ipairs(C.Panel.rows) do
+    if row._shown and row.data and row.data.text and row.data.text:find("Beast Mastery", 1, true) then print("avviso non BM:", row.data.text) break end
+end
+MOCK.specID = 253
+-- cambiando scheda l'anteprima si chiude
+C.Panel:Show("delves")
+print("anteprima dopo il cambio di scheda:", C.Pets.preview._shown)
+
 -- API assenti (client diverso / patch futura): nessun errore
+C_VignetteInfo, C_StableInfo, UnitGUID = nil
+MOCK.fire("VIGNETTES_UPDATED"); MOCK.fire("PET_STABLE_SHOW"); MOCK.fire("UNIT_PET", "player")
 C_AreaPoiInfo, C_TaskQuest, C_WeeklyRewards, C_PerksActivities, C_DelvesUI, C_Calendar, C_CurrencyInfo = nil
 C.API.ClearCache()
 C_TradeSkillUI, C_ProfSpecs, GetProfessions = nil
 C_AuctionHouse, C_Item, TooltipDataProcessor = nil
-for _, tab in ipairs({ "delves", "events", "weekly", "leveling", "gold", "market" }) do Dump(tab) end
+for _, tab in ipairs({ "delves", "events", "weekly", "leveling", "gold", "market", "pets" }) do Dump(tab) end
 MOCK.playerMap = 84
 C.Travel:Start(delve)
 

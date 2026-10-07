@@ -1,7 +1,7 @@
 ## Interface: 120100, 120105
 ## Title: RotAssist Companion
-## Notes: Delve, eventi, world quest, settimanali, levelling e strategie per l'oro, con percorso piu' veloce (portali) e link Wowhead. Solo fuori combattimento.
-## Version: 0.3.0
+## Notes: Delve, eventi, world quest, settimanali, levelling, oro e asta, pet da cacciatore rari, con percorso piu' veloce (portali) e link Wowhead. Solo fuori combattimento.
+## Version: 0.4.0
 ## SavedVariablesPerCharacter: RotAssistCompanionDB
 ## SavedVariables: RotAssistCompanionPrices
 ## IconTexture: Interface\Icons\INV_Misc_Map_01
@@ -23,6 +23,8 @@ Data\GoldStrategies.lua
 Data\Gold.lua
 Data\Prices.lua
 Data\Market.lua
+Data\PetsData.lua
+Data\Pets.lua
 
 UI\Panel.lua
 UI\Launcher.lua

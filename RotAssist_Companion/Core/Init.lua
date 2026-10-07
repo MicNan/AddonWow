@@ -16,8 +16,11 @@ ns.defaults = {
     minimapAngle  = 200,
     notifyLogin   = true,        -- riepilogo in chat all'accesso
     onlyBountiful = false,       -- scheda Delve: solo le abbondanti
-    playerType    = "medium",
-    tooltipPrices = true,        -- prezzi d'asta e vendor nei tooltip degli oggetti    -- strategie sull'oro: casual | medium | hardcore
+    playerType    = "medium",    -- strategie sull'oro: casual | medium | hardcore
+    tooltipPrices = true,        -- prezzi d'asta e vendor nei tooltip degli oggetti
+    petAlerts     = true,        -- avviso quando un pet raro compare sulla minimappa
+    ownedPets     = {},          -- creatureID dei pet nella stalla
+    petSeen       = {},          -- ultima posizione vista dei pet rari
     tab           = "delves",    -- ultima scheda aperta
     pos           = { point = "CENTER", x = 0, y = 60 },
 }

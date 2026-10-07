@@ -54,6 +54,7 @@ function ns:RegisterSettings()
     Checkbox("notifyLogin", L.OPT_NOTIFY)
     Checkbox("onlyBountiful", L.OPT_ONLY_BOUNTIFUL)
     Checkbox("tooltipPrices", L.OPT_TOOLTIP_PRICES)
+    Checkbox("petAlerts", L.OPT_PET_ALERTS)
     local profile = Register("playerType", VT.String or "string", L.OPT_PROFILE)
     local function ProfileOptions()
         local c = Settings.CreateControlTextContainer()
@@ -109,6 +110,7 @@ local TAB_ALIASES = {
     levelling = "leveling", leveling = "leveling", level = "leveling",
     oro = "gold", gold = "gold", soldi = "gold",
     asta = "market", aste = "market", auction = "market", market = "market",
+    pet = "pets", pets = "pets",
 }
 
 local PROFILE_ALIASES = {

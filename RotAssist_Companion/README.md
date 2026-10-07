@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.3.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.4.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -17,6 +17,7 @@ confermate in gioco (vedi "Da verificare in gioco").
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, livelli consigliati della zona, zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
 | **Oro** | le tue professioni con Concentrazione e punti conoscenza da spendere; strategie per fare oro adatte al tuo **profilo** (occasionale, medio, assiduo) e alle tue professioni | `GetProfessions`, `C_TradeSkillUI`, `C_ProfSpecs` |
 | **Asta** | oggetti delle borse da mettere all'asta o vendere al vendor; materiali di Midnight da farmare per il tuo profilo; sessione di farm con oro all'ora reale | `C_AuctionHouse.ReplicateItems`, `C_Container`, `C_Item` |
+| **Pet** | pet da cacciatore rari e notevoli di Midnight per zona, con anteprima 3D, requisiti (esotico, Florafaun), percorso con i portali e avviso quando uno compare sulla minimappa; consigli su quale famiglia usare | elenco curato (`Data/PetsData.lua`), `PlayerModel:SetCreature`, `C_StableInfo`, `C_VignetteInfo` |
 
 Il levelling è volutamente leggero: per le guide passo per passo esistono addon dedicati,
 come RestedXP.
@@ -25,8 +26,8 @@ come RestedXP.
 - **Clic sinistro:** calcola il **percorso più veloce** (vedi sotto) e mette il waypoint sul
   primo passo.
 - **Maiusc + clic sinistro:** solo il waypoint sulla destinazione.
-- **Clic destro:** link Wowhead da copiare (pagina della missione, della valuta, oppure una
-  ricerca per nome).
+- **Clic destro:** link Wowhead da copiare (pagina della missione, della valuta, dell'NPC,
+  oppure una ricerca per nome).
 
 ## Percorso più veloce
 
@@ -67,6 +68,47 @@ per Silvermoon, le pagine degli oggetti su Wowhead.
   teletrasporto.
 - Le coordinate vanno aggiornate se Blizzard sposta i portali; la tabella è in
   `Data/Travel.lua`.
+
+## Pet da cacciatore
+
+Il gioco non dà agli addon l'elenco delle bestie domabili, quindi la scheda **Pet** usa una
+tabella curata a mano (`Data/PetsData.lua`, ottobre 2026): 22 rari, elite e pet dall'aspetto
+unico di Harandar, Voidstorm, Eversong Woods e Zul'Aman. La zona in cui ti trovi è in cima.
+
+Per ogni pet:
+- **famiglia e abilità di famiglia** (riduzione cure, schivata, purificazione, rallentamento);
+- **dove si trova:** zona, sottozona e coordinate quando sono note;
+- **requisiti:** *esotico* (solo Beast Mastery), *Florafaun* (serve il libro "Trials of the
+  Florafaun Hunter", o essere Haranir), *libro* (il rare può lasciare quel libro);
+- **in verde** i pet che hai già: l'elenco si legge quando apri la stalla da uno Stable Master,
+  più il pet che hai evocato.
+
+**Anteprima.** Passando il mouse su una riga compare a lato del pannello il **modello 3D**
+della creatura (trascina per ruotarlo, rotellina per lo zoom). Se il client non ha ancora il
+modello compare un avviso: il clic destro dà la pagina Wowhead con le immagini.
+
+**Percorso.** Il clic sinistro calcola il percorso più veloce, portali compresi (per esempio
+Stormwind → Silvermoon → portale per Harandar). Per i rari senza coordinate il percorso arriva
+alla zona e indica la sottozona da cercare.
+
+**Rari sulla minimappa.** Quando uno dei rari dell'elenco compare sulla minimappa ricevi un
+avviso in chat con la posizione esatta presa dal gioco, e la riga diventa gialla per 30 minuti
+(con il percorso verso quel punto). L'avviso si disattiva dalle opzioni.
+
+**Quale pet usare.** In cima alla scheda c'è un riassunto dei consigli di Icy Veins per
+Beast Mastery (12.1): Aqiri per raid e Mitiche+, famiglie con riduzione delle cure, Clefthoof
+per il gioco in solitaria, Whiptail per il PvP, Feathermane per Updraft.
+
+**Fonti.** Elenchi e note di posizione da [wow-petopia.com](https://www.wow-petopia.com),
+coordinate dalle pagine degli NPC su Wowhead, rari Florafaun dalla guida di
+[method.gg](https://www.method.gg/guides/how-to-tame-florafaun-pets-in-midnight), consigli
+dalla [guida pet di Icy Veins](https://www.icy-veins.com/wow/beast-mastery-hunter-pets-guide).
+I testi sono riassunti, non copiati.
+
+**Limiti**
+- L'addon non doma e non seleziona bersagli: mostra solo dove andare.
+- Spawn, famiglie e requisiti vanno verificati in gioco; Blizzard può cambiarli con le patch.
+- Le famiglie sono in inglese, come compaiono su Petopia e Wowhead.
 
 ## Strategie per l'oro
 
@@ -139,6 +181,7 @@ conta cosa entra nelle borse e ne mostra il valore e l'oro all'ora. Se la sessio
 | `/rac asta` | apre la scheda Asta |
 | `/rac scan` | scansione dei prezzi (con la casa d'aste aperta) |
 | `/rac farm` | avvia o ferma la sessione di farm |
+| `/rac pet` | apre la scheda Pet (pet da cacciatore rari) |
 | `/rac aggiorna` | aggiorna subito i dati |
 | `/rac riepilogo` | riepilogo in chat: delve abbondanti, chiavi, Great Vault |
 | `/rac config` | pannello opzioni |
@@ -179,6 +222,10 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
 
 8. **Asta:** durata della scansione completa sul tuo reame e riconoscimento dei materiali di
    Midnight (categoria ed espansione degli oggetti).
+
+9. **Pet:** anteprima 3D con `SetCreature` (alcune creature potrebbero non avere il modello
+   finché non le incontri), elenco della stalla (`C_StableInfo`, campo `creatureID`) e
+   avviso dei rari tramite le vignette della minimappa.
 
 ## Installazione
 

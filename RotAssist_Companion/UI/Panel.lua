@@ -1,11 +1,14 @@
 -- RotAssist Companion - Panel
--- Finestra con sei schede (Delve, Eventi, Settimanale, Levelling, Oro, Asta).
--- Ogni scheda e' un elenco di righe prodotto da Data\*.lua:
+-- Finestra con sette schede (Delve, Eventi, Settimanale, Levelling, Oro,
+-- Asta, Pet). Ogni scheda e' un elenco di righe prodotto da Data\*.lua:
 --   { header = "titolo" } oppure
 --   { text, right, icon | atlas, color = {r,g,b}, dim, tooltip = {...},
---     waypoint = { mapID, x, y, titolo }, link = {...}, linkTitle, wrap }
--- Clic sinistro su una destinazione: percorso piu' veloce (DataTravel.lua);
--- Maiusc + clic: solo waypoint; clic destro: link Wowhead.
+--     waypoint = { mapID, x, y, titolo }, dest = { mapID, x?, y?, name, note? },
+--     preview = pet, link = {...}, linkTitle, wrap }
+-- Clic sinistro su una destinazione: percorso piu' veloce (Data\Travel.lua);
+-- 'dest' senza coordinate porta solo fino alla zona. Maiusc + clic: solo
+-- waypoint; clic destro: link Wowhead. 'preview': anteprima 3D al passaggio
+-- del mouse (Data\Pets.lua).
 -- In combattimento l'elenco non viene aggiornato.
 
 local _, ns = ...
@@ -14,7 +17,7 @@ local A = ns.API
 local P = { rows = {}, tab = nil }
 ns.Panel = P
 
-local WIDTH, HEIGHT, ROW_H = 540, 540, 20
+local WIDTH, HEIGHT, ROW_H = 600, 540, 20
 local AUTO_REFRESH = 30
 
 local TABS = {
@@ -24,6 +27,7 @@ local TABS = {
     { key = "leveling", label = "TAB_LEVELING", source = function() return ns.Leveling end },
     { key = "gold",     label = "TAB_GOLD",     source = function() return ns.Gold end },
     { key = "market",   label = "TAB_MARKET",   source = function() return ns.Market end },
+    { key = "pets",     label = "TAB_PETS",     source = function() return ns.Pets end },
 }
 
 ---------------------------------------------------------------------------
@@ -32,19 +36,35 @@ local TABS = {
 local function ShowTooltip(row)
     local d = row.data
     if not (d and GameTooltip) or d.header then return end
-    GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+    -- con l'anteprima 3D aperta il tooltip va sotto di essa, non sopra
+    local preview = d.preview and ns.Pets and ns.Pets.preview
+    if preview and preview:IsShown() then
+        GameTooltip:SetOwner(preview, "ANCHOR_BOTTOM")
+    else
+        GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+    end
     local lines = d.tooltip or { d.text }
     local first = true
-    for i = 1, 8 do
+    for i = 1, 16 do
         local line = lines[i]
         if line and line ~= "" then
             if first then GameTooltip:AddLine(line, 1, 1, 1); first = false
             else GameTooltip:AddLine(line, 0.8, 0.8, 0.8, true) end
         end
     end
-    if d.waypoint then GameTooltip:AddLine(ns.L.HINT_ROUTE, 0.5, 0.8, 1) end
+    if d.waypoint or (d.dest and d.dest.x) then GameTooltip:AddLine(ns.L.HINT_ROUTE, 0.5, 0.8, 1)
+    elseif d.dest then GameTooltip:AddLine(ns.L.HINT_ROUTE_ZONE, 0.5, 0.8, 1) end
     if d.link then GameTooltip:AddLine(ns.L.HINT_WOWHEAD, 0.5, 0.8, 1) end
     GameTooltip:Show()
+end
+
+local function OnRowEnter(row)
+    local d = row.data
+    if d and d.preview and ns.Pets then
+        local ok, err = pcall(ns.Pets.ShowPreview, ns.Pets, d.preview)
+        if not ok then ns:ReportError(err) end
+    end
+    ShowTooltip(row)
 end
 
 local function OnRowClick(row, button)
@@ -57,6 +77,13 @@ local function OnRowClick(row, button)
                 ns:SetWaypoint(w[1], w[2], w[3], w[4])
             else
                 ns.Travel:Start({ mapID = w[1], x = w[2], y = w[3], name = w[4] })
+            end
+        elseif button == "LeftButton" and d.dest then
+            local t = d.dest
+            if t.x and IsShiftKeyDown and IsShiftKeyDown() then
+                ns:SetWaypoint(t.mapID, t.x, t.y, t.name)
+            else
+                ns.Travel:Start(t)
             end
         elseif d.link then
             ns:ShowLink(d.linkTitle or d.text, d.link)
@@ -80,7 +107,7 @@ local function CreateRow(parent)
     row.right:SetJustifyH("RIGHT")
     row.text:SetPoint("LEFT", row.icon, "RIGHT", 4, 0)
     row.text:SetPoint("RIGHT", row.right, "LEFT", -6, 0)
-    row:SetScript("OnEnter", ShowTooltip)
+    row:SetScript("OnEnter", OnRowEnter)
     row:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
     row:SetScript("OnClick", OnRowClick)
     return row
@@ -207,6 +234,13 @@ function P:Create()
     f.farm:SetScript("OnClick", function() ns.Market:ToggleSession() end)
     f.farm:Hide()
 
+    -- filtro dei pet (scheda Pet)
+    f.petFilter = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    f.petFilter:SetSize(180, 22)
+    f.petFilter:SetPoint("BOTTOMLEFT", 10, 10)
+    f.petFilter:SetScript("OnClick", function() ns.Pets:CycleFilter() end)
+    f.petFilter:Hide()
+
     f.bountiful = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
     f.bountiful:SetSize(22, 22)
     f.bountiful:SetPoint("BOTTOMLEFT", 10, 10)
@@ -309,6 +343,9 @@ function P:Refresh()
     f.profile:SetShown(self.tab == "gold")
     f.farm:SetShown(self.tab == "market")
     f.farm:SetText(ns.Market.session and L.BTN_FARM_STOP or L.BTN_FARM_START)
+    f.petFilter:SetShown(self.tab == "pets")
+    f.petFilter:SetText(L.BTN_PET_FILTER:format(L["PET_FILTER_" .. ns.Pets.filter]))
+    if self.tab ~= "pets" then ns.Pets:HidePreview() end
     f.profile:SetText(L.BTN_PROFILE:format(L["PROFILE_" .. (ns.db.playerType or "medium")]))
     self:UpdateRoute()
     f.bountiful:SetChecked(ns.db.onlyBountiful and true or false)

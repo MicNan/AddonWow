@@ -48,6 +48,16 @@ end)
 -- dati degli oggetti arrivati dal server: i nomi mancanti si completano
 ns:On("GET_ITEM_INFO_RECEIVED", function() ns.Panel:RequestRefresh(5) end)
 
+-- scheda Pet: stalla, pet evocato e rari sulla minimappa
+for _, ev in ipairs({ "PET_STABLE_SHOW", "PET_STABLE_UPDATE" }) do
+    ns:On(ev, function() ns.Pets:ScanStable(); ns.Panel:RequestRefresh() end)
+end
+ns:On("UNIT_PET", function(_, unit) if unit == "player" then ns.Pets:CheckSummoned() end end)
+ns:On("PLAYER_ENTERING_WORLD", function() ns.Pets:CheckSummoned(); ns.Pets:ScanVignettes(true) end)
+for _, ev in ipairs({ "VIGNETTE_MINIMAP_UPDATED", "VIGNETTES_UPDATED" }) do
+    ns:On(ev, function() ns.Pets:ScanVignettes() end)
+end
+
 ns:On("PLAYER_XP_UPDATE", function(_, unit)
     if unit == nil or unit == "player" then ns.Leveling:OnXPUpdate() end
 end)
