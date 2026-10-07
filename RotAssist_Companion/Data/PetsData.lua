@@ -1,9 +1,11 @@
 -- RotAssist Companion - PetsData
--- Pet da cacciatore rari e notevoli di Midnight, piu' i consigli d'uso.
+-- Pet da cacciatore rari e notevoli di Midnight, le spirit beast domabili di
+-- tutte le espansioni, piu' i consigli d'uso.
 --
 -- Il gioco non fornisce agli addon l'elenco delle bestie domabili: questa
 -- tabella e' curata a mano (ottobre 2026, patch 12.1). Fonti:
 --  * elenchi dei pet unici, rari ed elite e note di posizione: wow-petopia.com
+--    (per le spirit beast: liste Rare, Elite, Spawned e pagine dei modelli)
 --  * coordinate: pagine degli NPC su Wowhead; rari Florafaun: guida di method.gg
 --  * consigli sulle famiglie: Icy Veins, "Beast Mastery Hunter Pets Guide 12.1"
 -- I testi sono riassunti con parole nostre. Coordinate assenti = solo la
@@ -14,10 +16,20 @@
 -- exotic (solo Beast Mastery), florafaun (bestia-pianta: serve il libro
 -- "Trials of the Florafaun Hunter" o essere Haranir), tome (il rare puo'
 -- lasciare il libro), unique (aspetto che ha solo lui), elite.
+-- Spirit beast: group = "spirit", how = chiave del testo "come domarla",
+-- tag = chiave dell'etichetta (facile, evocazione, missione, istanza, sblocco).
+-- In Midnight non ci sono spirit beast domabili: Petopia segna gli Spirit
+-- Pangos come non domabili.
 
 local _, ns = ...
 
 local EVERSONG, ZULAMAN, HARANDAR, VOIDSTORM = 2395, 2437, 2413, 2405
+local STORMWIND, ORGRIMMAR, DUSKWOOD, HYJAL = 84, 85, 47, 198
+local TWILIGHT, ABYSSAL_DEPTHS, GRIZZLY_HILLS = 241, 204, 116
+local SHOLAZAR, STORM_PEAKS, ZULDRAK = 119, 120, 121
+local JADE_FOREST, FOUR_WINDS, KUNLAI, ETERNAL_BLOSSOMS = 371, 376, 379, 390
+local STORMHEIM, SURAMAR, SHADOWMOON_DRAENOR = 634, 680, 539
+local OHNAHRAN, EMERALD_DREAM, ISLE_OF_DORN = 2023, 2200, 2248
 
 ns.PetsData = {
     pets = {
@@ -69,6 +81,74 @@ ns.PetsData = {
           where = "Zeb'Alar Lumberyard" },
         { npc = 245044, name = "Nightbrood", family = "wasp", map = VOIDSTORM,
           where = "Night Trench" },
+
+        -- Spirit beast (esotiche) -------------------------------------------
+        -- sempre presenti: le piu' facili da domare
+        { npc = 103326, name = "Mana Saber", family = "spiritbeast", map = SURAMAR, group = "spirit",
+          where = "Moon Guard Stronghold", exotic = true, tag = "EASY", how = "PET_HOW_EASY" },
+        { npc = 112068, name = "Leyline Prowler", family = "spiritbeast", map = SURAMAR, group = "spirit",
+          where = "Leystation Moonfall", exotic = true, tag = "EASY", how = "PET_HOW_EASY" },
+        { npc = 113201, name = "Thicket Manahunter", family = "spiritbeast", map = SURAMAR, group = "spirit",
+          where = "Crimson Thicket", exotic = true, tag = "EASY", how = "PET_HOW_EASY" },
+        -- rari dall'aspetto unico
+        { npc = 32517, name = "Loque'nahak", family = "spiritbeast", map = SHOLAZAR, group = "spirit",
+          exotic = true, unique = true },
+        { npc = 33776, name = "Gondria", family = "spiritbeast", map = ZULDRAK, group = "spirit",
+          exotic = true, unique = true },
+        { npc = 35189, name = "Skoll", family = "spiritbeast", map = STORM_PEAKS, group = "spirit",
+          exotic = true, unique = true },
+        { npc = 38453, name = "Arcturis", family = "spiritbeast", map = GRIZZLY_HILLS, group = "spirit",
+          exotic = true, unique = true },
+        { npc = 54318, name = "Ankha", family = "spiritbeast", map = HYJAL, group = "spirit",
+          exotic = true, unique = true, how = "PET_HOW_NOARMOR" },
+        { npc = 54319, name = "Magria", family = "spiritbeast", map = HYJAL, group = "spirit",
+          exotic = true, unique = true, how = "PET_HOW_MAGRIA" },
+        { npc = 54320, name = "Ban'thalos", family = "spiritbeast", map = HYJAL, group = "spirit",
+          exotic = true, unique = true, how = "PET_HOW_BANTHALOS" },
+        { npc = 50138, name = "Karoma", family = "spiritbeast", map = TWILIGHT, group = "spirit",
+          exotic = true, unique = true },
+        { npc = 50051, name = "Ghostcrawler", family = "spiritbeast", map = ABYSSAL_DEPTHS, group = "spirit",
+          where = "Abandoned Reef", exotic = true, unique = true },
+        { npc = 118244, name = "Lightning Paw", family = "spiritbeast", map = DUSKWOOD, group = "spirit",
+          exotic = true, unique = true, how = "PET_HOW_LIGHTNINGPAW" },
+        { npc = 111463, name = "Bulvinkel", family = "spiritbeast", map = STORMHEIM, group = "spirit",
+          where = "cliffs south-east of the Halls of Valor", exotic = true, unique = true, how = "PET_HOW_BULVINKEL" },
+        -- altri rari
+        { npc = 110340, name = "Myonix", family = "spiritbeast", map = SURAMAR, group = "spirit",
+          where = "north of Anora Hollow, east of Moonwhisper Gulch", exotic = true },
+        { npc = 113694, name = "Pashya", family = "spiritbeast", map = SURAMAR, group = "spirit",
+          where = "Crimson Thicket, south of Nighteyes", exotic = true, how = "PET_HOW_PASHYA" },
+        -- elite
+        { npc = 69943, name = "Gumi", family = "spiritbeast", map = KUNLAI, group = "spirit",
+          exotic = true, elite = true, unique = true, how = "PET_HOW_PORCUPINE" },
+        { npc = 69946, name = "Hutia", family = "spiritbeast", map = JADE_FOREST, group = "spirit",
+          exotic = true, elite = true, unique = true, how = "PET_HOW_PORCUPINE" },
+        { npc = 69947, name = "Degu", family = "spiritbeast", map = FOUR_WINDS, group = "spirit",
+          where = "southern cliff edge, from south-east of Stormstout Brewery to above Thunder Cleft",
+          exotic = true, elite = true, unique = true, how = "PET_HOW_PORCUPINE" },
+        { npc = 193254, name = "Bloodgullet", family = "spiritbeast", map = OHNAHRAN, group = "spirit",
+          x = 0.66, y = 0.43, where = "meadows south-east of Maruukai", exotic = true, elite = true,
+          unique = true, how = "PET_HOW_BLOODGULLET" },
+        { npc = 210868, name = "Sul'raka", family = "spiritbeast", map = EMERALD_DREAM, group = "spirit",
+          exotic = true, elite = true, unique = true, how = "PET_HOW_SULRAKA" },
+        { npc = 210908, name = "Nah'qi", family = "spiritbeast", map = EMERALD_DREAM, group = "spirit",
+          where = "flies around Amirdrassil, just below the canopy", exotic = true, elite = true,
+          unique = true, tag = "UNLOCK", how = "PET_HOW_NAHQI" },
+        { npc = 60410, name = "Elegon", family = "spiritbeast", map = ETERNAL_BLOSSOMS, group = "spirit",
+          where = "Mogu'shan Vaults (raid)", exotic = true, unique = true, tag = "INSTANCE", how = "PET_HOW_ELEGON" },
+        -- da evocare o legate a missioni
+        { npc = 213428, name = "Aradan", family = "spiritbeast", map = ISLE_OF_DORN, group = "spirit",
+          x = 0.291, y = 0.362, where = "Void-Scarred Stormhammer under the sea, then The Rookery (dungeon)",
+          exotic = true, unique = true, tag = "INSTANCE", how = "PET_HOW_ARADAN" },
+        { npc = 121571, name = "Gon", family = "spiritbeast", map = ORGRIMMAR, group = "spirit",
+          where = "Valley of Spirits, by Shadow-Walker Zuru", exotic = true, unique = true,
+          tag = "SUMMON", how = "PET_HOW_GON" },
+        { npc = 121567, name = "Lost Spectral Gryphon", family = "spiritbeast", map = STORMWIND, group = "spirit",
+          where = "by the gryphon mount vendor", exotic = true, unique = true, tag = "SUMMON", how = "PET_HOW_GRYPHON" },
+        { npc = 151144, name = "Hati", family = "spiritbeast", map = STORM_PEAKS, group = "spirit",
+          where = "Temple of Storms", exotic = true, tag = "QUEST", how = "PET_HOW_HATI" },
+        { npc = 88708, name = "Gara", family = "spiritbeast", map = SHADOWMOON_DRAENOR, group = "spirit",
+          exotic = true, unique = true, tag = "QUEST", how = "PET_HOW_GARA" },
     },
 
     -- Famiglie: nome inglese (come nel client) e abilita' speciale di famiglia
@@ -87,6 +167,7 @@ ns.PetsData = {
         sporebat    = { name = "Sporebat",     ability = "dispel" },
         bloodbeast  = { name = "Blood Beast",  ability = "slow" },
         crab        = { name = "Crab",         ability = "slow" },
+        spiritbeast = { name = "Spirit Beast", ability = "spirit" },
     },
 
     -- Consigli per contenuto (chiavi di localizzazione); 'search' = famiglia

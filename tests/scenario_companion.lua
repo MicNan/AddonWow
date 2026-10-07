@@ -106,6 +106,13 @@ Route("Voidstorm -> Eversong", 2405, "Horde", delve)
 Route("Thunder Bluff (Alleanza) -> Eversong", 88, "Alliance", delve)
 Route("Stormwind -> Harandar senza coordinate", 84, "Alliance",
       { mapID = 2413, name = "Ancient Devilsaptor", note = "Nordrassil Roots" })
+-- espansioni precedenti: portali delle capitali ed Earthshrine
+Route("Silvermoon (Alleanza) -> Sholazar Basin", 2393, "Alliance", { mapID = 119, name = "Loque'nahak" })
+Route("Silvermoon (Orda) -> Abyssal Depths", 2393, "Horde", { mapID = 204, name = "Ghostcrawler", note = "Abandoned Reef" })
+Route("Orgrimmar -> Mount Hyjal", 85, "Horde", { mapID = 198, name = "Magria" })
+Route("Stormwind -> Suramar", 84, "Alliance", { mapID = 680, x = 0.5, y = 0.5, name = "Mana Saber" })
+Route("Orgrimmar -> Draenor", 85, "Horde", { mapID = 539, name = "Gara" })
+Route("Voidstorm (Orda) -> Emerald Dream", 2405, "Horde", { mapID = 2200, name = "Sul'raka" })
 
 print("--- navigatore")
 MOCK.playerMap, MOCK.faction = 85, "Horde"
@@ -276,13 +283,30 @@ print("avvisi in chat:", alerts, "(atteso 1) | posizione salvata:", C.db.petSeen
 Dump("pets")
 print("destinazione Bloated Snapdragon (vista):", C.Pets:Destination(C.Pets.byNpc[250582]).x)
 
--- filtri
-for _ = 1, 3 do
+-- filtri (tutti -> esotici -> spirit beast -> non domati -> tutti)
+for _ = 1, 4 do
     C.Panel.frame.petFilter._scripts.OnClick(C.Panel.frame.petFilter)
     local n = 0
     for _, row in ipairs(C.Panel.rows) do if row._shown and row.data and row.data.preview then n = n + 1 end end
     print("filtro", C.Pets.filter, "->", n, "pet | pulsante:", C.Panel.frame.petFilter._text)
+    if C.Pets.filter == "spirit" then Dump("pets") end
 end
+
+-- spirit beast: tooltip con le istruzioni e percorso verso il martello di Aradan
+C.Pets.filter = "spirit"
+MOCK.playerMap, MOCK.faction = 2393, "Alliance"
+C.Panel:Refresh()
+local aradan = PetRow(213428)
+tipLines = {}
+GameTooltip.AddLine = function(_, t) tipLines[#tipLines + 1] = t end
+aradan._scripts.OnEnter(aradan)
+GameTooltip.AddLine = nil
+print("tooltip di Aradan:")
+for _, l in ipairs(tipLines) do print("   " .. l) end
+print("altezza anteprima:", C.Pets.preview._h)
+aradan._scripts.OnClick(aradan, "LeftButton")
+C.Travel:Stop()
+C.Pets.filter = "all"
 
 -- non cacciatore / cacciatore non Beast Mastery
 local realClass = UnitClass

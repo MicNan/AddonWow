@@ -17,7 +17,7 @@ confermate in gioco (vedi "Da verificare in gioco").
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, livelli consigliati della zona, zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
 | **Oro** | le tue professioni con Concentrazione e punti conoscenza da spendere; strategie per fare oro adatte al tuo **profilo** (occasionale, medio, assiduo) e alle tue professioni | `GetProfessions`, `C_TradeSkillUI`, `C_ProfSpecs` |
 | **Asta** | oggetti delle borse da mettere all'asta o vendere al vendor; materiali di Midnight da farmare per il tuo profilo; sessione di farm con oro all'ora reale | `C_AuctionHouse.ReplicateItems`, `C_Container`, `C_Item` |
-| **Pet** | pet da cacciatore rari e notevoli di Midnight per zona, con anteprima 3D, requisiti (esotico, Florafaun), percorso con i portali e avviso quando uno compare sulla minimappa; consigli su quale famiglia usare | elenco curato (`Data/PetsData.lua`), `PlayerModel:SetCreature`, `C_StableInfo`, `C_VignetteInfo` |
+| **Pet** | pet da cacciatore rari e notevoli di Midnight per zona e spirit beast di tutte le espansioni, con anteprima 3D, requisiti (esotico, Florafaun), istruzioni per domarli, percorso con i portali e avviso quando uno compare sulla minimappa; consigli su quale famiglia usare | elenco curato (`Data/PetsData.lua`), `PlayerModel:SetCreature`, `C_StableInfo`, `C_VignetteInfo` |
 
 Il levelling è volutamente leggero: per le guide passo per passo esistono addon dedicati,
 come RestedXP.
@@ -33,8 +33,9 @@ come RestedXP.
 
 WoW non offre agli addon un calcolo dei percorsi, quindi il Companion usa:
 - una **tabella di portali** curata a mano;
-- un grafo di **regioni**: i continenti, più Harandar e Voidstorm, che sono zone separate
-  raggiungibili solo con portali.
+- un grafo di **regioni**: i continenti, più alcune zone separate che si raggiungono con un
+  portale (Harandar, Voidstorm e le zone di Cataclysm collegate agli Earthshrine: Mount Hyjal,
+  Twilight Highlands, Vashj'ir).
 
 Il percorso scelto è quello con meno passaggi. Considera i portali della tua fazione e la
 **Pietra del ritorno**, se è pronta e il punto di ritorno è un centro conosciuto (per esempio
@@ -50,7 +51,8 @@ Per ogni percorso il Companion:
 - **si annulla** con il pulsante "Annulla" o con `/rac stop`.
 
 **Portali conosciuti (12.1).** Fonti: wago.tools per gli ID delle mappe, la guida di method.gg
-per Silvermoon, le pagine degli oggetti su Wowhead.
+per Silvermoon, warcraft.wiki.gg per le sale dei portali di Stormwind e Orgrimmar (disposizione
+della patch 12.0.1) e per gli Earthshrine, la pagina dell'oggetto su Wowhead per Voidstorm.
 
 | Da | Verso | Coordinate |
 |---|---|---|
@@ -58,12 +60,20 @@ per Silvermoon, le pagine degli oggetti su Wowhead.
 | Silvermoon City | Harandar | 36.7, 68.6 |
 | Silvermoon City | Voidstorm | 35.3, 65.7 |
 | Voidstorm | Silvermoon City | 51.6, 70.2 |
-| Stormwind City | Silvermoon City · Dornogal | 48.4, 94.5 · 47.5, 92.2 |
-| Orgrimmar | Silvermoon City · Dornogal | 56.5, 89.0 · 57.4, 89.3 |
+| Stormwind (Wizard's Sanctum) | Silvermoon · Dornogal · Valdrakken | 48.7, 95.1 · 49.1, 92.0 · 48.8, 93.5 |
+| Stormwind (Wizard's Sanctum) | Dalaran (Northrend) · Jade Forest | 44.4, 89.7 · 45.7, 87.2 |
+| Stormwind (stanza sul retro) | Azsuna · Stormshield (Draenor) | 42.0, 91.4 · 41.3, 90.0 |
+| Orgrimmar (Pathfinder's Den, piano superiore) | Silvermoon · Dornogal · Valdrakken | 56.0, 88.2 · 58.6, 91.3 · 57.1, 87.3 |
+| Orgrimmar (Pathfinder's Den, piano superiore) | Dalaran (Northrend) · Jade Forest | 56.2, 91.7 · 57.5, 92.3 |
+| Orgrimmar (Pathfinder's Den, piano inferiore) | Azsuna · Warspear (Draenor) | 57.2, 88.3 · 55.2, 92.0 |
+| Eastern / Western Earthshrine | Mount Hyjal · Twilight Highlands · Vashj'ir | senza coordinate; ogni portale si sblocca con la missione introduttiva della zona |
 | Dornogal | Stormwind / Orgrimmar | da verificare (Foundation Hall, nord-est) |
 
 **Limiti**
 - Non conosce il portale di ritorno da Harandar: da lì propone il volo o la Pietra del ritorno.
+- Per le espansioni precedenti conosce solo i portali delle capitali verso Northrend,
+  Pandaria, Broken Isles, Dragon Isles e Draenor: da lì in poi si vola. Non sa come entrare
+  nell'Emerald Dream.
 - Non considera i teletrasporti di classe (per esempio quelli del mago) né gli oggetti di
   teletrasporto.
 - Le coordinate vanno aggiornate se Blizzard sposta i portali; la tabella è in
@@ -83,6 +93,20 @@ Per ogni pet:
 - **in verde** i pet che hai già: l'elenco si legge quando apri la stalla da uno Stable Master,
   più il pet che hai evocato.
 
+**Spirit beast.** In Midnight non ce ne sono da domare: Petopia segna gli Spirit Pangos come
+non domabili. La scheda elenca quindi le **28 spirit beast domabili delle espansioni precedenti**,
+divise per continente:
+- **facili**, sempre presenti: Mana Saber, Leyline Prowler e Thicket Manahunter a Suramar;
+- **rare dall'aspetto unico:** Loque'nahak, Gondria, Skoll, Arcturis, Ankha, Magria,
+  Ban'thalos, Karoma, Ghostcrawler, Lightning Paw, Bulvinkel, più Myonix e Pashya;
+- **elite:** i tre porcospini di Pandaria (Gumi, Hutia, Degu), Bloodgullet, Sul'raka, Nah'qi;
+- **speciali:** Elegon (raid), Aradan (dungeon The Rookery, serve un martello), Gon e il Lost
+  Spectral Gryphon (da evocare), Hati e Gara (catene di missioni).
+
+Per ognuna il tooltip spiega **come domarla** (togliere l'armatura, portarla sotto il 30%,
+usare Flare, cosa cliccare per evocarla, quale sblocco serve). Il filtro in basso ha anche la
+voce "solo spirit beast". Sono tutte esotiche: servono la specializzazione Beast Mastery.
+
 **Anteprima.** Passando il mouse su una riga compare a lato del pannello il **modello 3D**
 della creatura (trascina per ruotarlo, rotellina per lo zoom). Se il client non ha ancora il
 modello compare un avviso: il clic destro dà la pagina Wowhead con le immagini.
@@ -99,7 +123,7 @@ avviso in chat con la posizione esatta presa dal gioco, e la riga diventa gialla
 Beast Mastery (12.1): Aqiri per raid e Mitiche+, famiglie con riduzione delle cure, Clefthoof
 per il gioco in solitaria, Whiptail per il PvP, Feathermane per Updraft.
 
-**Fonti.** Elenchi e note di posizione da [wow-petopia.com](https://www.wow-petopia.com),
+**Fonti.** Elenchi, note di posizione e istruzioni da [wow-petopia.com](https://www.wow-petopia.com),
 coordinate dalle pagine degli NPC su Wowhead, rari Florafaun dalla guida di
 [method.gg](https://www.method.gg/guides/how-to-tame-florafaun-pets-in-midnight), consigli
 dalla [guida pet di Icy Veins](https://www.icy-veins.com/wow/beast-mastery-hunter-pets-guide).
@@ -225,7 +249,10 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
 
 9. **Pet:** anteprima 3D con `SetCreature` (alcune creature potrebbero non avere il modello
    finché non le incontri), elenco della stalla (`C_StableInfo`, campo `creatureID`) e
-   avviso dei rari tramite le vignette della minimappa.
+   avviso dei rari tramite le vignette della minimappa (le rare più vecchie potrebbero non
+   averle).
+10. **Portali delle capitali:** coordinate da warcraft.wiki.gg (patch 12.0.1) e posizione degli
+    Earthshrine, da confermare in gioco.
 
 ## Installazione
 

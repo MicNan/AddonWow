@@ -51,8 +51,9 @@ Le sue schede coprono:
 - **Oro:** strategie per le tue professioni secondo il profilo (occasionale, medio, assiduo).
 - **Asta:** cosa mettere all'asta e cosa vendere al vendor, quali materiali farmare, oro all'ora
   misurato.
-- **Pet:** pet da cacciatore rari di Midnight con anteprima 3D, requisiti, percorso con i portali
-  e avviso quando compaiono sulla minimappa.
+- **Pet:** pet da cacciatore rari di Midnight e spirit beast di tutte le espansioni, con
+  anteprima 3D, requisiti, istruzioni per domarli, percorso con i portali e avviso quando
+  compaiono sulla minimappa.
 
 Il clic su una destinazione calcola il **percorso più veloce**, portali compresi, con
 istruzioni passo per passo.

@@ -1,7 +1,8 @@
 -- RotAssist Companion - Pets
--- Scheda Pet: pet da cacciatore rari e notevoli di Midnight (PetsData.lua),
--- consigli su quale famiglia usare, anteprima 3D del modello e percorso
--- (con i portali) fino al punto in cui si trovano.
+-- Scheda Pet: pet da cacciatore rari e notevoli di Midnight e spirit beast
+-- di tutte le espansioni (PetsData.lua), consigli su quale famiglia usare,
+-- anteprima 3D del modello e percorso (con i portali) fino al punto in cui
+-- si trovano.
 --
 -- Solo lettura: l'addon non doma e non seleziona bersagli. Usa
 --  * C_StableInfo (alla stalla) e il pet evocato per sapere quali pet hai;
@@ -19,7 +20,7 @@ local ALERT_AGAIN   = 600     -- stesso rare: nuovo avviso dopo 10 minuti
 local SEEN_FRESH    = 1800    -- posizione vista di recente: 30 minuti
 local SCAN_EVERY    = 2       -- secondi tra due letture delle vignette
 local ZONE_ORDER    = { 2413, 2405, 2395, 2437 }   -- Harandar, Voidstorm, Eversong, Zul'Aman
-local FILTERS       = { "all", "exotic", "missing" }
+local FILTERS       = { "all", "exotic", "spirit", "missing" }
 Pets.FILTERS = FILTERS
 
 local byNpc = {}
@@ -248,6 +249,9 @@ function Pets:ShowPreview(pet)
     end
     f.name:SetText(pet.name)
     f.info:SetText(table.concat(self:Details(pet, true), "\n"))
+    -- il riquadro cresce con il testo (le spirit beast hanno istruzioni lunghe)
+    local h = f.info:GetStringHeight()
+    if type(h) == "number" and h > 0 then f:SetHeight(math.max(PREVIEW_H, MODEL_H + 70 + h)) end
 end
 
 function Pets:HidePreview()
@@ -276,6 +280,7 @@ function Pets:Details(pet, short)
     if pet.tome then out[#out + 1] = L.PET_DROPS_TOME end
     if pet.unique then out[#out + 1] = L.PET_UNIQUE end
     if pet.elite then out[#out + 1] = L.PET_ELITE end
+    if pet.how then out[#out + 1] = L[pet.how] end
     if self:Owned(pet.npc) then out[#out + 1] = L.PET_OWNED end
     if not short then
         -- percorso dalla posizione attuale
@@ -298,7 +303,9 @@ end
 
 local function Tags(pet)
     local L, t = ns.L, {}
-    if pet.exotic then t[#t + 1] = L.PET_TAG_EXOTIC end
+    if pet.tag then t[#t + 1] = L["PET_TAG_" .. pet.tag] end
+    -- le spirit beast sono tutte esotiche: l'etichetta sarebbe ripetuta
+    if pet.exotic and pet.group ~= "spirit" then t[#t + 1] = L.PET_TAG_EXOTIC end
     if pet.florafaun then t[#t + 1] = L.PET_TAG_FLORAFAUN end
     if pet.tome then t[#t + 1] = L.PET_TAG_TOME end
     if pet.unique then t[#t + 1] = L.PET_TAG_UNIQUE end
@@ -307,6 +314,7 @@ end
 
 function Pets:Passes(pet)
     if self.filter == "exotic" then return pet.exotic and true or false end
+    if self.filter == "spirit" then return pet.group == "spirit" end
     if self.filter == "missing" then return not self:Owned(pet.npc) end
     return true
 end
@@ -336,6 +344,26 @@ local function PlayerZone()
         guard = guard + 1
     end
     return nil
+end
+
+-- Riga di un pet: clic = percorso, mouse sopra = anteprima, clic destro = Wowhead
+function Pets:PetRow(pet, label)
+    local L = ns.L
+    local isOwned = self:Owned(pet.npc)
+    local seen = self:Seen(pet.npc)
+    local tip = { pet.name }
+    for _, line in ipairs(self:Details(pet)) do tip[#tip + 1] = line end
+    tip[#tip + 1] = L.PET_HINT_PREVIEW
+    return {
+        text = ("%s - %s"):format(pet.name, label),
+        right = seen and L.PET_SEEN_NOW or (isOwned and L.PET_TAG_OWNED or Tags(pet)),
+        icon = "Interface\\Icons\\Ability_Hunter_BeastTaming",
+        color = seen and { 1, 0.82, 0 } or (isOwned and { 0.5, 0.9, 0.5 }) or nil,
+        tooltip = tip,
+        dest = self:Destination(pet),
+        preview = pet,
+        link = { npc = pet.npc }, linkTitle = pet.name,
+    }
 end
 
 function Pets:Rows()
@@ -373,26 +401,40 @@ function Pets:Rows()
     for _, zone in ipairs(order) do
         local list = {}
         for _, pet in ipairs(ns.PetsData.pets) do
-            if pet.map == zone and self:Passes(pet) then list[#list + 1] = pet end
+            if pet.map == zone and not pet.group and self:Passes(pet) then list[#list + 1] = pet end
         end
         if #list > 0 then
             add({ header = L.HDR_PET_ZONE:format(A.ZoneName(zone), #list) })
             for _, pet in ipairs(list) do
-                local isOwned = self:Owned(pet.npc)
-                local seen = self:Seen(pet.npc)
-                local tip = { pet.name }
-                for _, line in ipairs(self:Details(pet)) do tip[#tip + 1] = line end
-                tip[#tip + 1] = L.PET_HINT_PREVIEW
-                add({
-                    text = ("%s - %s"):format(pet.name, FamilyName(pet)),
-                    right = seen and L.PET_SEEN_NOW or (isOwned and L.PET_TAG_OWNED or Tags(pet)),
-                    icon = "Interface\\Icons\\Ability_Hunter_BeastTaming",
-                    color = seen and { 1, 0.82, 0 } or (isOwned and { 0.5, 0.9, 0.5 }) or nil,
-                    tooltip = tip,
-                    dest = self:Destination(pet),
-                    preview = pet,
-                    link = { npc = pet.npc }, linkTitle = pet.name,
-                })
+                add(self:PetRow(pet, FamilyName(pet)))
+                shown = shown + 1
+            end
+        end
+    end
+
+    -- spirit beast di tutte le espansioni, divise per continente
+    local groups, continents = {}, {}
+    for _, pet in ipairs(ns.PetsData.pets) do
+        if pet.group == "spirit" and self:Passes(pet) then
+            local _, continent = A.ContinentOf(pet.map)
+            continent = continent or A.ZoneName(pet.map)
+            if not groups[continent] then
+                groups[continent] = {}
+                continents[#continents + 1] = continent
+            end
+            table.insert(groups[continent], pet)
+        end
+    end
+    if #continents > 0 then
+        add({ header = L.HDR_PET_SPIRIT })
+        add({ text = L.PET_SPIRIT_INFO, wrap = true, color = { 0.6, 0.85, 1 },
+              tooltip = { L.HDR_PET_SPIRIT, L.PET_SPIRIT_INFO }, link = { search = "Spirit Beast" },
+              linkTitle = "Spirit Beast" })
+        table.sort(continents)
+        for _, continent in ipairs(continents) do
+            add({ header = L.HDR_PET_SPIRIT_IN:format(continent, #groups[continent]) })
+            for _, pet in ipairs(groups[continent]) do
+                add(self:PetRow(pet, A.ZoneName(pet.map)))
                 shown = shown + 1
             end
         end

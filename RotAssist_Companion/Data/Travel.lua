@@ -3,15 +3,19 @@
 --
 -- WoW non offre agli addon un'API di calcolo del percorso: il percorso e'
 -- stimato con una tabella di portali curata a mano (fonti sotto) e un grafo
--- di "regioni" (continenti, piu' Harandar e Voidstorm che sono zone separate
--- raggiungibili solo con portali). All'interno di una regione si vola.
+-- di "regioni" (continenti, piu' alcune zone separate che conviene
+-- raggiungere con un portale: Harandar, Voidstorm e le zone di Cataclysm
+-- collegate agli Earthshrine). All'interno di una regione si vola.
 -- Il navigatore imposta il waypoint del passo attuale e passa da solo al
 -- passo successivo quando il giocatore arriva nella regione giusta.
 --
 -- Fonti (ottobre 2026, patch 12.1):
 --  * UiMapID: tabella UiMap su wago.tools (build 12.1.5)
 --  * portali di Silvermoon: guida "Portal Locations In Silvermoon City" (method.gg)
---  * portali di Stormwind / Orgrimmar / Voidstorm: pagine degli oggetti su Wowhead
+--  * portali di Stormwind e Orgrimmar: warcraft.wiki.gg, pagine "Wizard's Sanctum"
+--    e "Pathfinder's Den" (disposizione della patch 12.0.1); Earthshrine: pagine
+--    "Eastern Earthshrine" e "Western Earthshrine"
+--  * portale di Voidstorm: pagina dell'oggetto su Wowhead
 -- DA VERIFICARE in gioco; da aggiornare se Blizzard sposta i portali.
 
 local _, ns = ...
@@ -22,10 +26,16 @@ ns.Travel = T
 
 -- Regioni ---------------------------------------------------------------
 local QUELTHALAS, EASTERN_KINGDOMS, KALIMDOR, KHAZ_ALGAR = 2537, 13, 12, 2274
+local NORTHREND, PANDARIA, BROKEN_ISLES, DRAGON_ISLES, DRAENOR = 113, 424, 619, 1978, 572
 local HARANDAR, VOIDSTORM = 2413, 2405
+local HYJAL, TWILIGHT, VASHJIR = 198, 241, 203
 
--- Zone che formano una regione a se' (raggiungibili solo via portale)
-local SEPARATE_ZONES = { [HARANDAR] = "harandar", [VOIDSTORM] = "voidstorm" }
+-- Zone che formano una regione a se' (raggiungibili solo via portale, o
+-- molto piu' in fretta con un portale che in volo)
+local SEPARATE_ZONES = {
+    [HARANDAR] = "harandar", [VOIDSTORM] = "voidstorm",
+    [HYJAL] = "hyjal", [TWILIGHT] = "twilight", [VASHJIR] = "vashjir",
+}
 
 -- Regione di una mappa: zona separata, altrimenti il suo continente.
 function T:RegionOf(mapID)
@@ -50,6 +60,16 @@ local HUBS = {
     dornogal   = { map = 2339, region = KHAZ_ALGAR },
     harandar   = { map = HARANDAR,  region = "harandar" },
     voidstorm  = { map = VOIDSTORM, region = "voidstorm" },
+    -- espansioni precedenti (portali delle capitali)
+    dalaran    = { map = 125,  region = NORTHREND },
+    jadeforest = { map = 371,  region = PANDARIA },
+    azsuna     = { map = 630,  region = BROKEN_ISLES },
+    valdrakken = { map = 2112, region = DRAGON_ISLES },
+    stormshield = { map = 622, region = DRAENOR, faction = "Alliance" },
+    warspear   = { map = 624,  region = DRAENOR, faction = "Horde" },
+    hyjal      = { map = HYJAL,    region = "hyjal" },
+    twilight   = { map = TWILIGHT, region = "twilight" },
+    vashjir    = { map = VASHJIR,  region = "vashjir" },
 }
 T.HUBS = HUBS
 
@@ -60,10 +80,30 @@ local PORTALS = {
     { from = "silvermoon", map = 2393, x = 0.3670, y = 0.6857, to = "harandar",  where = "SM_HARANDAR" },
     { from = "silvermoon", map = 2393, x = 0.3528, y = 0.6565, to = "voidstorm", where = "SM_VOIDSTORM" },
     { from = "voidstorm",  map = 2405, x = 0.5160, y = 0.7020, to = "silvermoon" },
-    { from = "stormwind",  map = 84,   x = 0.4840, y = 0.9450, to = "silvermoon", faction = "Alliance", where = "SW_PORTALS" },
-    { from = "orgrimmar",  map = 85,   x = 0.5650, y = 0.8900, to = "silvermoon", faction = "Horde",    where = "OG_PORTALS" },
-    { from = "stormwind",  map = 84,   x = 0.4750, y = 0.9220, to = "dornogal",   faction = "Alliance", where = "SW_PORTALS" },
-    { from = "orgrimmar",  map = 85,   x = 0.5740, y = 0.8930, to = "dornogal",   faction = "Horde",    where = "OG_PORTALS" },
+    -- Stormwind: Wizard's Sanctum (Mage Quarter)
+    { from = "stormwind",  map = 84,   x = 0.487, y = 0.951, to = "silvermoon",  faction = "Alliance", where = "SW_PORTALS" },
+    { from = "stormwind",  map = 84,   x = 0.491, y = 0.920, to = "dornogal",    faction = "Alliance", where = "SW_PORTALS" },
+    { from = "stormwind",  map = 84,   x = 0.488, y = 0.935, to = "valdrakken",  faction = "Alliance", where = "SW_PORTALS" },
+    { from = "stormwind",  map = 84,   x = 0.444, y = 0.897, to = "dalaran",     faction = "Alliance", where = "SW_PORTALS" },
+    { from = "stormwind",  map = 84,   x = 0.457, y = 0.872, to = "jadeforest",  faction = "Alliance", where = "SW_PORTALS" },
+    { from = "stormwind",  map = 84,   x = 0.420, y = 0.914, to = "azsuna",      faction = "Alliance", where = "SW_BACK" },
+    { from = "stormwind",  map = 84,   x = 0.413, y = 0.900, to = "stormshield", faction = "Alliance", where = "SW_BACK" },
+    -- Orgrimmar: Pathfinder's Den
+    { from = "orgrimmar",  map = 85,   x = 0.560, y = 0.882, to = "silvermoon",  faction = "Horde", where = "OG_TOP" },
+    { from = "orgrimmar",  map = 85,   x = 0.586, y = 0.913, to = "dornogal",    faction = "Horde", where = "OG_TOP" },
+    { from = "orgrimmar",  map = 85,   x = 0.571, y = 0.873, to = "valdrakken",  faction = "Horde", where = "OG_TOP" },
+    { from = "orgrimmar",  map = 85,   x = 0.562, y = 0.917, to = "dalaran",     faction = "Horde", where = "OG_TOP" },
+    { from = "orgrimmar",  map = 85,   x = 0.575, y = 0.923, to = "jadeforest",  faction = "Horde", where = "OG_TOP" },
+    { from = "orgrimmar",  map = 85,   x = 0.572, y = 0.883, to = "azsuna",      faction = "Horde", where = "OG_BOTTOM" },
+    { from = "orgrimmar",  map = 85,   x = 0.552, y = 0.920, to = "warspear",    faction = "Horde", where = "OG_BOTTOM" },
+    -- Earthshrine: zone di Cataclysm (ogni portale si sblocca con la missione
+    -- introduttiva della zona; posizione senza coordinate)
+    { from = "stormwind",  map = 84, to = "hyjal",    faction = "Alliance", where = "SW_EARTHSHRINE" },
+    { from = "stormwind",  map = 84, to = "twilight", faction = "Alliance", where = "SW_EARTHSHRINE" },
+    { from = "stormwind",  map = 84, to = "vashjir",  faction = "Alliance", where = "SW_EARTHSHRINE" },
+    { from = "orgrimmar",  map = 85, to = "hyjal",    faction = "Horde",    where = "OG_EARTHSHRINE" },
+    { from = "orgrimmar",  map = 85, to = "twilight", faction = "Horde",    where = "OG_EARTHSHRINE" },
+    { from = "orgrimmar",  map = 85, to = "vashjir",  faction = "Horde",    where = "OG_EARTHSHRINE" },
     -- coordinate non verificate: solo indicazione testuale
     { from = "dornogal",   map = 2339, to = "stormwind", faction = "Alliance", where = "DG_CAPITALS" },
     { from = "dornogal",   map = 2339, to = "orgrimmar", faction = "Horde",    where = "DG_CAPITALS" },
