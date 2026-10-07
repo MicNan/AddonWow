@@ -45,8 +45,22 @@ local function Format(msg, ...)
 end
 ns.Format = Format
 
+-- Registro in RotAssistCompanionDB.log (scritto su disco al /reload o al
+-- logout): permette di analizzare scansioni e problemi leggendo il file.
+local LOG_MAX = 300
+function ns:Log(text)
+    local db = self.db
+    if not db then return end
+    db.log = db.log or {}
+    text = tostring(text):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+    table.insert(db.log, ((date and date("%Y-%m-%d %H:%M:%S")) or "") .. " " .. text)
+    while #db.log > LOG_MAX do table.remove(db.log, 1) end
+end
+
 function ns:Print(msg, ...)
-    print(PREFIX .. Format(msg, ...))
+    local text = Format(msg, ...)
+    print(PREFIX .. text)
+    self:Log(text)
 end
 
 local reported = {}
@@ -55,6 +69,7 @@ function ns:ReportError(err)
     if reported[err] then return end
     reported[err] = true
     self:Print("|cffff5555%s|r %s", self.L and self.L.MSG_INTERNAL_ERROR or "errore interno:", err)
+    self:Log("[errore] " .. err .. (debugstack and ("\n" .. debugstack(2, 6, 0)) or ""))
 end
 
 ---------------------------------------------------------------------------

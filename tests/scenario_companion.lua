@@ -176,6 +176,22 @@ local tip = { AddDoubleLine = function(_, a, b) lines[#lines + 1] = a .. " = " .
 for _, fn in ipairs(MOCK.tooltipHooks) do fn(tip, { id = 1001 }); fn(tip, { id = 1009 }); fn(tip, { id = 99999 }) end
 for _, l in ipairs(lines) do print("   " .. l) end
 
+print("--- scansione con dati in ritardo (dopo il timeout)")
+MOCK.now = MOCK.now + 1000                          -- limite dei 15 minuti scaduto
+local realReplicate = C_AuctionHouse.ReplicateItems
+C_AuctionHouse.ReplicateItems = function() end      -- la casa d'aste non risponde subito
+print("pulsante prima:", C.Prices.button and C.Prices.button._text)
+SlashCmdList.ROTASSISTCOMPANION("scan")             -- i timer del mock scattano subito: timeout
+print("in attesa dopo il timeout:", tostring(C.Prices.waiting), "| scanning:", tostring(C.Prices.scanning))
+MOCK.auctions[#MOCK.auctions + 1] = { 1003, 50, 50 * 15000.0 }   -- nuova asta piu' economica
+MOCK.fire("REPLICATE_ITEM_LIST_UPDATE")             -- i dati arrivano in ritardo
+local w = C.Prices.worker
+while w and w._scripts.OnUpdate do w._scripts.OnUpdate(w, 0.016) end
+print("prezzo Sunfire Silk dopo i dati in ritardo:", C.Prices:Get(1003), "| pulsante:", C.Prices.button._text)
+C_AuctionHouse.ReplicateItems = realReplicate
+print("ultime righe del registro:")
+for i = math.max(1, #C.db.log - 5), #C.db.log do print("   " .. C.db.log[i]) end
+
 print("--- Auctionator come riserva (scansione vecchia)")
 C.Prices:DB().time = time() - 5 * 86400
 Auctionator = { API = { v1 = {

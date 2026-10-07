@@ -14,6 +14,7 @@ do
             end
         end
         if k == "GetChecked" then return function(self) return self._checked end end
+        if k == "SetText" then return function(self, v) self._text = v end end
         if k == "SetChecked" then return function(self, v) self._checked = v end end
         return index(t, k)
     end

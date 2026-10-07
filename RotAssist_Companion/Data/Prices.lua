@@ -20,7 +20,9 @@ ns.Prices = PR
 local FRESH = 3 * 86400          -- oltre 3 giorni la scansione propria e' "vecchia"
 local SCAN_THROTTLE = 15 * 60    -- limite di Blizzard tra due scansioni complete
 local CHUNK = 4000               -- aste elaborate per frame
-local SCAN_TIMEOUT = 15          -- secondi di attesa dei dati dopo la richiesta
+local SCAN_SLOW = 30             -- dopo quanti secondi avvisare che i dati tardano
+local SCAN_TIMEOUT = 180         -- dopo quanti secondi rinunciare
+local LATE_ACCEPT = 600          -- dati arrivati in ritardo accettati fino a 10 minuti
 
 local function RealmKey()
     return A.Call(GetNormalizedRealmName) or A.Call(GetRealmName) or "realm"
@@ -123,9 +125,16 @@ function PR:CanScan()
     if not (C_AuctionHouse and C_AuctionHouse.ReplicateItems) then return false, "api" end
     if not self.ahOpen then return false, "closed" end
     if self.scanning then return false, "busy" end
-    local last = RotAssistCompanionPrices and RotAssistCompanionPrices._lastScan
-    if last and time() - last < SCAN_THROTTLE then return false, "throttle", SCAN_THROTTLE - (time() - last) end
+    local wait = self:ThrottleLeft()
+    if wait > 0 then return false, "throttle", wait end
     return true
+end
+
+-- Secondi che mancano alla prossima scansione consentita (0 = adesso)
+function PR:ThrottleLeft()
+    local last = RotAssistCompanionPrices and RotAssistCompanionPrices._lastScan
+    if not last then return 0 end
+    return math.max(0, SCAN_THROTTLE - (time() - last))
 end
 
 function PR:StartScan()
@@ -138,28 +147,42 @@ function PR:StartScan()
         else ns:Print(L.SCAN_UNAVAILABLE) end
         return
     end
-    self.scanning, self.waiting = true, true
-    self.requestedAt = GetTime()
+    self.scanning, self.waiting, self.processing = true, true, false
+    self.requestedAt, self.progress = GetTime(), nil
     ns:Print(L.SCAN_STARTED)
-    if not pcall(C_AuctionHouse.ReplicateItems) then
+    local called, err = pcall(C_AuctionHouse.ReplicateItems)
+    ns:Log(("[scan] ReplicateItems chiamata: %s %s"):format(tostring(called), tostring(err or "")))
+    if not called then
         self.scanning, self.waiting = false, false
         ns:Print(L.SCAN_UNAVAILABLE)
+        self:UpdateButton()
         return
     end
-    -- se i dati non arrivano (limite di Blizzard non rispettato), rinunciamo
+    self:UpdateButton()
+    -- la casa d'aste puo' impiegare piu' di un minuto su un reame affollato:
+    -- un avviso dopo SCAN_SLOW secondi, si rinuncia solo dopo SCAN_TIMEOUT
+    ns:After(SCAN_SLOW, function()
+        if PR.waiting then ns:Print(L.SCAN_SLOW) end
+    end)
     ns:After(SCAN_TIMEOUT, function()
         if PR.waiting then
             PR.scanning, PR.waiting = false, false
+            ns:Log("[scan] nessun dato dopo " .. SCAN_TIMEOUT .. " s")
             ns:Print(L.SCAN_NO_DATA)
+            PR:UpdateButton()
         end
     end)
 end
 
 -- Dati pronti: li elaboriamo a blocchi in OnUpdate per non bloccare il gioco.
+-- Accettiamo anche dati arrivati dopo il timeout, se la richiesta e' recente.
 function PR:OnReplicateReady()
-    if not self.waiting then return end
-    self.waiting = false
+    local recent = self.requestedAt and (GetTime() - self.requestedAt) < LATE_ACCEPT
+    if self.processing or not (self.waiting or recent) then return end
     local total = A.Call(C_AuctionHouse.GetNumReplicateItems) or 0
+    ns:Log(("[scan] dati ricevuti dopo %.1f s: %d aste"):format(GetTime() - (self.requestedAt or GetTime()), total))
+    if total == 0 then return end           -- arriveranno con l'evento successivo
+    self.waiting, self.processing, self.scanning = false, true, true
     local acc, index = {}, 0
     local frame = self.worker or CreateFrame("Frame")
     self.worker = frame
@@ -180,6 +203,8 @@ function PR:OnReplicateReady()
             end
         end
         index = last + 1
+        PR.progress = math.floor(index / total * 100)
+        PR:UpdateButton()
         if index >= total then
             f:SetScript("OnUpdate", nil)
             PR:FinishScan(acc, total)
@@ -194,29 +219,62 @@ function PR:FinishScan(acc, total)
     db.items, db.time, db.auctions = acc, time(), total
     db.farmIndex = ns.BuildFarmIndex and ns.BuildFarmIndex(acc) or {}
     RotAssistCompanionPrices._lastScan = time()
-    self.scanning = false
+    self.scanning, self.processing, self.progress = false, false, nil
+    self.doneAt = GetTime()
+    ns:Log(("[scan] completata: %d oggetti, %d aste"):format(n, total))
     ns:Print(ns.L.SCAN_DONE, n, total)
+    if SOUNDKIT then pcall(PlaySound, SOUNDKIT.AUCTION_WINDOW_OPEN or 5274) end
+    self:UpdateButton()
     if ns.Panel then ns.Panel:RequestRefresh() end
 end
 
+-- Stato in una riga (pulsante e scheda Asta)
+function PR:StatusText()
+    local L = ns.L
+    if self.processing and self.progress then return L.SCAN_PROGRESS:format(self.progress) end
+    if self.waiting then return L.SCAN_WAITING end
+    if self.doneAt and GetTime() - self.doneAt < 8 then return L.SCAN_DONE_SHORT end
+    local wait = self:ThrottleLeft()
+    if wait > 0 then return L.SCAN_NEXT_IN:format(A.TimeText(wait)) end
+    return nil
+end
+
 ---------------------------------------------------------------------------
--- Pulsante di scansione sulla finestra della casa d'aste
+-- Pulsante di scansione, sotto la finestra della casa d'aste
 ---------------------------------------------------------------------------
+function PR:UpdateButton()
+    local b = self.button
+    if not b then return end
+    local status = self:StatusText()
+    b:SetText(status or ns.L.SCAN_BUTTON)
+    if self.scanning or self:ThrottleLeft() > 0 then b:Disable() else b:Enable() end
+end
+
 function PR:OnAuctionHouseShow()
     self.ahOpen = true
     local parent = AuctionHouseFrame or UIParent
     if not self.button then
         local b = CreateFrame("Button", "RotAssistCompanionScanButton", parent, "UIPanelButtonTemplate")
-        b:SetSize(170, 22)
+        b:SetSize(230, 24)
         b:SetScript("OnClick", function() PR:StartScan() end)
+        -- aggiorna il conto alla rovescia una volta al secondo
+        local elapsed = 0
+        b:SetScript("OnUpdate", function(_, dt)
+            elapsed = elapsed + dt
+            if elapsed >= 1 then elapsed = 0; PR:UpdateButton() end
+        end)
         self.button = b
     end
     local b = self.button
     b:SetParent(parent)
     b:ClearAllPoints()
-    if parent == UIParent then b:SetPoint("TOP", 0, -120) else b:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -30, -2) end
-    b:SetText(ns.L.SCAN_BUTTON)
+    if parent == UIParent then
+        b:SetPoint("TOP", 0, -120)
+    else
+        b:SetPoint("TOPRIGHT", parent, "BOTTOMRIGHT", 0, -2)
+    end
     b:Show()
+    self:UpdateButton()
 end
 
 function PR:OnAuctionHouseClosed()

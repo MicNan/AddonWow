@@ -272,6 +272,8 @@ function M:Rows()
 
     -- fonte dei prezzi
     rows[#rows + 1] = { header = L.HDR_PRICES }
+    local scanStatus = ns.Prices:StatusText()
+    if scanStatus then rows[#rows + 1] = { text = scanStatus, color = { 0.5, 0.85, 1 } } end
     local status = ns.Prices:SourceStatus()
     if status then
         rows[#rows + 1] = { text = L.PRICE_SOURCES:format(status), dim = true }

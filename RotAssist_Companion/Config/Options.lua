@@ -130,6 +130,9 @@ local function Handler(msg)
         if PROFILE_ALIASES[arg] then ns:Set("playerType", PROFILE_ALIASES[arg]) else ns:CycleProfile() end
     elseif cmd == "scan" or cmd == "scansione" then
         ns.Prices:StartScan()
+    elseif cmd == "log" then
+        if arg == "clear" then ns.db.log = {} end
+        ns:Print("log: %d", #(ns.db.log or {}))
     elseif cmd == "farm" then
         ns.Market:ToggleSession()
     elseif cmd == "stop" then
