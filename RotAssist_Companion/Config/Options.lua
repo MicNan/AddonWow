@@ -109,6 +109,7 @@ local TAB_ALIASES = {
     settimanale = "weekly", weekly = "weekly",
     levelling = "leveling", leveling = "leveling", level = "leveling",
     oro = "gold", gold = "gold", soldi = "gold",
+    professioni = "craft", professione = "craft", prof = "craft", professions = "craft", craft = "craft",
     asta = "market", aste = "market", auction = "market", market = "market",
     pet = "pets", pets = "pets",
 }

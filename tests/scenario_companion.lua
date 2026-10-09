@@ -216,6 +216,47 @@ print("Sunfire Silk:", C.Prices:Get(1003))
 print("Sunbloom (solo scansione vecchia):", C.Prices:Get(1001))
 MOCK.fire("AUCTION_HOUSE_CLOSED")
 
+-- ===================== Professioni =====================
+print("--- professioni")
+SlashCmdList.ROTASSISTCOMPANION("professioni")
+Dump("craft")                                         -- prima della lettura: invito ad aprire la professione
+MOCK.bank = { [1004] = 3 }                            -- 3 Mycobloom in banca
+MOCK.fire("TRADE_SKILL_SHOW")
+local scan = C.db.craft and C.db.craft[171]
+print("ricette lette:", scan and #scan.recipes, "(attese 3: arancione, gialla prima creazione, arancione prima creazione)")
+Dump("craft")
+local plan = C.Craft:Plan(171)
+print("migliore:", plan.best[1].recipe.name, "| a punto:", plan.best[1].perPoint, "| creazioni per 10 punti:", plan.topCrafts)
+for _, s in ipairs(plan.shopping) do print("   compra", s.itemID, "servono", s.need, "hai", s.have, "mancano", s.missing, "costo", s.cost) end
+-- tooltip della ricetta migliore
+tipLines = {}
+GameTooltip.AddLine = function(_, t) tipLines[#tipLines + 1] = t end
+for _, row in ipairs(C.Panel.rows) do
+    if row._shown and row.data and row.data.link and row.data.link.spell == 7003 then row._scripts.OnEnter(row) break end
+end
+GameTooltip.AddLine = nil
+print("tooltip:")
+for _, l in ipairs(tipLines) do print("   " .. l) end
+-- professione di un altro giocatore: ignorata
+C.db.craft = nil
+MOCK.tsLinked = true; MOCK.fire("TRADE_SKILL_SHOW"); MOCK.tsLinked = nil
+print("professione collegata -> lettura:", tostring(C.db.craft))
+-- scheda di un'altra espansione aperta
+MOCK.tsChild = 2823; MOCK.fire("TRADE_SKILL_SHOW")
+print("altra espansione:", C.Craft.otherExpansion and C.Craft.otherExpansion.name, "| lettura:", tostring(C.db.craft))
+MOCK.tsChild = nil; MOCK.fire("TRADE_SKILL_SHOW")
+-- specializzazione consigliata: cacciatore con Leatherworking, guerriero con Blacksmithing, mago con Inscription
+local realProf, realClass = MOCK.profInfo[1], UnitClass
+MOCK.profInfo[1] = { "Leatherworking", 101, 72, 100, 0, 0, 165 }
+Dump("craft")
+UnitClass = function() return "Warrior", "WARRIOR" end
+MOCK.profInfo[1] = { "Blacksmithing", 101, 55, 100, 0, 0, 164 }
+Dump("craft")
+UnitClass = function() return "Mage", "MAGE" end
+MOCK.profInfo[1] = { "Inscription", 101, 100, 100, 0, 0, 773 }
+Dump("craft")
+MOCK.profInfo[1], UnitClass, MOCK.bank = realProf, realClass, nil
+
 -- ===================== Pet =====================
 print("--- pet da cacciatore")
 MOCK.playerMap, MOCK.faction = 84, "Alliance"
@@ -330,7 +371,7 @@ C_AreaPoiInfo, C_TaskQuest, C_WeeklyRewards, C_PerksActivities, C_DelvesUI, C_Ca
 C.API.ClearCache()
 C_TradeSkillUI, C_ProfSpecs, GetProfessions = nil
 C_AuctionHouse, C_Item, TooltipDataProcessor = nil
-for _, tab in ipairs({ "delves", "events", "weekly", "leveling", "gold", "market", "pets" }) do Dump(tab) end
+for _, tab in ipairs({ "delves", "events", "weekly", "leveling", "gold", "craft", "market", "pets" }) do Dump(tab) end
 MOCK.playerMap = 84
 C.Travel:Start(delve)
 

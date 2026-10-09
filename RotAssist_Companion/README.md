@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.4.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.5.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -16,6 +16,7 @@ confermate in gioco (vedi "Da verificare in gioco").
 | **Settimanale** | Great Vault per tipo (dungeon, raid, delve e mondo) con avviso "ricompense da ritirare", Traveler's Log del mese, tempo ai reset | `C_WeeklyRewards`, `C_PerksActivities`, `C_DateAndTime` |
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, livelli consigliati della zona, zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
 | **Oro** | le tue professioni con Concentrazione e punti conoscenza da spendere; strategie per fare oro adatte al tuo **profilo** (occasionale, medio, assiduo) e alle tue professioni | `GetProfessions`, `C_TradeSkillUI`, `C_ProfSpecs` |
+| **Professioni** | per ogni tua professione: la fase della guida 1-100 in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
 | **Asta** | oggetti delle borse da mettere all'asta o vendere al vendor; materiali di Midnight da farmare per il tuo profilo; sessione di farm con oro all'ora reale | `C_AuctionHouse.ReplicateItems`, `C_Container`, `C_Item` |
 | **Pet** | pet da cacciatore rari e notevoli di Midnight per zona e spirit beast di tutte le espansioni, con anteprima 3D, requisiti (esotico, Florafaun), istruzioni per domarli, percorso con i portali e avviso quando uno compare sulla minimappa; consigli su quale famiglia usare | elenco curato (`Data/PetsData.lua`), `PlayerModel:SetCreature`, `C_StableInfo`, `C_VignetteInfo` |
 
@@ -134,6 +135,56 @@ I testi sono riassunti, non copiati.
 - Spawn, famiglie e requisiti vanno verificati in gioco; Blizzard può cambiarli con le patch.
 - Le famiglie sono in inglese, come compaiono su Petopia e Wowhead.
 
+## Guida alle professioni
+
+La scheda **Professioni** mostra, per ogni professione del personaggio:
+
+1. **La fase della guida** in cui ti trovi, secondo il livello attuale (per esempio
+   Leatherworking 60-91: "crea una delle ricette di livello medio, circa 35 creazioni"), con la
+   fase successiva e il trainer di Silvermoon. Il tooltip mostra tutte le fasi da 1 a 100.
+2. **Cosa creare adesso.** Quando apri la finestra della professione, l'addon legge le ricette
+   di Midnight che conosci: colore (arancione, gialla, verde), punti per creazione, prime
+   creazioni ancora da fare e materiali. Poi:
+   - elenca le **prime creazioni** (ognuna vale 1 punto conoscenza);
+   - ordina le ricette per **costo per punto**, usando i prezzi della scansione d'asta (o di
+     Auctionator e TSM). Per le ricette gialle e verdi i punti sono una stima;
+   - dice quante volte creare la migliore per i prossimi 10 punti.
+3. **Cosa comprare.** Per le prime creazioni e per la ricetta migliore somma i materiali che
+   servono, toglie quelli che hai già in borse, banca, banca dei reagenti e banca della brigata,
+   e mostra cosa manca con il costo. Per i materiali con più qualità conta tutte quelle che hai e
+   propone la più economica. Un materiale senza prezzo d'asta di solito si compra dal venditore
+   accanto al trainer.
+4. **La specializzazione consigliata** per l'equipaggiamento del tuo personaggio, in base alla
+   classe (tipo di armatura) e alla specializzazione:
+
+   | Professione | Consiglio |
+   |---|---|
+   | Leatherworking | maglia (cacciatore, sciamano, evocatore): **Safeguarding Scales**, con il set epico Farstrider's; cuoio: **Lasting Leather**, con il set Silvermoon Agent's |
+   | Blacksmithing | armi da mischia: **Weaponsmithing** (di solito l'upgrade più grande); piastre: **Armorsmithing** |
+   | Tailoring | stoffa: **Sin'dorei Finery**; per tutti: **Nimble Needlework** (cooldown dei tessuti, mantello abbellito) |
+   | Jewelcrafting | **Alluring Accessories**: anelli e collane |
+   | Engineering | **Combat Analytics**: occhiali, bracciali, stivali e pistole (per il cacciatore a distanza) |
+   | Inscription | **Blueprints**: archi per il cacciatore a distanza, bastoni e off-hand per gli incantatori |
+   | Alchemy | **Fluent in Flasks** per raid e Mitiche+; Transmutation Authority per l'Alchemist Stone |
+   | Enchanting | **Elevating Equipment** |
+
+   Nel client italiano le specializzazioni possono avere nomi tradotti: il tooltip mostra quelli
+   del tuo client e cosa sblocca ciascuna.
+5. **Dove prendere i punti conoscenza:** prime creazioni, tesori, libro della reputazione,
+   fonti settimanali e mensili, e il reset una tantum della patch 12.1.
+
+Per le professioni di raccolta (Herbalism, Mining, Skinning) la scheda mostra solo la guida.
+
+**Fonti.** Guide "Leveling 1-100", "Recipes & Knowledge Points" e "Specialization Guide" di
+[wow-professions.com](https://www.wow-professions.com) e la guida alle fonti di conoscenza di
+[method.gg](https://www.method.gg/guides/all-profession-knowledge-point-sources-in-midnight),
+riassunte. ID delle professioni di Midnight dalla tabella SkillLine di wago.tools.
+
+**Limiti**
+- La lettura avviene solo con la finestra della professione aperta, quindi i dati invecchiano:
+  riaprila dopo aver salito qualche punto.
+- Le ricette non imparate non entrano nel calcolo: la guida ricorda quando tornare dal trainer.
+
 ## Strategie per l'oro
 
 La scheda **Oro** legge le tue professioni. Per ogni professione mostra:
@@ -201,6 +252,7 @@ conta cosa entra nelle borse e ne mostra il valore e l'oro all'ora. Se la sessio
 | `/rac` | apre o chiude il pannello |
 | `/rac delve` · `eventi` · `settimanale` · `levelling` · `oro` | apre la scheda (anche in inglese: `delves`, `events`, `weekly`, `leveling`, `gold`) |
 | `/rac profilo occasionale|medio|assiduo` | profilo per le strategie sull'oro (senza argomento passa al successivo) |
+| `/rac professioni` | apre la scheda Professioni (anche `prof` o `professions`) |
 | `/rac stop` | annulla il percorso in corso |
 | `/rac asta` | apre la scheda Asta |
 | `/rac scan` | scansione dei prezzi (con la casa d'aste aperta) |
@@ -253,6 +305,10 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
    averle).
 10. **Portali delle capitali:** coordinate da warcraft.wiki.gg (patch 12.0.1) e posizione degli
     Earthshrine, da confermare in gioco.
+11. **Professioni:** campi delle ricette (`relativeDifficulty`, `numSkillUps`, `firstCraft`),
+    materiali obbligatori di `GetRecipeSchematic` e conteggio con la banca della brigata
+    (`C_Item.GetItemCount`). Le probabilità di punto per le ricette gialle (50%) e verdi (15%)
+    sono stime.
 
 ## Installazione
 

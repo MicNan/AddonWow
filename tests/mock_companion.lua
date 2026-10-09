@@ -202,7 +202,10 @@ GetProfessions = function() return MOCK.profs[1], MOCK.profs[2], nil, nil, nil e
 GetProfessionInfo = function(i) local t = MOCK.profInfo[i]; if t then return table.unpack(t) end end
 C_TradeSkillUI = {
     GetBaseProfessionInfo = function() return { professionID = 171 } end,
-    GetChildProfessionInfo = function() return { professionID = 2906 } end,
+    GetChildProfessionInfo = function()
+        return { professionID = MOCK.tsChild or 2906, professionName = MOCK.tsChild and "Dragon Isles Alchemy" or "Midnight Alchemy",
+                 skillLevel = 37, maxSkillLevel = 100 }
+    end,
     GetConcentrationCurrencyID = function(id) return 3200 end,
 }
 C_ProfSpecs = { GetCurrencyInfoForSkillLine = function() return { numAvailable = 5 } end }
@@ -233,6 +236,9 @@ MOCK.items = {
     [1008] = { "Quest Letter", 1, 0, 12, 0, 1, 11, false },
     [1009] = { "Thin Leather", 1, 200, 7, 6, 0, 11, true },
     [1010] = { "Not Cached", 1, 100, 7, 9, 0, 11, true },
+    [1011] = { "Sunglass Vial", 1, 5, 7, 11, 0, 11, true },          -- dal venditore: nessun prezzo d'asta
+    [1012] = { "Silvermoon Health Potion", 1, 100, 0, 1, 0, 11, false },
+    [1013] = { "Mycobloom (gold)", 2, 400, 7, 9, 0, 11, true },
 }
 MOCK.uncached = { [1010] = true }
 C_Item = {
@@ -274,6 +280,54 @@ MOCK.bags = {
     [1] = { { 1007, 1, true }, { 1008, 1, true }, { 1009, 20 }, { 1010, 5 } },
 }
 C_Container.GetContainerNumSlots = function(bag) return MOCK.bags[bag] and #MOCK.bags[bag] or 0 end
+
+-- Ricette della professione aperta (Alchemy di Midnight, 2906)
+-- reagents = { { {itemID per qualita'}, quantita' }, ... }
+MOCK.recipes = {
+    [7001] = { info = { name = "Silvermoon Health Potion", learned = true, relativeDifficulty = 0, numSkillUps = 1 },
+               reagents = { { { 1001 }, 3 }, { { 1011 }, 1 } }, out = 1012 },
+    [7002] = { info = { name = "Entropic Extract", learned = true, relativeDifficulty = 1, numSkillUps = 1, firstCraft = true },
+               reagents = { { { 1004, 1013 }, 2 } } },
+    [7003] = { info = { name = "Flask of Thalassian Resistance", learned = true, relativeDifficulty = 0, numSkillUps = 2, firstCraft = true },
+               reagents = { { { 1001 }, 5 }, { { 1002 }, 2 } } },
+    [7004] = { info = { name = "Old Potion", learned = true, relativeDifficulty = 3, numSkillUps = 1 },
+               reagents = { { { 1001 }, 1 } } },                                   -- grigia: esclusa
+    [7005] = { info = { name = "Unlearned Elixir", learned = false, relativeDifficulty = 0 } },   -- non imparata
+    [7006] = { info = { name = "Dragon Isles Potion", learned = true, relativeDifficulty = 0 }, other = true },
+    [7007] = { info = { name = "Recycle Potions", learned = true, relativeDifficulty = 0, isSalvageRecipe = true } },
+}
+C_TradeSkillUI.GetAllRecipeIDs = function()
+    local t = {}
+    for id in pairs(MOCK.recipes) do t[#t + 1] = id end
+    table.sort(t)
+    return t
+end
+C_TradeSkillUI.IsRecipeInSkillLine = function(id, line) return line == 2906 and not MOCK.recipes[id].other end
+C_TradeSkillUI.GetRecipeInfo = function(id)
+    local r = MOCK.recipes[id]
+    local info = { recipeID = id }
+    for k, v in pairs(r.info) do info[k] = v end
+    return info
+end
+C_TradeSkillUI.GetRecipeSchematic = function(id)
+    local r = MOCK.recipes[id]
+    local slots = {}
+    for i, s in ipairs(r.reagents or {}) do
+        local list = {}
+        for _, item in ipairs(s[1]) do list[#list + 1] = { itemID = item } end
+        slots[i] = { reagents = list, quantityRequired = s[2], required = true }
+    end
+    slots[#slots + 1] = { reagents = { { itemID = 1002 } }, quantityRequired = 1, required = false }   -- opzionale: ignorato
+    return { reagentSlotSchematics = slots, outputItemID = r.out, quantityMin = 1, quantityMax = 1 }
+end
+C_TradeSkillUI.IsTradeSkillLinked = function() return MOCK.tsLinked end
+C_Item.GetItemCount = function(id)
+    local n = 0
+    for _, bag in pairs(MOCK.bags) do for _, s in ipairs(bag) do if s[1] == id then n = n + s[2] end end end
+    return n + ((MOCK.bank and MOCK.bank[id]) or 0)
+end
+C_ProfSpecs.GetSpecTabIDsForSkillLine = function() return { 1, 2 } end
+C_ProfSpecs.GetTabInfo = function(id) return { name = id == 1 and "Fluent in Flasks" or "Potion Prowess" } end
 C_Container.GetContainerItemInfo = function(bag, slot)
     local s = MOCK.bags[bag] and MOCK.bags[bag][slot]
     if not s then return nil end

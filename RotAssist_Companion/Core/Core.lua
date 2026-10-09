@@ -32,8 +32,10 @@ for _, ev in ipairs({ "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED", "PLAYER_ENTERING_
     ns:On(ev, function() ns.Travel:Advance() end)
 end
 
--- professione aperta: ricordiamo Concentrazione e conoscenza (scheda Oro)
-ns:On("TRADE_SKILL_SHOW", function() ns.Gold:OnTradeSkillShow(); ns.Panel:RequestRefresh() end)
+-- professione aperta: Concentrazione e conoscenza (scheda Oro), ricette
+-- conosciute per la guida (scheda Professioni)
+ns:On("TRADE_SKILL_SHOW", function() ns.Gold:OnTradeSkillShow(); ns.Craft:RequestScan(); ns.Panel:RequestRefresh() end)
+ns:On("TRADE_SKILL_LIST_UPDATE", function() ns.Craft:RequestScan() end)
 
 -- casa d'aste: pulsante di scansione e dati della scansione completa
 ns:On("AUCTION_HOUSE_SHOW", function() ns.Prices:OnAuctionHouseShow() end)

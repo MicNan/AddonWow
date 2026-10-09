@@ -1,6 +1,6 @@
 -- RotAssist Companion - Panel
--- Finestra con sette schede (Delve, Eventi, Settimanale, Levelling, Oro,
--- Asta, Pet). Ogni scheda e' un elenco di righe prodotto da Data\*.lua:
+-- Finestra con otto schede (Delve, Eventi, Settimanale, Levelling, Oro,
+-- Professioni, Asta, Pet). Ogni scheda e' un elenco di righe prodotto da Data\*.lua:
 --   { header = "titolo" } oppure
 --   { text, right, icon | atlas, color = {r,g,b}, dim, tooltip = {...},
 --     waypoint = { mapID, x, y, titolo }, dest = { mapID, x?, y?, name, note? },
@@ -17,7 +17,7 @@ local A = ns.API
 local P = { rows = {}, tab = nil }
 ns.Panel = P
 
-local WIDTH, HEIGHT, ROW_H = 600, 540, 20
+local WIDTH, HEIGHT, ROW_H = 640, 540, 20
 local AUTO_REFRESH = 30
 
 local TABS = {
@@ -26,6 +26,7 @@ local TABS = {
     { key = "weekly",   label = "TAB_WEEKLY",   source = function() return ns.Weekly end },
     { key = "leveling", label = "TAB_LEVELING", source = function() return ns.Leveling end },
     { key = "gold",     label = "TAB_GOLD",     source = function() return ns.Gold end },
+    { key = "craft",    label = "TAB_CRAFT",    source = function() return ns.Craft end },
     { key = "market",   label = "TAB_MARKET",   source = function() return ns.Market end },
     { key = "pets",     label = "TAB_PETS",     source = function() return ns.Pets end },
 }
