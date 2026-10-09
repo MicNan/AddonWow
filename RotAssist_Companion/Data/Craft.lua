@@ -314,6 +314,11 @@ function C:PlanRows(rows, plan)
     local cache = {}
     local age = time() - (plan.scan.time or time())
     rows[#rows + 1] = { text = L.CRAFT_SCAN_AGE:format(A.TimeText(math.max(60, age))), dim = true }
+    -- senza prezzi i costi restano "prezzo?": serve la casa d'aste aperta
+    local hasPrices = (ns.Prices:ScanAge() or (Auctionator and Auctionator.API) or TSM_API) and true or false
+    if not hasPrices then
+        rows[#rows + 1] = { text = L.CRAFT_NEED_PRICES, wrap = true, color = { 0.5, 0.85, 1 } }
+    end
 
     -- prime creazioni: punti conoscenza
     if #plan.firsts > 0 then
@@ -360,16 +365,17 @@ function C:PlanRows(rows, plan)
     if #plan.shopping == 0 then
         rows[#rows + 1] = { text = L.CRAFT_SHOP_NONE, color = { 0.5, 0.9, 0.5 } }
     else
-        rows[#rows + 1] = { text = L.CRAFT_SHOP:format(A.Money(plan.total)), color = { 1, 0.82, 0 } }
+        rows[#rows + 1] = { text = plan.total > 0 and L.CRAFT_SHOP:format(A.Money(plan.total)) or L.CRAFT_SHOP_PLAIN,
+                            color = { 1, 0.82, 0 } }
         for _, s in ipairs(plan.shopping) do
             local name = ItemName(s.itemID)
             rows[#rows + 1] = {
-                text = L.CRAFT_BUY:format(s.missing, name), right = s.cost and A.Money(s.cost) or L.CRAFT_VENDOR,
+                text = L.CRAFT_BUY:format(s.missing, name), right = s.cost and A.Money(s.cost) or (hasPrices and L.CRAFT_VENDOR or L.CRAFT_NO_PRICE),
                 tooltip = { name, L.CRAFT_BUY_TIP:format(s.need, s.have, s.missing) },
                 link = { item = s.itemID }, linkTitle = name,
             }
         end
-        if plan.unknown > 0 then rows[#rows + 1] = { text = L.CRAFT_SHOP_UNKNOWN, wrap = true, dim = true } end
+        if plan.unknown > 0 and hasPrices then rows[#rows + 1] = { text = L.CRAFT_SHOP_UNKNOWN, wrap = true, dim = true } end
     end
 end
 

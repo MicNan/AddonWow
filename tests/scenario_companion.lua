@@ -146,6 +146,8 @@ print("profilo dopo il ciclo:", C.db.playerType)
 MOCK.profs = {}
 Dump("gold")
 MOCK.profs = { 1, 2 }
+print("--- professioni prima della scansione dei prezzi")
+Dump("craft")
 
 -- ===================== Asta =====================
 local function Pump()
