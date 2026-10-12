@@ -1,7 +1,9 @@
 -- RotAssist Companion - Gold
--- Scheda "Oro": professioni del personaggio, Concentrazione, punti conoscenza
--- da spendere e strategie per fare oro adatte al profilo scelto
--- (occasionale / medio / assiduo, opzione 'playerType').
+-- Scheda "Oro": selettore del profilo di gioco (occasionale / medio / assiduo,
+-- opzione 'playerType') e tre sezioni: strategie per fare oro con le tue
+-- professioni, borse e prezzi d'asta, cosa farmare (Market.lua).
+-- Concentrazione e punti conoscenza si leggono qui ma si mostrano nella scheda
+-- Professioni (Craft.lua).
 --
 -- Concentrazione e conoscenza dipendono dalla professione di Midnight
 -- (professione "figlia"): il suo ID si legge solo con la finestra della
@@ -14,8 +16,9 @@ local A = ns.API
 local G = {}
 ns.Gold = G
 
-local CONCENTRATION_PER_DAY = 240   -- Midnight: +240 al giorno, massimo 1000
+G.CONCENTRATION_PER_DAY = 240   -- Midnight: +240 al giorno, massimo 1000 (usato dalla scheda Professioni)
 G.PROFILES = { "casual", "medium", "hardcore" }
+G.SECTIONS = { "strategies", "bags", "farm" }
 
 -- Professioni conosciute: { name, icon, rank, max, skillLine, key }
 function G:Professions()
@@ -96,7 +99,27 @@ function G:Rows()
     rows[#rows + 1] = { kind = "pills", items = items }
     rows[#rows + 1] = { kind = "note", text = L["PROFILE_DESC_" .. profile] }
 
-    -- le tue professioni: fascia per l'oro, Concentrazione, conoscenza
+    -- sezione
+    local section = ns.db.goldSection or "strategies"
+    local sItems = {}
+    for _, key in ipairs(G.SECTIONS) do
+        sItems[#sItems + 1] = { label = L["GOLD_SEC_" .. key], selected = key == section,
+                                onClick = function() ns.db.goldSection = key end }
+    end
+    rows[#rows + 1] = { kind = "pills", items = sItems }
+    if section == "bags" then
+        rows[#rows + 1] = { header = L.HDR_PRICES }
+        ns.Market:PriceRows(rows)
+        ns.Market:BagRows(rows)
+        rows[#rows + 1] = { kind = "note", text = L.MARKET_DISCLAIMER }
+        return rows
+    elseif section == "farm" then
+        ns.Market:FarmRows(rows)
+        rows[#rows + 1] = { kind = "note", text = L.MARKET_DISCLAIMER }
+        return rows
+    end
+
+    -- le tue professioni: fascia per l'oro
     rows[#rows + 1] = { header = L.HDR_PROFESSIONS }
     if #profs == 0 then
         rows[#rows + 1] = { kind = "callout", style = "info", text = L.NO_PROFESSIONS }
@@ -110,23 +133,8 @@ function G:Rows()
             tooltip = { p.name, tier and L.TIER_TIP:format(tier) or nil, p.key and S:Why(p.key) or nil },
             link = { search = p.name }, linkTitle = p.name,
         }
-        local cur, max = self:Concentration(p.skillLine)
-        if cur then
-            local full = cur >= max
-            rows[#rows + 1] = {
-                kind = "bar", min = 0, max = max, value = cur,
-                color = full and { 1, 0.6, 0.2 } or { 0.35, 0.65, 1 },
-                label = L.CONCENTRATION:format(cur, max), labelColor = full and { 1, 0.6, 0.2 } or nil,
-                right = full and L.CONC_FULL_SHORT or L.CONC_FULL_IN:format(A.TimeText((max - cur) / CONCENTRATION_PER_DAY * 86400)),
-            }
-        elseif not (p.key == "herbalism" or p.key == "mining" or p.key == "skinning") then
-            rows[#rows + 1] = { kind = "note", text = L.CONC_UNKNOWN }
-        end
-        local knowledge = self:Knowledge(p.skillLine)
-        if knowledge and knowledge > 0 then
-            rows[#rows + 1] = { kind = "step", badge = tostring(knowledge), badgeColor = { 1, 0.6, 0.2 }, text = L.KNOWLEDGE_SPEND }
-        end
     end
+    if #profs > 0 then rows[#rows + 1] = { kind = "note", text = L.GOLD_SEE_CRAFT } end
 
     -- cosa fare con le tue professioni
     local covered = 0
@@ -141,6 +149,7 @@ function G:Rows()
             Steps(rows, S:Get(p.key, profile))
         end
     end
+    if covered > 0 then rows[#rows + 1] = { kind = "note", text = L.GOLD_SEE_BUILDS } end
     if covered == 0 then
         rows[#rows + 1] = { header = L.HDR_GOLD_NONE }
         Steps(rows, S:Get("none", profile))

@@ -83,6 +83,11 @@ end
 -- Righe per la scheda
 function D:Rows()
     local L, rows = ns.L, {}
+    local only = ns.db.onlyBountiful and true or false
+    rows[#rows + 1] = { kind = "pills", items = {
+        { label = L.DELVE_FILTER_ALL, selected = not only, onClick = function() ns:Set("onlyBountiful", false) end },
+        { label = L.ONLY_BOUNTIFUL, selected = only, onClick = function() ns:Set("onlyBountiful", true) end },
+    } }
     rows[#rows + 1] = { header = L.HDR_DELVE_STATUS }
     local keys, shards = self:Keys()
     if keys then
@@ -115,12 +120,19 @@ function D:Rows()
 
     rows[#rows + 1] = { header = L.HDR_DELVES }
     local n = 0
+    local widths, align = { 0.46, 0.34, 0.2 }, { "LEFT", "LEFT", "RIGHT" }
     for _, d in ipairs(self:List()) do
-        if d.bountiful or not ns.db.onlyBountiful then
+        if d.bountiful or not only then
+            if n == 0 then
+                rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
+                                    cols = { L.DELVE_COL_NAME, L.DELVE_COL_ZONE, L.DELVE_COL_STATE } }
+            end
             n = n + 1
             rows[#rows + 1] = {
-                text = d.name, right = d.zone, atlas = d.atlas,
-                color = d.bountiful and { 1, 0.82, 0 } or (d.locked and { 0.5, 0.5, 0.5 } or nil),
+                kind = "tr", widths = widths, align = align,
+                cols = { d.name, d.zone or "", d.bountiful and L.DELVE_BOUNTIFUL or (d.locked and L.DELVE_LOCKED or "") },
+                colors = { d.bountiful and { 1, 0.82, 0 } or (d.locked and { 0.5, 0.5, 0.5 } or nil), nil,
+                           d.bountiful and { 1, 0.82, 0 } or { 0.6, 0.6, 0.6 } },
                 tooltip = { d.name, d.zone, d.bountiful and L.DELVE_BOUNTIFUL or nil,
                             d.locked and L.DELVE_LOCKED or nil, d.description },
                 waypoint = d.x and { d.mapID, d.x, d.y, d.name } or nil,

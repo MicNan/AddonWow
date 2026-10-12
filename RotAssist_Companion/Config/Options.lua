@@ -104,6 +104,7 @@ end
 -- Comandi
 ---------------------------------------------------------------------------
 local TAB_ALIASES = {
+    oggi = "today", today = "today",
     delve = "delves", delves = "delves",
     eventi = "events", events = "events", event = "events",
     settimanale = "weekly", weekly = "weekly",

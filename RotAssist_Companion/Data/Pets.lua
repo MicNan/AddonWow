@@ -337,7 +337,15 @@ local function PlayerZone()
     return nil
 end
 
--- Riga di un pet: clic = percorso, mouse sopra = anteprima, clic destro = Wowhead
+-- Riga di un pet (tabella: nome, famiglia o zona, etichette): clic = percorso,
+-- mouse sopra = anteprima, clic destro = Wowhead
+local PET_W, PET_A = { 0.38, 0.28, 0.34 }, { "LEFT", "LEFT", "RIGHT" }
+
+local function PetHead(colLabel)
+    local L = ns.L
+    return { kind = "thead", widths = PET_W, align = PET_A, cols = { L.PET_COL_NAME, colLabel, L.PET_COL_NOTES } }
+end
+
 function Pets:PetRow(pet, label)
     local L = ns.L
     local isOwned = self:Owned(pet.npc)
@@ -345,11 +353,11 @@ function Pets:PetRow(pet, label)
     local tip = { pet.name }
     for _, line in ipairs(self:Details(pet)) do tip[#tip + 1] = line end
     tip[#tip + 1] = L.PET_HINT_PREVIEW
+    local color = seen and { 1, 0.82, 0 } or (isOwned and { 0.5, 0.9, 0.5 }) or nil
     return {
-        text = ("%s - %s"):format(pet.name, label),
-        right = seen and L.PET_SEEN_NOW or (isOwned and L.PET_TAG_OWNED or Tags(pet)),
-        icon = "Interface\\Icons\\Ability_Hunter_BeastTaming",
-        color = seen and { 1, 0.82, 0 } or (isOwned and { 0.5, 0.9, 0.5 }) or nil,
+        kind = "tr", widths = PET_W, align = PET_A,
+        cols = { pet.name, label, seen and L.PET_SEEN_NOW or (isOwned and L.PET_TAG_OWNED or Tags(pet)) },
+        colors = { color, { 0.75, 0.75, 0.75 }, color },
         tooltip = tip,
         dest = self:Destination(pet),
         preview = pet,
@@ -409,6 +417,7 @@ function Pets:Rows()
         end
         if #list > 0 then
             add({ header = L.HDR_PET_ZONE:format(A.ZoneName(zone), #list) })
+            add(PetHead(L.PET_COL_FAMILY))
             for _, pet in ipairs(list) do
                 add(self:PetRow(pet, FamilyName(pet)))
                 shown = shown + 1
@@ -435,6 +444,7 @@ function Pets:Rows()
         table.sort(continents)
         for _, continent in ipairs(continents) do
             add({ kind = "sub", text = L.HDR_PET_SPIRIT_IN:format(continent, #groups[continent]) })
+            add(PetHead(L.PET_COL_ZONE))
             for _, pet in ipairs(groups[continent]) do
                 add(self:PetRow(pet, A.ZoneName(pet.map)))
                 shown = shown + 1

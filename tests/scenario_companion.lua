@@ -215,6 +215,8 @@ MOCK.bags[0][1][2] = 70                              -- +30 Sunbloom
 MOCK.fire("BAG_UPDATE_DELAYED")
 MOCK.now = MOCK.now + 600
 Dump("market")
+ClickPill(C.L.GOLD_SEC_farm)
+Dump("gold")
 SlashCmdList.ROTASSISTCOMPANION("farm")
 print("resa salvata Sunbloom:", C.db.farmRates and C.db.farmRates[1001] and C.db.farmRates[1001].rate)
 SlashCmdList.ROTASSISTCOMPANION("profilo assiduo")
@@ -320,8 +322,11 @@ C.db.craftProf, C.db.craftSection = nil, "level"
 
 -- ===================== Attivita' =====================
 print("--- attivita'")
-SlashCmdList.ROTASSISTCOMPANION("attivita")
-Dump("activities")                                    -- equipaggiamento, Beast Mastery (Mitiche+)
+SlashCmdList.ROTASSISTCOMPANION("oggi")
+ClickPill(C.L.ACT_GOAL_summary)
+Dump("today")                                         -- riepilogo
+ClickPill(C.L.ACT_GOAL_gear)
+Dump("today")                                         -- equipaggiamento, Beast Mastery (Mitiche+)
 ClickPill(C.L.ACT_CONTENT_raid)
 print("priorita' raid:", table.concat(C.StatPriority:Current().order, " > "))
 for _, g in ipairs({ "vault", "rep", "gold" }) do

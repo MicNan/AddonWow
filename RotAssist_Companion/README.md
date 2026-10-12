@@ -4,29 +4,27 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.7.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.8.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
 
 | Scheda | Contenuto | Fonte (API di Blizzard) |
 |---|---|---|
-| **Delve** | Restored Coffer Key, Coffer Key Shards della settimana, livello del compagno; delve attive su tutte le mappe, con le **abbondanti** in cima (filtro "solo abbondanti") | `C_AreaPoiInfo.GetDelvesForMap`, `C_CurrencyInfo`, `C_DelvesUI`, `C_GossipInfo` |
-| **Eventi** | festività di oggi, eventi sulla mappa con tempo rimasto, world quest del continente in cui ti trovi (le elite evidenziate), ordinate per scadenza | `C_Calendar`, `C_AreaPoiInfo.GetEventsForMap`, `C_TaskQuest.GetQuestsOnMap` |
-| **Settimanale** | Great Vault per tipo (dungeon, raid, delve e mondo) con avviso "ricompense da ritirare", Traveler's Log del mese, tempo ai reset | `C_WeeklyRewards`, `C_PerksActivities`, `C_DateAndTime` |
-| **Attività** | attività consigliate secondo l'obiettivo scelto (equipaggiamento, Great Vault, reputazione, oro): world quest con le ricompense confrontate con il tuo equipaggiamento e con la priorità delle statistiche della tua specializzazione, cosa manca al prossimo slot della Vault, fazioni più vicine al prossimo Renown, attività settimanali ricorrenti | `C_TaskQuest`, ricompense delle missioni, `C_Item.GetItemStats`, `C_WeeklyRewards`, `C_MajorFactions`, `C_ClassTalents` |
-| **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, livelli consigliati della zona, zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
-| **Oro** | le tue professioni con Concentrazione e punti conoscenza da spendere; strategie per fare oro adatte al tuo **profilo** (occasionale, medio, assiduo) e alle tue professioni | `GetProfessions`, `C_TradeSkillUI`, `C_ProfSpecs` |
-| **Professioni** | per ogni tua professione: la fase della guida 1-100 in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
-| **Asta** | oggetti delle borse da mettere all'asta o vendere al vendor; materiali di Midnight da farmare per il tuo profilo; sessione di farm con oro all'ora reale | `C_AuctionHouse.ReplicateItems`, `C_Container`, `C_Item` |
+| **Oggi** | **Riepilogo** (cosa fare adesso per ogni obiettivo, eventi e festività, world quest in scadenza con la ricompensa, Traveler's Log e reset) e attività consigliate per **obiettivo** (equipaggiamento, Great Vault, reputazione, oro): world quest confrontate con il tuo equipaggiamento e con la priorità delle statistiche, slot della Vault, fazioni più vicine al prossimo Renown | `C_TaskQuest`, ricompense delle missioni, `C_Calendar`, `C_AreaPoiInfo.GetEventsForMap`, `C_Item.GetItemStats`, `C_WeeklyRewards`, `C_PerksActivities`, `C_MajorFactions`, `C_ClassTalents` |
+| **Delve** | Restored Coffer Key, Coffer Key Shards della settimana, livello del compagno; tabella delle delve attive su tutte le mappe, con le **abbondanti** in cima (filtro in cima: tutte o solo abbondanti) | `C_AreaPoiInfo.GetDelvesForMap`, `C_CurrencyInfo`, `C_DelvesUI`, `C_GossipInfo` |
+| **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, tabelle della zona attuale e delle zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
+| **Professioni** | per ogni tua professione: Concentrazione e punti conoscenza da spendere, la fase della guida 1-100 in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
+| **Oro** | tre sezioni con il **profilo** di gioco (occasionale, medio, assiduo) in cima: **Strategie** per le tue professioni, **Borse e prezzi** (cosa mettere all'asta e cosa vendere al vendor), **Da farmare** (materiali di Midnight per il tuo profilo e sessione di farm con oro all'ora reale) | `GetProfessions`, `C_AuctionHouse.ReplicateItems`, `C_Container`, `C_Item` |
 | **Pet** | pet da cacciatore rari e notevoli di Midnight per zona e spirit beast di tutte le espansioni, con anteprima 3D, requisiti (esotico, Florafaun), istruzioni per domarli, percorso con i portali e avviso quando uno compare sulla minimappa; consigli su quale famiglia usare | elenco curato (`Data/PetsData.lua`), `PlayerModel:SetCreature`, `C_StableInfo`, `C_VignetteInfo` |
 
 Il levelling è volutamente leggero: per le guide passo per passo esistono addon dedicati,
 come RestedXP.
 
 **Come leggere il pannello**
-- **Selettori** in cima ad alcune schede: professione e sezione (Professioni), profilo di gioco
-  (Oro), filtro (Pet). La scelta viene ricordata.
+- **Selettori** in cima alle schede: obiettivo (Oggi), filtro (Delve e Pet), professione e
+  sezione (Professioni), profilo e sezione (Oro). La scelta viene ricordata. I pulsanti verdi
+  sono azioni, per esempio avviare o fermare la sessione di farm.
 - **Riquadri colorati:** blu per le informazioni e le cose da fare (aprire una finestra, fare
   una scansione), verde per i consigli, arancione per gli avvisi.
 - **Barre:** livello della professione con le fasi della guida e il segno del punto in cui sei,
@@ -34,8 +32,12 @@ come RestedXP.
   frammenti delle delve, diario delle missioni.
 - **Passi numerati:** il numero a sinistra indica l'ordine oppure i punti da mettere in un nodo
   della specializzazione.
-- **Tabelle:** ricette (punti e costo a punto), lista della spesa (quanto comprare, quanto hai,
-  costo), fonti dei punti conoscenza, pet consigliati per contenuto.
+- **Tabelle:** world quest ed eventi, delve, zone per livello, ricette (punti e costo a punto),
+  lista della spesa (quanto comprare, quanto hai, costo), fonti dei punti conoscenza, oggetti
+  delle borse, materiali da farmare, pet per zona e pet consigliati per contenuto.
+
+Ogni informazione sta in una sola scheda: le world quest si leggono solo in Oggi, la Great Vault
+è in Oggi, Concentrazione e punti conoscenza sono in Professioni; le altre schede rimandano lì.
 
 **Clic sulle righe**
 - **Clic sinistro:** calcola il **percorso più veloce** (vedi sotto) e mette il waypoint sul
@@ -150,11 +152,20 @@ I testi sono riassunti, non copiati.
 - Spawn, famiglie e requisiti vanno verificati in gioco; Blizzard può cambiarli con le patch.
 - Le famiglie sono in inglese, come compaiono su Petopia e Wowhead.
 
-## Attività consigliate
+## Oggi: attività consigliate
 
-La scheda **Attività** ha in cima il selettore dell'**obiettivo**. Le world quest sono lette dal
-gioco in tutte le zone di Quel'Thalas (Coiled Isle compresa) con le loro ricompense; il clic su
-una riga calcola il percorso.
+La scheda **Oggi** ha in cima il selettore dell'**obiettivo**. Le world quest sono lette dal
+gioco in tutte le zone di Quel'Thalas (Coiled Isle compresa) e nelle zone del continente in cui
+ti trovi, con le loro ricompense; il clic su una riga calcola il percorso.
+
+**Riepilogo** (la vista iniziale)
+- **Da fare adesso:** la cosa migliore per ogni obiettivo (per esempio l'upgrade più grande, la
+  categoria della Vault più vicina a uno slot) e l'avviso se la Great Vault ha ricompense da
+  ritirare.
+- **Eventi e festività** di oggi in una tabella, con il tempo rimasto.
+- **World quest in scadenza**, con la ricompensa in colonna (le prime 15; le altre si vedono
+  scegliendo un obiettivo).
+- **La settimana:** barra del Traveler's Log e tempo ai reset giornaliero e settimanale.
 
 **Equipaggiamento**
 - Le world quest che danno un oggetto **migliore di quello che indossi** in quello slot (per anelli,
@@ -205,7 +216,12 @@ Renown, ordini delle professioni).
 
 ## Guida alle professioni
 
-La scheda **Professioni** ha due selettori in cima: la **professione** e la **sezione**.
+La scheda **Professioni** ha due selettori in cima: la **professione** e la **sezione**. Sotto i
+selettori, per la professione scelta:
+- una barra della **Concentrazione**, arancione quando è piena e la stai sprecando;
+- i **punti conoscenza** non spesi.
+
+Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno una volta.
 
 **Livellamento**
 - Una **barra da 1 a 100** divisa nelle fasi della guida, con il segno del tuo livello.
@@ -262,17 +278,15 @@ Midnight dalla tabella SkillLine di wago.tools.
   riaprila dopo aver salito qualche punto.
 - Le ricette non imparate non entrano nel calcolo: la guida ricorda quando tornare dal trainer.
 
-## Strategie per l'oro
+## Oro: strategie, borse e farm
 
-La scheda **Oro** ha in cima il selettore del **profilo** di gioco. Per ogni tua professione
-mostra:
-- la **fascia per fare oro** (S, A o B) accanto al nome;
-- una barra della **Concentrazione**, arancione quando è piena e la stai sprecando;
-- i **punti conoscenza** non spesi.
+La scheda **Oro** ha in cima due selettori: il **profilo** di gioco e la **sezione** (Strategie,
+Borse e prezzi, Da farmare). Il profilo vale per tutte e tre le sezioni.
 
-Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno una volta.
-Poi, per ogni professione, un riquadro con il **perché** della sua fascia e i **passi numerati**
-adatti al profilo; in fondo i consigli validi per tutti.
+**Strategie.** Le tue professioni con la **fascia per fare oro** (S, A o B) accanto al nome; poi,
+per ogni professione, un riquadro con il **perché** della sua fascia e i **passi numerati**
+adatti al profilo; in fondo i consigli validi per tutti. Concentrazione, punti conoscenza e build
+di vendita sono nella scheda Professioni, che a sua volta rimanda qui per cosa conviene vendere.
 
 Il profilo si sceglie con il selettore, con `/rac profilo` o dalle opzioni:
 
@@ -304,7 +318,7 @@ Le strategie sono scritte per questo addon (riassumendo Icy Veins e guide pubbli
 riportano cifre in oro, perché prezzi e domanda cambiano da reame a reame: la scheda ricorda
 sempre di controllare la casa d'aste.
 
-## Asta: cosa vendere e cosa farmare
+### Borse e prezzi, Da farmare
 
 I prezzi vengono dalla **scansione completa** della casa d'aste:
 - Con la casa d'aste aperta compare il pulsante **"RotAssist: scansione prezzi"**.
@@ -313,7 +327,7 @@ I prezzi vengono dalla **scansione completa** della casa d'aste:
 
 Se la scansione ha più di 3 giorni e hai **Auctionator** o **TSM**, si usano i loro prezzi.
 
-**Borse.** Per ogni oggetto la scheda confronta il prezzo d'asta, al netto della commissione
+**Borse e prezzi.** Due tabelle (oggetto, quantità, valore). Per ogni oggetto la scheda confronta il prezzo d'asta, al netto della commissione
 del 5%, con il prezzo del vendor:
 - **All'asta:** quando rende almeno 1 oro e il 25% in più del vendor.
 - **Al vendor:** oggetti vincolati, grigi, oggetti senza prezzo d'asta, oppure quando l'asta
@@ -323,7 +337,8 @@ Il tooltip di ogni oggetto mostra prezzo d'asta, prezzo del vendor e guadagno a 
 
 **Da farmare.** Dopo la scansione, l'addon individua da solo i **materiali dell'espansione
 attuale** in vendita: erbe, minerali, pelli, stoffe, carne e pesce, elementali, materiali
-d'incantamento. Li ordina in base al profilo:
+d'incantamento. Li mostra in una tabella (materiale, prezzo, quantità in vendita, chi può
+raccoglierlo o la resa misurata) ordinata in base al profilo:
 
 | Profilo | Classifica |
 |---|---|
@@ -331,7 +346,8 @@ d'incantamento. Li ordina in base al profilo:
 | **Medio** | stessi materiali, per valore pesato sulla profondità del mercato |
 | **Assiduo** | tutti i materiali (in grigio quelli che richiedono una professione che non hai), per **oro all'ora misurato** dove c'è una sessione, altrimenti per valore e profondità |
 
-**Sessione di farm.** Avviala con il pulsante in basso nella scheda o con `/rac farm`. L'addon
+**Sessione di farm.** Avviala con il pulsante verde in cima alla sezione Da farmare o con
+`/rac farm`. L'addon
 conta cosa entra nelle borse e ne mostra il valore e l'oro all'ora. Se la sessione dura almeno
 5 minuti, la resa di ogni materiale viene ricordata e usata nella classifica.
 
@@ -346,15 +362,12 @@ conta cosa entra nelle borse e ne mostra il valore e l'oro all'ora. Se la sessio
 | Comando | Effetto |
 |---|---|
 | `/rac` | apre o chiude il pannello |
-| `/rac delve` · `eventi` · `settimanale` · `levelling` · `oro` | apre la scheda (anche in inglese: `delves`, `events`, `weekly`, `leveling`, `gold`) |
-| `/rac profilo occasionale|medio|assiduo` | profilo per le strategie sull'oro (senza argomento passa al successivo) |
-| `/rac professioni` | apre la scheda Professioni (anche `prof` o `professions`) |
-| `/rac attivita` | apre la scheda Attività (anche `activities` o `obiettivi`) |
+| `/rac oggi` · `delve` · `levelling` · `professioni` · `oro` · `pet` | apre la scheda (anche in inglese: `today`, `delves`, `leveling`, `professions`, `gold`, `pets`) |
+| `/rac eventi` · `settimanale` · `attivita` · `asta` | nomi delle vecchie schede, ancora validi: aprono Oggi (Riepilogo o Great Vault) oppure Oro (Borse e prezzi) |
+| `/rac profilo occasionale|medio|assiduo` | profilo per l'oro e i materiali da farmare (senza argomento passa al successivo) |
 | `/rac stop` | annulla il percorso in corso |
-| `/rac asta` | apre la scheda Asta |
 | `/rac scan` | scansione dei prezzi (con la casa d'aste aperta) |
 | `/rac farm` | avvia o ferma la sessione di farm |
-| `/rac pet` | apre la scheda Pet (pet da cacciatore rari) |
 | `/rac aggiorna` | aggiorna subito i dati |
 | `/rac riepilogo` | riepilogo in chat: delve abbondanti, chiavi, Great Vault |
 | `/rac config` | pannello opzioni |

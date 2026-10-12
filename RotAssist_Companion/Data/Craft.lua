@@ -401,11 +401,6 @@ function C:SpecRows(rows, p, guide)
     local L = ns.L
     local key = p.key
     local childID = ns.CraftGuide.MIDNIGHT[p.skillLine]
-    local knowledge = ns.Gold:Knowledge(p.skillLine)
-    if knowledge and knowledge > 0 then
-        rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_KP_TO_SPEND:format(knowledge) }
-    end
-
     -- consiglio per il personaggio
     local class, specID = PlayerSpec()
     local advice, suggested = ns.CraftGuide:Advice(key, class, specID)
@@ -468,6 +463,7 @@ function C:SpecRows(rows, p, guide)
     end
     for _, note in ipairs(b.notes or {}) do rows[#rows + 1] = { kind = "note", text = note } end
     if total > 0 then rows[#rows + 1] = { kind = "note", text = L.CRAFT_BUILD_TOTAL:format(total) } end
+    rows[#rows + 1] = { kind = "note", text = L.CRAFT_SEE_GOLD }
 end
 
 ---------------------------------------------------------------------------
@@ -475,10 +471,6 @@ end
 ---------------------------------------------------------------------------
 function C:KnowledgeRows(rows, p)
     local L = ns.L
-    local knowledge = ns.Gold:Knowledge(p.skillLine)
-    if knowledge and knowledge > 0 then
-        rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_KP_TO_SPEND:format(knowledge) }
-    end
     local widths, align = { 0.5, 0.2, 0.3 }, { "LEFT", "RIGHT", "RIGHT" }
     rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
                         cols = { L.CRAFT_COL_SOURCE, L.CRAFT_COL_KP, L.CRAFT_COL_WHEN } }
@@ -487,6 +479,29 @@ function C:KnowledgeRows(rows, p)
     end
     for _, note in ipairs(ns.CraftGuide:Text("knowledgeNotes")) do
         rows[#rows + 1] = { kind = "step", badge = "!", badgeColor = { 0.35, 0.65, 1 }, text = note }
+    end
+end
+
+---------------------------------------------------------------------------
+-- Stato della professione: Concentrazione e punti conoscenza da spendere
+---------------------------------------------------------------------------
+function C:StatusRows(rows, p)
+    local L, G = ns.L, ns.Gold
+    local cur, max = G:Concentration(p.skillLine)
+    if cur then
+        local full = cur >= max
+        rows[#rows + 1] = {
+            kind = "bar", min = 0, max = max, value = cur,
+            color = full and { 1, 0.6, 0.2 } or { 0.35, 0.65, 1 },
+            label = L.CONCENTRATION:format(cur, max), labelColor = full and { 1, 0.6, 0.2 } or nil,
+            right = full and L.CONC_FULL_SHORT or L.CONC_FULL_IN:format(A.TimeText((max - cur) / G.CONCENTRATION_PER_DAY * 86400)),
+        }
+    elseif not ns.CraftGuide.GATHERING[p.skillLine] then
+        rows[#rows + 1] = { kind = "note", text = L.CONC_UNKNOWN }
+    end
+    local knowledge = G:Knowledge(p.skillLine)
+    if knowledge and knowledge > 0 then
+        rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_KP_TO_SPEND:format(knowledge) }
     end
 end
 
@@ -533,6 +548,7 @@ function C:Rows()
     local level = (scan and scan.level) or p.rank or 0
     local max = (scan and scan.max) or p.max or 100
 
+    self:StatusRows(rows, p)
     rows[#rows + 1] = { header = L["CRAFT_SEC_" .. section] }
     if section == "level" then
         self:LevelRows(rows, p, guide, level, max)

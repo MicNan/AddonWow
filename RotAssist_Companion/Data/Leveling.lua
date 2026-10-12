@@ -82,8 +82,9 @@ function LV:Rows()
         rows[#rows + 1] = { header = L.HDR_ZONE }
         local name = A.ZoneName(mapID)
         local minL, maxL = A.Call(C_Map.GetMapLevels, mapID)
-        local text = (minL and maxL and maxL > 0) and L.ZONE_LEVELS:format(name, minL, maxL) or name
-        rows[#rows + 1] = { text = text, link = { search = name }, linkTitle = name }
+        rows[#rows + 1] = { kind = "tr", widths = { 0.7, 0.3 }, align = { "LEFT", "RIGHT" },
+                            cols = { name, (minL and maxL and maxL > 0) and ("%d-%d"):format(minL, maxL) or "" },
+                            link = { search = name }, linkTitle = name }
     end
 
     -- zone del continente adatte al livello
@@ -100,8 +101,13 @@ function LV:Rows()
             end
         end
         table.sort(found, function(a, b) return a.min < b.min end)
+        if #found > 0 then
+            rows[#rows + 1] = { kind = "thead", widths = { 0.7, 0.3 }, align = { "LEFT", "RIGHT" },
+                                cols = { L.LVL_COL_ZONE, L.LVL_COL_LEVELS } }
+        end
         for _, z in ipairs(found) do
-            rows[#rows + 1] = { text = L.ZONE_LEVELS:format(z.name, z.min, z.max),
+            rows[#rows + 1] = { kind = "tr", widths = { 0.7, 0.3 }, align = { "LEFT", "RIGHT" },
+                                cols = { z.name, ("%d-%d"):format(z.min, z.max) },
                                 link = { search = z.name }, linkTitle = z.name }
         end
         if #found == 0 then rows[#rows + 1] = { kind = "note", text = L.NO_ZONES } end

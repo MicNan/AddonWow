@@ -1,4 +1,5 @@
 -- RotAssist Companion - Weekly
+-- Fonte di dati per la scheda Oggi (Activities.lua):
 -- * Great Vault: C_WeeklyRewards.GetActivities, raggruppato per tipo
 --   (1 = dungeon, 3 = raid, 6 = delve e attivita' nel mondo).
 -- * Traveler's Log: C_PerksActivities.GetPerksActivitiesInfo.
@@ -60,54 +61,8 @@ function W:TravelersLog()
     }
 end
 
-function W:Rows()
-    local L, rows = ns.L, {}
-
-    rows[#rows + 1] = { header = L.HDR_VAULT }
-    if self:VaultReady() then
-        rows[#rows + 1] = { kind = "callout", style = "tip", text = L.VAULT_READY }
-    end
-    local vault = self:Vault()
-    for _, t in ipairs(VAULT_TYPES) do
-        local slots = vault[t.type]
-        if slots and #slots > 0 then
-            -- una barra per tipo: avanzamento e soglie degli slot
-            local done, ticks, progress, nextT = 0, {}, 0, nil
-            for _, s in ipairs(slots) do
-                ticks[#ticks + 1] = s.threshold
-                progress = math.max(progress, s.progress)
-                if s.done then done = done + 1 elseif not nextT then nextT = s.threshold end
-            end
-            local last = slots[#slots].threshold
-            local tip = { L[t.key] }
-            for i, s in ipairs(slots) do
-                tip[#tip + 1] = L.VAULT_SLOT_TIP:format(i, math.min(s.progress, s.threshold), s.threshold,
-                    (s.done and s.level and s.level > 0) and (" - " .. L.VAULT_ITEM_LEVEL:format(s.level)) or "")
-            end
-            rows[#rows + 1] = { text = L[t.key], right = L.VAULT_SLOTS:format(done, #slots), tooltip = tip,
-                                color = done == #slots and { 0.4, 1, 0.4 } or nil }
-            rows[#rows + 1] = { kind = "bar", min = 0, max = last, value = math.min(progress, last), ticks = ticks,
-                                color = done > 0 and { 0.35, 0.85, 0.45 } or { 0.35, 0.65, 1 },
-                                label = L.VAULT_PROGRESS:format(math.min(progress, last), last),
-                                right = nextT and L.VAULT_NEXT:format(nextT - progress) or L.VAULT_ALL_DONE }
-        end
-    end
-
-    local log = self:TravelersLog()
-    if log then
-        rows[#rows + 1] = { header = L.HDR_LOG }
-        rows[#rows + 1] = {
-            text = L.LOG_PROGRESS:format(log.month, log.done, log.total, log.points),
-            right = log.secondsLeft and A.TimeText(log.secondsLeft) or nil,
-        }
-    end
-
-    rows[#rows + 1] = { header = L.HDR_RESETS }
-    if C_DateAndTime and C_DateAndTime.GetSecondsUntilDailyReset then
-        rows[#rows + 1] = { text = L.RESET_DAILY:format(A.TimeText(A.Call(C_DateAndTime.GetSecondsUntilDailyReset))) }
-    end
-    if C_DateAndTime and C_DateAndTime.GetSecondsUntilWeeklyReset then
-        rows[#rows + 1] = { text = L.RESET_WEEKLY:format(A.TimeText(A.Call(C_DateAndTime.GetSecondsUntilWeeklyReset))) }
-    end
-    return rows
+-- Secondi ai reset giornaliero e settimanale (nil se non disponibili)
+function W:Resets()
+    if not C_DateAndTime then return nil, nil end
+    return A.Call(C_DateAndTime.GetSecondsUntilDailyReset), A.Call(C_DateAndTime.GetSecondsUntilWeeklyReset)
 end

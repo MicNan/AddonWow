@@ -1,11 +1,11 @@
 -- RotAssist Companion - Panel
--- Finestra con nove schede (Delve, Eventi, Settimanale, Attivita', Levelling,
--- Oro, Professioni, Asta, Pet). Ogni scheda e' un elenco di righe prodotto da
+-- Finestra con sei schede: Oggi, Delve, Levelling, Professioni, Oro, Pet. Ogni scheda e' un elenco di righe prodotto da
 -- Data\*.lua. Tipi di riga (campo 'kind', predefinito "line"):
 --   { header = "titolo" }                      titolo di sezione con riga sotto
 --   { kind = "sub", text }                     sottotitolo
 --   { kind = "phase", text }                   titolo di una fase (arancione)
---   { kind = "pills", items = { { label, selected, onClick } } }   selettori
+--   { kind = "pills", items = { { label, selected, onClick, action } } }
+--                                              selettori (action = comando)
 --   { kind = "callout", style = "info"|"tip"|"warn", title?, text }   riquadro
 --   { kind = "step", badge = "10", text }      passo con numero/punti a sinistra
 --   { kind = "thead"|"tr", cols = {...}, widths = {...}, align = {...},
@@ -34,16 +34,34 @@ local CONTENT_W = WIDTH - 48
 local AUTO_REFRESH = 30
 
 local TABS = {
+    { key = "today",    label = "TAB_TODAY",    source = function() return ns.Activities end },
     { key = "delves",   label = "TAB_DELVES",   source = function() return ns.Delves end },
-    { key = "events",   label = "TAB_EVENTS",   source = function() return ns.Events end },
-    { key = "weekly",   label = "TAB_WEEKLY",   source = function() return ns.Weekly end },
-    { key = "activities", label = "TAB_ACTIVITIES", source = function() return ns.Activities end },
     { key = "leveling", label = "TAB_LEVELING", source = function() return ns.Leveling end },
-    { key = "gold",     label = "TAB_GOLD",     source = function() return ns.Gold end },
     { key = "craft",    label = "TAB_CRAFT",    source = function() return ns.Craft end },
-    { key = "market",   label = "TAB_MARKET",   source = function() return ns.Market end },
+    { key = "gold",     label = "TAB_GOLD",     source = function() return ns.Gold end },
     { key = "pets",     label = "TAB_PETS",     source = function() return ns.Pets end },
 }
+
+-- Schede delle versioni precedenti: dove sono finite (scheda, vista)
+local OLD_TABS = {
+    events = { "today", "summary" }, weekly = { "today", "vault" }, activities = { "today" },
+    market = { "gold", "bags" },
+}
+P.OLD_TABS = OLD_TABS
+
+-- Scheda valida per una chiave (anche vecchia); imposta la vista se serve
+local function ResolveTab(key)
+    local old = OLD_TABS[key]
+    if old then
+        if old[2] and ns.db then
+            if old[1] == "today" then ns.db.actGoal = old[2] else ns.db.goldSection = old[2] end
+        end
+        return old[1]
+    end
+    for _, t in ipairs(TABS) do if t.key == key then return key end end
+    return "today"
+end
+P.ResolveTab = ResolveTab
 
 -- Colori dei riquadri e degli elementi grafici
 local STYLE = {
@@ -283,7 +301,10 @@ function Draw.pills(row, d)
         b:SetWidth(w)
         b:ClearAllPoints()
         b:SetPoint("LEFT", row, "LEFT", x, 0)
-        if item.selected then
+        if item.action then
+            Color(b.bg, STYLE.tip, 0.4)
+            b.label:SetTextColor(1, 1, 1)
+        elseif item.selected then
             Color(b.bg, STYLE.info, 0.45)
             b.label:SetTextColor(1, 1, 1)
         else
@@ -514,12 +535,6 @@ function P:Create()
         local b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         b:SetSize(tabW - 4, 22)
         b:SetPoint("TOPLEFT", 12 + (i - 1) * tabW, -28)
-        -- carattere piccolo: nove schede devono stare in una riga
-        if b.SetNormalFontObject then
-            b:SetNormalFontObject("GameFontNormalSmall")
-            b:SetHighlightFontObject("GameFontHighlightSmall")
-            b:SetDisabledFontObject("GameFontDisableSmall")
-        end
         b:SetText(L[t.label])
         b:SetScript("OnClick", function() P:SelectTab(t.key) end)
         b.key = t.key
@@ -558,24 +573,6 @@ function P:Create()
     f.routeCancel:SetScript("OnClick", function() ns.Travel:Stop() end)
     f.routeCancel:Hide()
 
-    -- sessione di farm (scheda Asta)
-    f.farm = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    f.farm:SetSize(180, 22)
-    f.farm:SetPoint("BOTTOMLEFT", 10, 10)
-    f.farm:SetScript("OnClick", function() ns.Market:ToggleSession() end)
-    f.farm:Hide()
-
-    f.bountiful = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
-    f.bountiful:SetSize(22, 22)
-    f.bountiful:SetPoint("BOTTOMLEFT", 10, 10)
-    f.bountiful.label = f.bountiful:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.bountiful.label:SetPoint("LEFT", f.bountiful, "RIGHT", 2, 0)
-    f.bountiful.label:SetText(L.ONLY_BOUNTIFUL)
-    f.bountiful:SetScript("OnClick", function(self)
-        ns.db.onlyBountiful = self:GetChecked() and true or false
-        P:Refresh()
-    end)
-
     -- aggiornamento automatico mentre il pannello e' aperto
     local elapsed = 0
     f:SetScript("OnUpdate", function(_, dt)
@@ -589,7 +586,8 @@ function P:Create()
 
     self.frame = f
     self:ApplyPosition()
-    self.tab = ns.db.tab or "delves"
+    self.tab = ResolveTab(ns.db.tab or "today")
+    ns.db.tab = self.tab
 end
 
 function P:ApplyPosition()
@@ -600,6 +598,7 @@ function P:ApplyPosition()
 end
 
 function P:SelectTab(key)
+    key = ResolveTab(key)
     self.tab = key
     ns.db.tab = key
     if self.frame and self.frame:IsShown() then self:Refresh() else self:Show() end
@@ -611,7 +610,7 @@ function P:Toggle()
 end
 
 function P:Show(tab)
-    if tab then self.tab = tab; ns.db.tab = tab end
+    if tab then tab = ResolveTab(tab); self.tab = tab; ns.db.tab = tab end
     if not self.frame then return end
     if self.frame:IsShown() then self:Refresh() else self.frame:Show() end
 end
@@ -658,17 +657,13 @@ function P:Refresh()
     for _, b in ipairs(f.tabs) do
         if b.key == self.tab then b:Disable() else b:Enable() end
     end
-    f.bountiful:SetShown(self.tab == "delves")
-    f.farm:SetShown(self.tab == "market")
-    f.farm:SetText(ns.Market.session and L.BTN_FARM_STOP or L.BTN_FARM_START)
     if self.tab ~= "pets" then ns.Pets:HidePreview() end
     self:UpdateRoute()
-    f.bountiful:SetChecked(ns.db.onlyBountiful and true or false)
     if A.InCombat() then
         f.status:SetText(L.IN_COMBAT)
         return
     end
-    local source = TabSource(self.tab) or ns.Delves
+    local source = TabSource(self.tab) or ns.Activities
     local ok, rows = pcall(source.Rows, source)
     if not ok then
         ns:ReportError(rows)

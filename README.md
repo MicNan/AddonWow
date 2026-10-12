@@ -43,20 +43,18 @@ RotAssist parte dal suggerimento nativo di **Assisted Combat**
 ## RotAssist Companion
 
 Secondo addon del repository, indipendente da RotAssist e attivo solo fuori dal combattimento.
-Le sue schede coprono:
+Le sue sei schede coprono:
+- **Oggi:** un riepilogo (cosa fare adesso, eventi e festività, world quest in scadenza, Traveler's
+  Log e reset) e le attività consigliate per obiettivo (equipaggiamento, Great Vault,
+  reputazione, oro), con le ricompense delle world quest confrontate con il tuo equipaggiamento
+  e con la priorità delle statistiche della tua specializzazione.
 - **Delve:** delve attive con le abbondanti in evidenza, chiavi, compagno.
-- **Eventi:** eventi sulla mappa, world quest, festività.
-- **Settimanale:** Great Vault, Traveler's Log, reset.
 - **Levelling:** XP/ora e zone adatte al tuo livello.
-- **Oro:** strategie per le tue professioni secondo il profilo (occasionale, medio, assiduo).
-- **Attività:** cosa fare oggi secondo l'obiettivo (equipaggiamento, Great Vault, reputazione,
-  oro), con le ricompense delle world quest confrontate con il tuo equipaggiamento e con la
-  priorità delle statistiche della tua specializzazione.
-- **Professioni:** guida 1-100 secondo il tuo livello, cosa creare adesso al costo più basso,
-  cosa comprare in base a quello che hai già, specializzazione consigliata per il tuo
-  equipaggiamento.
-- **Asta:** cosa mettere all'asta e cosa vendere al vendor, quali materiali farmare, oro all'ora
-  misurato.
+- **Professioni:** Concentrazione e punti conoscenza, guida 1-100 secondo il tuo livello, cosa
+  creare adesso al costo più basso, cosa comprare in base a quello che hai già, specializzazione
+  consigliata per il tuo equipaggiamento.
+- **Oro:** strategie per le tue professioni secondo il profilo (occasionale, medio, assiduo),
+  cosa mettere all'asta e cosa vendere al vendor, quali materiali farmare, oro all'ora misurato.
 - **Pet:** pet da cacciatore rari di Midnight e spirit beast di tutte le espansioni, con
   anteprima 3D, requisiti, istruzioni per domarli, percorso con i portali e avviso quando
   compaiono sulla minimappa.
@@ -79,10 +77,10 @@ Documentazione completa, piano di test e limiti noti sono in
 | Percorso | Contenuto |
 |---|---|
 | `RotAssist/` | l'addon di rotazione (Lua + XML, nessuna libreria esterna) |
-| `RotAssist_Companion/` | l'addon per delve, eventi, settimanali, attività consigliate, levelling, percorsi, oro, professioni, asta e pet da cacciatore |
+| `RotAssist_Companion/` | l'addon fuori dal combattimento: attività di oggi, delve, levelling, professioni, oro e asta, pet da cacciatore, percorsi |
 | `docs/` | dati e analisi raccolti per i moduli |
 | `tests/` | test in WoW simulato: sintassi Lua 5.1 e scenari con i dati nascosti del combattimento |
-| `TODO.md` | attività aperte: razionalizzazione delle schede, grafica uniforme, estensione a tutte le classi e professioni |
+| `TODO.md` | piano di lavoro e attività aperte: verifica in gioco, estensione a tutte le classi e professioni |
 
 ## Test
 

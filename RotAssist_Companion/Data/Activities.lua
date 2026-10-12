@@ -1,13 +1,18 @@
 -- RotAssist Companion - Activities
--- Scheda "Attivita'": cosa fare oggi e questa settimana secondo l'obiettivo
--- scelto (equipaggiamento, Great Vault, reputazione, oro).
+-- Scheda "Oggi": cosa fare oggi e questa settimana. Il selettore in cima
+-- sceglie la vista: riepilogo (il meglio di ogni obiettivo, eventi,
+-- festivita', world quest in scadenza, Traveler's Log e reset) oppure un
+-- obiettivo (equipaggiamento, Great Vault, reputazione, oro).
+-- Unica lettura delle world quest dell'addon: le altre schede non le leggono.
 --
 -- Dati letti dal gioco (sempre aggiornati):
---  * world quest di Quel'Thalas con le ricompense: oggetti (livello e
+--  * world quest di Quel'Thalas e del continente in cui ti trovi, con le
+--    ricompense: oggetti (livello e
 --    statistiche confrontati con quello che indossi e con la priorita' delle
 --    statistiche della tua specializzazione, StatPriority.lua), crest, oro,
 --    reputazione delle fazioni maggiori;
---  * Great Vault: avanzamento e soglie per tipo (Weekly.lua);
+--  * Great Vault, Traveler's Log e reset (Weekly.lua); eventi sulla mappa e
+--    festivita' (Events.lua);
 --  * Renown delle fazioni maggiori.
 -- In piu' un elenco curato di attivita' settimanali ricorrenti della 12.1 e i
 -- livelli oggetto della Season 2, riassunti da guide pubbliche.
@@ -18,7 +23,7 @@ local A = ns.API
 local AC = { pending = 0 }
 ns.Activities = AC
 
-local GOALS = { "gear", "vault", "rep", "gold" }
+local GOALS = { "summary", "gear", "vault", "rep", "gold" }
 AC.GOALS = GOALS
 local ROOT = 2537            -- Quel'Thalas: tutte le zone di Midnight
 local SCAN_TTL = 20
@@ -70,7 +75,14 @@ function AC:Scan()
     local out, seen, pending = {}, {}, 0
     local QL = C_QuestLog or {}
     if not (C_TaskQuest and C_TaskQuest.GetQuestsOnMap) then return out, 0 end
-    for _, zone in ipairs(A.Zones(ROOT)) do
+    local zones, seenZone = {}, {}
+    local here = A.ContinentOf(A.PlayerMap())
+    for _, root in ipairs({ ROOT, here ~= ROOT and here or nil }) do
+        for _, z in ipairs(A.Zones(root)) do
+            if not seenZone[z.mapID] then seenZone[z.mapID] = true; zones[#zones + 1] = z end
+        end
+    end
+    for _, zone in ipairs(zones) do
         local quests = A.Call(C_TaskQuest.GetQuestsOnMap, zone.mapID)
         if type(quests) == "table" then
             for _, q in ipairs(quests) do
@@ -82,6 +94,8 @@ function AC:Scan()
                         zone = zone.name, mapID = zone.mapID, x = q.x, y = q.y,
                         secondsLeft = A.Call(C_TaskQuest.GetQuestTimeLeftSeconds, id),
                     }
+                    local tag = A.Call(QL.GetQuestTagInfo, id)
+                    wq.elite = type(tag) == "table" and tag.isElite or false
                     -- le ricompense arrivano dal server: se mancano le chiediamo
                     if HaveQuestRewardData and A.Call(HaveQuestRewardData, id) == false then
                         if C_TaskQuest.RequestPreloadRewardData then pcall(C_TaskQuest.RequestPreloadRewardData, id) end
@@ -219,14 +233,10 @@ function AC:StatRows(rows, prio)
     if prio.note then rows[#rows + 1] = { kind = "note", text = L[prio.note] } end
 end
 
-function AC:GearRows(rows)
-    local L = ns.L
-    local prio = ns.StatPriority:Current()
-    local quests = self:Quests()
-
-    -- oggetti in ricompensa che migliorano il tuo equipaggiamento
+-- Oggetti in ricompensa che migliorano il tuo equipaggiamento (dal migliore)
+function AC:GearUpgrades(prio)
     local ups, others = {}, 0
-    for _, q in ipairs(quests) do
+    for _, q in ipairs(self:Quests()) do
         for _, item in ipairs(q.items or {}) do
             if item.usable and item.equipLoc and SLOTS[item.equipLoc] then
                 local e = self:Evaluate(item, prio)
@@ -238,6 +248,14 @@ function AC:GearRows(rows)
         if a.e.delta ~= b.e.delta then return a.e.delta > b.e.delta end
         return (a.e.match or 0) > (b.e.match or 0)
     end)
+    return ups, others
+end
+
+function AC:GearRows(rows)
+    local L = ns.L
+    local prio = ns.StatPriority:Current()
+    local quests = self:Quests()
+    local ups, others = self:GearUpgrades(prio)
     rows[#rows + 1] = { header = L.ACT_GEAR_UPGRADES }
     if #ups == 0 then
         rows[#rows + 1] = { kind = "callout", style = "info", text = L.ACT_GEAR_NONE }
@@ -304,8 +322,9 @@ end
 ---------------------------------------------------------------------------
 -- Obiettivo: Great Vault
 ---------------------------------------------------------------------------
-function AC:VaultRows(rows)
-    local L, W = ns.L, ns.Weekly
+-- Categorie della Great Vault, la piu' vicina al prossimo slot per prima
+function AC:VaultCategories()
+    local W = ns.Weekly
     local vault = W:Vault()
     local cats, unlocked = {}, 0
     for _, t in ipairs(W.VAULT_TYPES) do
@@ -326,8 +345,13 @@ function AC:VaultRows(rows)
                                 remaining = nextT and (nextT - progress) or math.huge }
         end
     end
-    -- prima la categoria piu' vicina al prossimo slot
     table.sort(cats, function(a, b) return a.remaining < b.remaining end)
+    return cats, unlocked
+end
+
+function AC:VaultRows(rows)
+    local L, W = ns.L, ns.Weekly
+    local cats, unlocked = self:VaultCategories()
 
     rows[#rows + 1] = { header = L.ACT_VAULT }
     if W:VaultReady() then rows[#rows + 1] = { kind = "callout", style = "tip", text = L.VAULT_READY } end
@@ -395,11 +419,38 @@ function AC:Factions()
     return out
 end
 
+-- World quest con reputazione per fazioni non al massimo
+function AC:RepQuests(factions)
+    local byID, list = {}, {}
+    for _, f in ipairs(factions) do byID[f.id] = f end
+    for _, q in ipairs(self:Quests()) do
+        for _, r in ipairs(q.reps or {}) do
+            local f = type(r) == "table" and byID[r.factionID]
+            if f and not f.maxed and (r.rewardAmount or 0) > 0 then
+                list[#list + 1] = { q = q, f = f, amount = r.rewardAmount }
+            end
+        end
+    end
+    table.sort(list, function(a, b)
+        if a.f.frac ~= b.f.frac then return a.f.frac > b.f.frac end
+        return a.amount > b.amount
+    end)
+    return list
+end
+
+-- World quest con oro, dalla piu' ricca
+function AC:GoldQuests()
+    local list, total = {}, 0
+    for _, q in ipairs(self:Quests()) do
+        if (q.money or 0) > 0 then list[#list + 1] = q; total = total + q.money end
+    end
+    table.sort(list, function(a, b) return a.money > b.money end)
+    return list, total
+end
+
 function AC:RepRows(rows)
     local L = ns.L
     local factions = self:Factions()
-    local byID = {}
-    for _, f in ipairs(factions) do byID[f.id] = f end
 
     rows[#rows + 1] = { header = L.ACT_REP }
     if #factions == 0 then
@@ -414,20 +465,7 @@ function AC:RepRows(rows)
         }
     end
 
-    -- world quest con reputazione per fazioni non al massimo
-    local list = {}
-    for _, q in ipairs(self:Quests()) do
-        for _, r in ipairs(q.reps or {}) do
-            local f = type(r) == "table" and byID[r.factionID]
-            if f and not f.maxed and (r.rewardAmount or 0) > 0 then
-                list[#list + 1] = { q = q, f = f, amount = r.rewardAmount }
-            end
-        end
-    end
-    table.sort(list, function(a, b)
-        if a.f.frac ~= b.f.frac then return a.f.frac > b.f.frac end
-        return a.amount > b.amount
-    end)
+    local list = self:RepQuests(factions)
     rows[#rows + 1] = { kind = "sub", text = L.ACT_REP_QUESTS }
     if #list == 0 then
         rows[#rows + 1] = { kind = "note", text = L.ACT_REP_QUESTS_NONE }
@@ -451,17 +489,11 @@ end
 ---------------------------------------------------------------------------
 function AC:GoldRows(rows)
     local L = ns.L
-    local list = {}
-    for _, q in ipairs(self:Quests()) do
-        if (q.money or 0) > 0 then list[#list + 1] = q end
-    end
-    table.sort(list, function(a, b) return a.money > b.money end)
+    local list, total = self:GoldQuests()
     rows[#rows + 1] = { header = L.ACT_GOLD }
     if #list == 0 then
         rows[#rows + 1] = { kind = "callout", style = "info", text = L.ACT_GOLD_NONE }
     else
-        local total = 0
-        for _, q in ipairs(list) do total = total + q.money end
         rows[#rows + 1] = { kind = "callout", style = "tip", title = L.ACT_BEST_NOW,
                             text = L.ACT_GOLD_BEST:format(#list, A.Money(total)) }
         local widths, align = { 0.52, 0.28, 0.2 }, { "LEFT", "RIGHT", "RIGHT" }
@@ -477,18 +509,130 @@ function AC:GoldRows(rows)
 end
 
 ---------------------------------------------------------------------------
+-- Riepilogo: il meglio di ogni obiettivo, eventi, world quest, settimana
+---------------------------------------------------------------------------
+-- Ricompensa principale di una world quest, in breve
+local function RewardText(q)
+    local L = ns.L
+    if q.loading then return L.TODAY_LOADING end
+    for _, item in ipairs(q.items or {}) do
+        if item.equipLoc and SLOTS[item.equipLoc] and item.ilvl then return L.TODAY_REWARD_ITEM:format(item.ilvl) end
+    end
+    for _, c in ipairs(q.currencies or {}) do
+        if type(c) == "table" and CREST_TIER[c.currencyID] then
+            return ("%d %s"):format(c.totalRewardAmount or c.quantity or 0, c.name or "?")
+        end
+    end
+    if (q.money or 0) > 0 then return A.Money(q.money) end
+    local r = q.reps and q.reps[1]
+    if type(r) == "table" and (r.rewardAmount or 0) > 0 then return L.TODAY_REWARD_REP:format(r.rewardAmount) end
+    local item = q.items and q.items[1]
+    if item then return item.name or "?" end
+    return "-"
+end
+
+function AC:SummaryRows(rows)
+    local L, W, E = ns.L, ns.Weekly, ns.Events
+    local function goalStep(label, text)
+        rows[#rows + 1] = { kind = "step", badge = label, badgeColor = { 0.35, 0.85, 0.45 }, text = text }
+    end
+
+    -- da fare adesso, per obiettivo
+    rows[#rows + 1] = { header = L.ACT_BEST_NOW }
+    if W:VaultReady() then rows[#rows + 1] = { kind = "callout", style = "tip", text = L.VAULT_READY } end
+    local ups = self:GearUpgrades(ns.StatPriority:Current())
+    if ups[1] then
+        goalStep(L.ACT_GOAL_gear, L.ACT_GEAR_BEST:format(ups[1].item.name or "?", ups[1].e.delta, ups[1].q.name))
+    end
+    local cats = self:VaultCategories()
+    if cats[1] and cats[1].nextT then
+        goalStep(L.ACT_GOAL_vault, L.ACT_VAULT_BEST:format(L[cats[1].t.key], cats[1].remaining))
+    end
+    local reps = self:RepQuests(self:Factions())
+    if reps[1] then
+        goalStep(L.ACT_GOAL_rep, L.ACT_REP_BEST:format(reps[1].q.name, reps[1].amount, reps[1].f.name))
+    end
+    local golds, total = self:GoldQuests()
+    if golds[1] then goalStep(L.ACT_GOAL_gold, L.ACT_GOLD_BEST:format(#golds, A.Money(total))) end
+    if not (ups[1] or (cats[1] and cats[1].nextT) or reps[1] or golds[1]) then
+        rows[#rows + 1] = { kind = "note", text = L.TODAY_NOTHING }
+    end
+    rows[#rows + 1] = { kind = "note", text = L.TODAY_PICK_GOAL }
+
+    -- festivita' ed eventi sulla mappa
+    rows[#rows + 1] = { header = L.TODAY_EVENTS }
+    local widths, align = { 0.5, 0.3, 0.2 }, { "LEFT", "LEFT", "RIGHT" }
+    local hol, evs = E:Holidays(), E:MapEvents()
+    if #hol + #evs == 0 then
+        rows[#rows + 1] = { kind = "note", text = L.TODAY_NO_EVENTS }
+    else
+        rows[#rows + 1] = { kind = "thead", widths = widths, align = align, cols = { L.TODAY_COL_EVENT, L.TODAY_COL_WHERE, L.ACT_COL_TIME } }
+        for _, h in ipairs(hol) do
+            rows[#rows + 1] = { kind = "tr", icon = h.icon, widths = widths, align = align,
+                                cols = { h.name, L.TODAY_HOLIDAY, "" }, colors = { { 1, 0.82, 0 } },
+                                link = { search = h.name }, linkTitle = h.name }
+        end
+        for _, e in ipairs(evs) do
+            rows[#rows + 1] = {
+                kind = "tr", widths = widths, align = align,
+                cols = { e.name, e.zone or "", e.secondsLeft and A.TimeText(e.secondsLeft) or "" },
+                colors = { e.current and { 0.4, 1, 0.4 } or nil },
+                tooltip = { e.name, e.zone, e.description },
+                waypoint = e.x and { e.mapID, e.x, e.y, e.name } or nil,
+                link = { search = e.name }, linkTitle = e.name,
+            }
+        end
+    end
+
+    -- world quest in scadenza, con la ricompensa
+    local quests = {}
+    for _, q in ipairs(self:Quests()) do quests[#quests + 1] = q end
+    table.sort(quests, function(a, b) return (a.secondsLeft or 1e9) < (b.secondsLeft or 1e9) end)
+    rows[#rows + 1] = { header = L.TODAY_WORLD_QUESTS:format(#quests) }
+    if #quests == 0 then
+        rows[#rows + 1] = { kind = "note", text = L.NO_WORLD_QUESTS }
+    else
+        local w2, a2 = { 0.42, 0.24, 0.2, 0.14 }, { "LEFT", "LEFT", "LEFT", "RIGHT" }
+        rows[#rows + 1] = { kind = "thead", widths = w2, align = a2,
+                            cols = { L.ACT_COL_QUEST, L.ACT_COL_REWARD, L.TODAY_COL_WHERE, L.ACT_COL_TIME } }
+        for i = 1, math.min(15, #quests) do
+            local q = quests[i]
+            local name = q.elite and (q.name .. " (" .. L.ELITE .. ")") or q.name
+            rows[#rows + 1] = QuestRow(q, { name, RewardText(q), q.zone or "", TimeLeft(q) }, w2, a2, nil,
+                                       { q.elite and { 0.8, 0.5, 1 } or nil })
+        end
+        if #quests > 15 then rows[#rows + 1] = { kind = "note", text = L.TODAY_MORE_QUESTS:format(#quests - 15) } end
+    end
+    if self.pending > 0 then rows[#rows + 1] = { kind = "note", text = L.ACT_LOADING:format(self.pending) } end
+
+    -- la settimana: Traveler's Log e reset
+    rows[#rows + 1] = { header = L.TODAY_WEEK }
+    local log = W:TravelersLog()
+    if log and log.total > 0 then
+        rows[#rows + 1] = { kind = "bar", min = 0, max = log.total, value = log.done, color = { 1, 0.75, 0.3 },
+                            label = L.LOG_PROGRESS:format(log.month, log.done, log.total, log.points),
+                            right = log.secondsLeft and L.TIME_LEFT:format(A.TimeText(log.secondsLeft)) or nil }
+    end
+    local daily, weekly = W:Resets()
+    local w3 = { 0.6, 0.4 }
+    if daily then rows[#rows + 1] = { kind = "tr", widths = w3, align = { "LEFT", "RIGHT" }, cols = { L.TODAY_RESET_DAILY, A.TimeText(daily) } } end
+    if weekly then rows[#rows + 1] = { kind = "tr", widths = w3, align = { "LEFT", "RIGHT" }, cols = { L.TODAY_RESET_WEEKLY, A.TimeText(weekly) } } end
+end
+
+---------------------------------------------------------------------------
 -- Scheda
 ---------------------------------------------------------------------------
 function AC:Rows()
     local L, rows = ns.L, {}
-    local goal = ns.db.actGoal or "gear"
+    local goal = ns.db.actGoal or "summary"
     local items = {}
     for _, g in ipairs(GOALS) do
         items[#items + 1] = { label = L["ACT_GOAL_" .. g], selected = g == goal, onClick = function() ns.db.actGoal = g end }
     end
     rows[#rows + 1] = { kind = "pills", items = items }
     rows[#rows + 1] = { kind = "note", text = L["ACT_GOAL_DESC_" .. goal] }
-    if goal == "vault" then self:VaultRows(rows)
+    if goal == "summary" then self:SummaryRows(rows)
+    elseif goal == "vault" then self:VaultRows(rows)
     elseif goal == "rep" then self:RepRows(rows)
     elseif goal == "gold" then self:GoldRows(rows)
     else self:GearRows(rows) end

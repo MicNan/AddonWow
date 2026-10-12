@@ -1,5 +1,6 @@
 -- RotAssist Companion - Market
--- Scheda "Asta": decisioni basate sui prezzi della casa d'aste.
+-- Dati e sezioni "Borse e prezzi" e "Da farmare" della scheda Oro (Gold.lua):
+-- decisioni basate sui prezzi della casa d'aste.
 --  * Borse: per ogni oggetto, conviene l'asta o il vendor? (asta al netto
 --    della commissione del 5%; il deposito si recupera se l'oggetto si vende)
 --  * Da farmare: materiali dell'espansione attuale presenti nella scansione,
@@ -258,20 +259,21 @@ end
 ---------------------------------------------------------------------------
 -- Righe della scheda
 ---------------------------------------------------------------------------
-local function ItemRow(e, right, tip)
+-- Tabelle della scheda Oro (sezioni "Borse e prezzi" e "Da farmare")
+local BAG_W, BAG_A = { 0.56, 0.12, 0.32 }, { "LEFT", "RIGHT", "RIGHT" }
+
+local function ItemRow(e, value, tip, dim)
     return {
-        text = (e.count and e.count > 1) and (e.name .. " x" .. e.count) or e.name,
-        right = right, icon = e.icon, tooltip = tip,
-        link = { item = e.itemID }, linkTitle = e.name,
+        kind = "tr", icon = e.icon, widths = BAG_W, align = BAG_A,
+        cols = { e.name, tostring(e.count or 1), value },
+        colors = { dim and { 0.6, 0.6, 0.6 } or nil },
+        tooltip = tip, link = { item = e.itemID }, linkTitle = e.name,
     }
 end
 
-function M:Rows()
-    local L, rows = ns.L, {}
-    local profile = ns.db.playerType or "medium"
-
-    -- fonte dei prezzi
-    rows[#rows + 1] = { header = L.HDR_PRICES }
+-- Fonte dei prezzi (in cima a entrambe le sezioni)
+function M:PriceRows(rows)
+    local L = ns.L
     local scanStatus = ns.Prices:StatusText()
     if scanStatus then rows[#rows + 1] = { text = scanStatus, color = { 0.5, 0.85, 1 } } end
     local status = ns.Prices:SourceStatus()
@@ -280,9 +282,57 @@ function M:Rows()
     else
         rows[#rows + 1] = { kind = "callout", style = "warn", title = L.PRICE_NONE_TITLE, text = L.PRICE_NONE }
     end
+end
 
-    -- sessione di farm
+-- Borse: cosa mettere all'asta e cosa vendere al vendor
+function M:BagRows(rows)
+    local L = ns.L
+    local auction, vendor, loading = self:BagAdvice()
+    local aTotal, vTotal = 0, 0
+    for _, e in ipairs(auction) do aTotal = aTotal + e.ahTotal end
+    for _, e in ipairs(vendor) do vTotal = vTotal + e.vendorTotal end
+
+    rows[#rows + 1] = { header = L.HDR_BAG_AUCTION:format(#auction, A.Money(aTotal)) }
+    if #auction == 0 then
+        rows[#rows + 1] = { kind = "note", text = L.BAG_NONE }
+    else
+        rows[#rows + 1] = { kind = "thead", widths = BAG_W, align = BAG_A, cols = { L.MKT_COL_ITEM, L.MKT_COL_QTY, L.MKT_COL_VALUE } }
+        for i = 1, math.min(15, #auction) do
+            local e = auction[i]
+            local tip = { e.name, L.TIP_AH_UNIT:format(A.Money(e.price), e.source or "?",
+                          e.age and A.TimeText(e.age) or "?"),
+                          L.TIP_VENDOR_UNIT:format(A.Money(e.vendorUnit)),
+                          e.depth and L.TIP_DEPTH:format(A.Number(e.depth)) or nil,
+                          e.reagent and L.TIP_REAGENT or nil }
+            rows[#rows + 1] = ItemRow(e, A.Money(e.ahTotal), tip)
+        end
+    end
+
+    rows[#rows + 1] = { header = L.HDR_BAG_VENDOR:format(#vendor, A.Money(vTotal)) }
+    if #vendor == 0 then
+        rows[#rows + 1] = { kind = "note", text = L.BAG_NONE }
+    else
+        rows[#rows + 1] = { kind = "thead", widths = BAG_W, align = BAG_A, cols = { L.MKT_COL_ITEM, L.MKT_COL_QTY, L.MKT_COL_VALUE } }
+        for i = 1, math.min(15, #vendor) do
+            local e = vendor[i]
+            local why = e.bound and L.WHY_BOUND or (e.noPrice and L.WHY_NO_PRICE) or L.WHY_VENDOR_BETTER
+            rows[#rows + 1] = ItemRow(e, A.Money(e.vendorTotal), { e.name, why,
+                e.price and L.TIP_AH_UNIT:format(A.Money(e.price), e.source or "?", e.age and A.TimeText(e.age) or "?") or nil,
+                L.TIP_VENDOR_UNIT:format(A.Money(e.vendorUnit)) }, e.noPrice)
+        end
+    end
+    if loading > 0 then rows[#rows + 1] = { kind = "note", text = L.ITEMS_LOADING:format(loading) } end
+end
+
+-- Sessione di farm e materiali da farmare per il profilo
+function M:FarmRows(rows)
+    local L = ns.L
+    local profile = ns.db.playerType or "medium"
+
     rows[#rows + 1] = { header = L.HDR_FARM_SESSION }
+    rows[#rows + 1] = { kind = "pills", items = { {
+        label = self.session and L.BTN_FARM_STOP or L.BTN_FARM_START, action = true,
+        onClick = function() M:ToggleSession() end } } }
     local total, elapsed, items = self:SessionValue()
     if total then
         local hours = math.max(elapsed, 60) / 3600
@@ -291,71 +341,42 @@ function M:Rows()
         for i = 1, math.min(3, #items) do
             local it = items[i]
             local info = ns.Prices:ItemInfo(it.itemID)
-            rows[#rows + 1] = { text = "  " .. ((info and info.name) or ("item " .. it.itemID)) .. " x" .. it.count,
-                                right = A.Money(it.value), icon = info and info.icon }
+            rows[#rows + 1] = ItemRow({ name = (info and info.name) or ("item " .. it.itemID), icon = info and info.icon,
+                                        count = it.count, itemID = it.itemID }, A.Money(it.value))
         end
     elseif ns.db.lastSession then
         local ls = ns.db.lastSession
-        rows[#rows + 1] = { text = L.FARM_LAST:format(ls.zone or "?", ls.minutes or 0, A.Money(ls.value or 0)), dim = true }
+        rows[#rows + 1] = { kind = "note", text = L.FARM_LAST:format(ls.zone or "?", ls.minutes or 0, A.Money(ls.value or 0)) }
     else
         rows[#rows + 1] = { kind = "callout", style = "info", text = L.FARM_HINT }
     end
 
-    -- borse
-    local auction, vendor, loading = self:BagAdvice()
-    local aTotal, vTotal = 0, 0
-    for _, e in ipairs(auction) do aTotal = aTotal + e.ahTotal end
-    for _, e in ipairs(vendor) do vTotal = vTotal + e.vendorTotal end
-    rows[#rows + 1] = { header = L.HDR_BAG_AUCTION:format(#auction, A.Money(aTotal)) }
-    for i = 1, math.min(15, #auction) do
-        local e = auction[i]
-        local tip = { e.name, L.TIP_AH_UNIT:format(A.Money(e.price), e.source or "?",
-                      e.age and A.TimeText(e.age) or "?"),
-                      L.TIP_VENDOR_UNIT:format(A.Money(e.vendorUnit)),
-                      e.depth and L.TIP_DEPTH:format(A.Number(e.depth)) or nil,
-                      e.reagent and L.TIP_REAGENT or nil }
-        rows[#rows + 1] = ItemRow(e, A.Money(e.ahTotal), tip)
-    end
-    if #auction == 0 then rows[#rows + 1] = { kind = "note", text = L.BAG_NONE } end
-
-    rows[#rows + 1] = { header = L.HDR_BAG_VENDOR:format(#vendor, A.Money(vTotal)) }
-    for i = 1, math.min(15, #vendor) do
-        local e = vendor[i]
-        local why = e.bound and L.WHY_BOUND or (e.noPrice and L.WHY_NO_PRICE) or L.WHY_VENDOR_BETTER
-        local row = ItemRow(e, A.Money(e.vendorTotal), { e.name, why,
-            e.price and L.TIP_AH_UNIT:format(A.Money(e.price), e.source or "?", e.age and A.TimeText(e.age) or "?") or nil,
-            L.TIP_VENDOR_UNIT:format(A.Money(e.vendorUnit)) })
-        if e.noPrice then row.dim = true end
-        rows[#rows + 1] = row
-    end
-    if #vendor == 0 then rows[#rows + 1] = { kind = "note", text = L.BAG_NONE } end
-    if loading > 0 then rows[#rows + 1] = { kind = "note", text = L.ITEMS_LOADING:format(loading) } end
-
-    -- da farmare
     rows[#rows + 1] = { header = L.HDR_FARM:format(L["PROFILE_" .. profile]) }
     local list, needScan = self:FarmSuggestions(profile)
     if needScan then
         rows[#rows + 1] = { kind = "callout", style = "warn", text = L.FARM_NEED_SCAN }
+        return
+    end
+    if #list == 0 then
+        rows[#rows + 1] = { kind = "note", text = L.FARM_EMPTY }
     else
+        local w, a = { 0.4, 0.18, 0.18, 0.24 }, { "LEFT", "RIGHT", "RIGHT", "RIGHT" }
+        rows[#rows + 1] = { kind = "thead", widths = w, align = a,
+                            cols = { L.MKT_COL_MATERIAL, L.MKT_COL_PRICE, L.MKT_COL_LISTED, L.MKT_COL_WHO } }
         for _, c in ipairs(list) do
             local who = c.gatherer and L["GATHER_" .. c.gatherer] or L.GATHER_ANY
-            local text = L.FARM_LINE:format(c.name, A.Money(c.price), A.Number(c.depth or 0))
-            local row = {
-                text = text, right = c.gph and L.PER_HOUR:format(A.Money(c.gph)) or who, icon = c.icon,
+            rows[#rows + 1] = {
+                kind = "tr", icon = c.icon, widths = w, align = a,
+                cols = { c.name, A.Money(c.price), A.Number(c.depth or 0), c.gph and L.PER_HOUR:format(A.Money(c.gph)) or who },
+                colors = { (c.usable == false) and { 0.6, 0.6, 0.6 } or nil },
                 tooltip = { c.name, L["SUB_" .. c.subclass] or "", who,
                             c.rate and L.TIP_RATE:format(math.floor(c.rate)) or L.TIP_RATE_UNKNOWN,
                             (c.usable == false) and L.TIP_NEED_PROF or nil },
                 link = { item = c.itemID }, linkTitle = c.name,
             }
-            if c.usable == false then row.dim = true end
-            rows[#rows + 1] = row
         end
-        if #list == 0 then rows[#rows + 1] = { kind = "note", text = L.FARM_EMPTY } end
-        rows[#rows + 1] = { kind = "callout", style = "tip", text = L["FARM_TIP_" .. profile] }
     end
-
-    rows[#rows + 1] = { kind = "note", text = L.MARKET_DISCLAIMER }
-    return rows
+    rows[#rows + 1] = { kind = "callout", style = "tip", text = L["FARM_TIP_" .. profile] }
 end
 
 ---------------------------------------------------------------------------
