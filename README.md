@@ -82,6 +82,7 @@ Documentazione completa, piano di test e limiti noti sono in
 | `RotAssist_Companion/` | l'addon per delve, eventi, settimanali, attività consigliate, levelling, percorsi, oro, professioni, asta e pet da cacciatore |
 | `docs/` | dati e analisi raccolti per i moduli |
 | `tests/` | test in WoW simulato: sintassi Lua 5.1 e scenari con i dati nascosti del combattimento |
+| `TODO.md` | attività aperte: razionalizzazione delle schede, grafica uniforme, estensione a tutte le classi e professioni |
 
 ## Test
 
