@@ -318,6 +318,35 @@ Dump("craft")
 MOCK.profInfo[1], UnitClass, MOCK.bank = realProf, realClass, nil
 C.db.craftProf, C.db.craftSection = nil, "level"
 
+-- ===================== Attivita' =====================
+print("--- attivita'")
+SlashCmdList.ROTASSISTCOMPANION("attivita")
+Dump("activities")                                    -- equipaggiamento, Beast Mastery (Mitiche+)
+ClickPill(C.L.ACT_CONTENT_raid)
+print("priorita' raid:", table.concat(C.StatPriority:Current().order, " > "))
+for _, g in ipairs({ "vault", "rep", "gold" }) do
+    ClickPill(C.L["ACT_GOAL_" .. g])
+    Dump("activities")
+end
+-- sciamano Enhancement con talento eroico Totemic, poi Stormbringer
+ClickPill(C.L.ACT_GOAL_gear)
+MOCK.specID, MOCK.heroTree = 263, 54
+print("Enhancement Totemic:", table.concat(C.StatPriority:Current().order, " > "), "|", C.StatPriority:Current().heroName)
+MOCK.heroTree = 55
+print("Enhancement Stormbringer:", table.concat(C.StatPriority:Current().order, " > "))
+MOCK.specID = 70                                      -- specializzazione senza priorita' (Paladin Retribution)
+Dump("activities")
+MOCK.specID, MOCK.heroTree = 253, nil
+-- ricompense non ancora arrivate dal server
+MOCK.wqLoading = { [9002] = true }
+C.API.ClearCache()
+C.Panel:Refresh()
+print("ricompense in attesa:", C.Activities.pending, "| richieste al server:", MOCK.preload)
+MOCK.wqLoading = nil
+MOCK.fire("QUEST_LOG_UPDATE")
+C.Panel:Refresh()
+print("dopo QUEST_LOG_UPDATE in attesa:", C.Activities.pending)
+
 -- ===================== Pet =====================
 print("--- pet da cacciatore")
 MOCK.playerMap, MOCK.faction = 84, "Alliance"
@@ -432,7 +461,8 @@ C_AreaPoiInfo, C_TaskQuest, C_WeeklyRewards, C_PerksActivities, C_DelvesUI, C_Ca
 C.API.ClearCache()
 C_TradeSkillUI, C_ProfSpecs, GetProfessions = nil
 C_AuctionHouse, C_Item, TooltipDataProcessor = nil
-for _, tab in ipairs({ "delves", "events", "weekly", "leveling", "gold", "craft", "market", "pets" }) do Dump(tab) end
+C_MajorFactions, C_ClassTalents, C_Traits, GetNumQuestLogRewards, HaveQuestRewardData = nil
+for _, tab in ipairs({ "delves", "events", "weekly", "activities", "leveling", "gold", "craft", "market", "pets" }) do Dump(tab) end
 MOCK.playerMap = 84
 C.Travel:Start(delve)
 

@@ -239,6 +239,10 @@ MOCK.items = {
     [1011] = { "Sunglass Vial", 1, 5, 7, 11, 0, 11, true },          -- dal venditore: nessun prezzo d'asta
     [1012] = { "Silvermoon Health Potion", 1, 100, 0, 1, 0, 11, false },
     [1013] = { "Mycobloom (gold)", 2, 400, 7, 9, 0, 11, true },
+    -- equipaggiamento (9 = tipo di slot)
+    [2001] = { "Sunfire Bracers", 3, 1000, 4, 3, 1, 11, false, "INVTYPE_WRIST" },
+    [2002] = { "Old Ring", 2, 500, 4, 0, 1, 11, false, "INVTYPE_FINGER" },
+    [2003] = { "Voidtouched Cloak", 3, 900, 4, 1, 1, 11, false, "INVTYPE_CLOAK" },
 }
 MOCK.uncached = { [1010] = true }
 C_Item = {
@@ -250,8 +254,10 @@ C_Item = {
     GetItemInfoInstant = function(id)
         local t = MOCK.items[id]
         if not t then return nil end
-        return id, "", "", "", 5000 + id, t[4], t[5]
+        return id, "", "", t[9] or "", 5000 + id, t[4], t[5]
     end,
+    GetDetailedItemLevelInfo = function(link) return MOCK.linkLevel[link] end,
+    GetItemStats = function(link) return MOCK.linkStats[link] end,
     RequestLoadItemDataByID = function(id) MOCK.requested = (MOCK.requested or 0) + 1 end,
 }
 
@@ -280,6 +286,53 @@ MOCK.bags = {
     [1] = { { 1007, 1, true }, { 1008, 1, true }, { 1009, 20 }, { 1010, 5 } },
 }
 C_Container.GetContainerNumSlots = function(bag) return MOCK.bags[bag] and #MOCK.bags[bag] or 0 end
+
+-- Attivita': world quest con ricompense, equipaggiamento indossato, Renown
+MOCK.maps[2512] = { mapID = 2512, name = "The Coiled Isle", mapType = 3, parentMapID = 2537 }
+-- ricompense: items = { nome, icona, quantita', qualita', utilizzabile, itemID, livello }
+MOCK.wq = {
+    [9001] = { money = 250000, items = { { "Sunfire Bracers", 2, 1, 3, true, 2001, 305 } },
+               currencies = { { currencyID = 3440, name = "Hero Mistcrest", totalRewardAmount = 15 } },
+               reps = { { factionID = 2600, rewardAmount = 150 } } },
+    [9002] = { money = 0, items = { { "Old Ring", 3, 1, 2, true, 2002, 270 }, { "Voidtouched Cloak", 4, 1, 3, true, 2003, 300 } },
+               reps = { { factionID = 2601, rewardAmount = 75 }, { factionID = 2602, rewardAmount = 75 } } },
+}
+MOCK.equip = { [9] = "item:3009", [11] = "item:3011", [12] = "item:3012", [15] = "item:3015" }
+MOCK.linkLevel = { ["item:3009"] = 290, ["item:3011"] = 300, ["item:3012"] = 295, ["item:3015"] = 296,
+                   ["item:2001"] = 305, ["item:2002"] = 270, ["item:2003"] = 300 }
+MOCK.linkStats = {
+    ["item:2001"] = { ITEM_MOD_MASTERY_RATING_SHORT = 50, ITEM_MOD_HASTE_RATING_SHORT = 30, ITEM_MOD_AGILITY_SHORT = 80 },
+    ["item:3009"] = { ITEM_MOD_VERSATILITY = 60, ITEM_MOD_CRIT_RATING_SHORT = 20 },
+    ["item:2003"] = { ITEM_MOD_VERSATILITY = 55, ITEM_MOD_HASTE_RATING_SHORT = 25 },
+    ["item:3015"] = { ITEM_MOD_MASTERY_RATING_SHORT = 40, ITEM_MOD_CRIT_RATING_SHORT = 40 },
+}
+HaveQuestRewardData = function(id) return not (MOCK.wqLoading and MOCK.wqLoading[id]) end
+C_TaskQuest.RequestPreloadRewardData = function() MOCK.preload = (MOCK.preload or 0) + 1 end
+GetQuestLogRewardMoney = function(id) return MOCK.wq[id] and MOCK.wq[id].money or 0 end
+GetNumQuestLogRewards = function(id) return MOCK.wq[id] and #MOCK.wq[id].items or 0 end
+GetQuestLogRewardInfo = function(i, id) return table.unpack(MOCK.wq[id].items[i]) end
+GetQuestLogItemLink = function(_, i, id) return "item:" .. MOCK.wq[id].items[i][6] end
+C_QuestLog.GetQuestRewardCurrencies = function(id) return MOCK.wq[id] and MOCK.wq[id].currencies or {} end
+C_QuestLog.GetQuestLogMajorFactionReputationRewards = function(id) return MOCK.wq[id] and MOCK.wq[id].reps or {} end
+GetInventoryItemLink = function(_, slot) return MOCK.equip[slot] end
+GetCritChance = function() return 22.5 end
+GetSpellCritChance = function() return 20.0 end
+GetHaste = function() return 18.25 end
+GetMasteryEffect = function() return 45.1 end
+GetCombatRatingBonus = function() return 6.0 end
+GetVersatilityBonus = function() return 0 end
+C_ClassTalents = { GetActiveHeroTalentSpec = function() return MOCK.heroTree end, GetActiveConfigID = function() return 1 end }
+C_Traits = { GetSubTreeInfo = function(_, id) return { name = id == 54 and "Totemic" or (id == 55 and "Stormbringer" or "Pack Leader") } end }
+MOCK.factions = {
+    [2600] = { name = "Silvermoon Court", renownLevel = 12, renownReputationEarned = 2000, renownLevelThreshold = 2500, isUnlocked = true },
+    [2601] = { name = "Amani Tribe", renownLevel = 8, renownReputationEarned = 500, renownLevelThreshold = 2500, isUnlocked = true },
+    [2602] = { name = "Hara'ti", renownLevel = 20, renownReputationEarned = 0, renownLevelThreshold = 2500, isUnlocked = true },
+}
+C_MajorFactions = {
+    GetMajorFactionIDs = function() return { 2600, 2601, 2602 } end,
+    GetMajorFactionData = function(id) return MOCK.factions[id] end,
+    HasMaximumRenown = function(id) return id == 2602 end,
+}
 
 -- Ricette della professione aperta (Alchemy di Midnight, 2906)
 -- reagents = { { {itemID per qualita'}, quantita' }, ... }

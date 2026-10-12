@@ -15,6 +15,7 @@ local VAULT_TYPES = {
     { type = 3, key = "VAULT_RAID" },
     { type = 6, key = "VAULT_WORLD" },
 }
+W.VAULT_TYPES = VAULT_TYPES
 
 function W:VaultReady()
     if not (C_WeeklyRewards and C_WeeklyRewards.HasAvailableRewards) then return false end

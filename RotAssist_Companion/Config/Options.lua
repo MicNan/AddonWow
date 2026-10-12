@@ -112,6 +112,7 @@ local TAB_ALIASES = {
     professioni = "craft", professione = "craft", prof = "craft", professions = "craft", craft = "craft",
     asta = "market", aste = "market", auction = "market", market = "market",
     pet = "pets", pets = "pets",
+    attivita = "activities", ["attivit\195\160"] = "activities", activities = "activities", obiettivi = "activities",
 }
 
 local PROFILE_ALIASES = {

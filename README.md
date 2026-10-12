@@ -49,6 +49,9 @@ Le sue schede coprono:
 - **Settimanale:** Great Vault, Traveler's Log, reset.
 - **Levelling:** XP/ora e zone adatte al tuo livello.
 - **Oro:** strategie per le tue professioni secondo il profilo (occasionale, medio, assiduo).
+- **Attività:** cosa fare oggi secondo l'obiettivo (equipaggiamento, Great Vault, reputazione,
+  oro), con le ricompense delle world quest confrontate con il tuo equipaggiamento e con la
+  priorità delle statistiche della tua specializzazione.
 - **Professioni:** guida 1-100 secondo il tuo livello, cosa creare adesso al costo più basso,
   cosa comprare in base a quello che hai già, specializzazione consigliata per il tuo
   equipaggiamento.
@@ -76,7 +79,7 @@ Documentazione completa, piano di test e limiti noti sono in
 | Percorso | Contenuto |
 |---|---|
 | `RotAssist/` | l'addon di rotazione (Lua + XML, nessuna libreria esterna) |
-| `RotAssist_Companion/` | l'addon per delve, eventi, settimanali, levelling, percorsi, oro, professioni, asta e pet da cacciatore |
+| `RotAssist_Companion/` | l'addon per delve, eventi, settimanali, attività consigliate, levelling, percorsi, oro, professioni, asta e pet da cacciatore |
 | `docs/` | dati e analisi raccolti per i moduli |
 | `tests/` | test in WoW simulato: sintassi Lua 5.1 e scenari con i dati nascosti del combattimento |
 

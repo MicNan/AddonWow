@@ -1,6 +1,6 @@
 -- RotAssist Companion - Panel
--- Finestra con otto schede (Delve, Eventi, Settimanale, Levelling, Oro,
--- Professioni, Asta, Pet). Ogni scheda e' un elenco di righe prodotto da
+-- Finestra con nove schede (Delve, Eventi, Settimanale, Attivita', Levelling,
+-- Oro, Professioni, Asta, Pet). Ogni scheda e' un elenco di righe prodotto da
 -- Data\*.lua. Tipi di riga (campo 'kind', predefinito "line"):
 --   { header = "titolo" }                      titolo di sezione con riga sotto
 --   { kind = "sub", text }                     sottotitolo
@@ -29,7 +29,7 @@ local A = ns.API
 local P = { rows = {}, tab = nil }
 ns.Panel = P
 
-local WIDTH, HEIGHT, ROW_H = 640, 540, 20
+local WIDTH, HEIGHT, ROW_H = 680, 540, 20
 local CONTENT_W = WIDTH - 48
 local AUTO_REFRESH = 30
 
@@ -37,6 +37,7 @@ local TABS = {
     { key = "delves",   label = "TAB_DELVES",   source = function() return ns.Delves end },
     { key = "events",   label = "TAB_EVENTS",   source = function() return ns.Events end },
     { key = "weekly",   label = "TAB_WEEKLY",   source = function() return ns.Weekly end },
+    { key = "activities", label = "TAB_ACTIVITIES", source = function() return ns.Activities end },
     { key = "leveling", label = "TAB_LEVELING", source = function() return ns.Leveling end },
     { key = "gold",     label = "TAB_GOLD",     source = function() return ns.Gold end },
     { key = "craft",    label = "TAB_CRAFT",    source = function() return ns.Craft end },
@@ -513,6 +514,12 @@ function P:Create()
         local b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         b:SetSize(tabW - 4, 22)
         b:SetPoint("TOPLEFT", 12 + (i - 1) * tabW, -28)
+        -- carattere piccolo: nove schede devono stare in una riga
+        if b.SetNormalFontObject then
+            b:SetNormalFontObject("GameFontNormalSmall")
+            b:SetHighlightFontObject("GameFontHighlightSmall")
+            b:SetDisabledFontObject("GameFontDisableSmall")
+        end
         b:SetText(L[t.label])
         b:SetScript("OnClick", function() P:SelectTab(t.key) end)
         b.key = t.key

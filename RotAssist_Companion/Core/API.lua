@@ -100,6 +100,9 @@ end
 
 function A.ClearCache() wipe(cache) end
 
+-- Dimentica un solo risultato (per esempio quando arrivano dati nuovi)
+function A.Forget(key) cache[key] = nil end
+
 ---------------------------------------------------------------------------
 -- Valute e tempo
 ---------------------------------------------------------------------------

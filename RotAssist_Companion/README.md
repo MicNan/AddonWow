@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.6.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.7.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -14,6 +14,7 @@ confermate in gioco (vedi "Da verificare in gioco").
 | **Delve** | Restored Coffer Key, Coffer Key Shards della settimana, livello del compagno; delve attive su tutte le mappe, con le **abbondanti** in cima (filtro "solo abbondanti") | `C_AreaPoiInfo.GetDelvesForMap`, `C_CurrencyInfo`, `C_DelvesUI`, `C_GossipInfo` |
 | **Eventi** | festività di oggi, eventi sulla mappa con tempo rimasto, world quest del continente in cui ti trovi (le elite evidenziate), ordinate per scadenza | `C_Calendar`, `C_AreaPoiInfo.GetEventsForMap`, `C_TaskQuest.GetQuestsOnMap` |
 | **Settimanale** | Great Vault per tipo (dungeon, raid, delve e mondo) con avviso "ricompense da ritirare", Traveler's Log del mese, tempo ai reset | `C_WeeklyRewards`, `C_PerksActivities`, `C_DateAndTime` |
+| **Attività** | attività consigliate secondo l'obiettivo scelto (equipaggiamento, Great Vault, reputazione, oro): world quest con le ricompense confrontate con il tuo equipaggiamento e con la priorità delle statistiche della tua specializzazione, cosa manca al prossimo slot della Vault, fazioni più vicine al prossimo Renown, attività settimanali ricorrenti | `C_TaskQuest`, ricompense delle missioni, `C_Item.GetItemStats`, `C_WeeklyRewards`, `C_MajorFactions`, `C_ClassTalents` |
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, livelli consigliati della zona, zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
 | **Oro** | le tue professioni con Concentrazione e punti conoscenza da spendere; strategie per fare oro adatte al tuo **profilo** (occasionale, medio, assiduo) e alle tue professioni | `GetProfessions`, `C_TradeSkillUI`, `C_ProfSpecs` |
 | **Professioni** | per ogni tua professione: la fase della guida 1-100 in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
@@ -148,6 +149,59 @@ I testi sono riassunti, non copiati.
 - L'addon non doma e non seleziona bersagli: mostra solo dove andare.
 - Spawn, famiglie e requisiti vanno verificati in gioco; Blizzard può cambiarli con le patch.
 - Le famiglie sono in inglese, come compaiono su Petopia e Wowhead.
+
+## Attività consigliate
+
+La scheda **Attività** ha in cima il selettore dell'**obiettivo**. Le world quest sono lette dal
+gioco in tutte le zone di Quel'Thalas (Coiled Isle compresa) con le loro ricompense; il clic su
+una riga calcola il percorso.
+
+**Equipaggiamento**
+- Le world quest che danno un oggetto **migliore di quello che indossi** in quello slot (per anelli,
+  monili e armi si confronta il pezzo più basso), ordinate per livelli guadagnati.
+- Per ogni oggetto le **due statistiche principali**, in verde se sono le migliori per te e in
+  arancione se sono poco adatte, con la percentuale di "statistiche giuste" rispetto al tuo pezzo.
+- Le world quest con **crest** (Mistcrest) per potenziare quello che hai.
+- La **priorità delle statistiche** della tua specializzazione con i tuoi valori attuali:
+
+  | Specializzazione | Priorità (12.1) |
+  |---|---|
+  | Beast Mastery | Mitiche+ e il resto: Maestria > Critico > Versatilità > Celerità; raid (bersaglio singolo): Maestria > Celerità > Critico > Versatilità |
+  | Marksmanship | Critico > Maestria > Versatilità > Celerità |
+  | Survival | Maestria > Critico > Celerità > Versatilità (Critico e Celerità quasi uguali) |
+  | Elemental | livello oggetto, poi Maestria > Celerità > Critico > Versatilità |
+  | Enhancement | livello oggetto; Stormbringer: Maestria > Critico > Celerità > Versatilità; Totemic: Maestria > Celerità > Critico > Versatilità |
+  | Restoration | livello oggetto, poi Critico > Versatilità > Celerità > Maestria |
+
+  Per il Beast Mastery un selettore sceglie raid o Mitiche+; per l'Enhancement la priorità segue il
+  **talento eroico attivo**, letto dal gioco. Le altre specializzazioni mostrano solo il livello
+  oggetto. Una priorità generica non sostituisce una simulazione del personaggio.
+- Da dove arriva l'equipaggiamento nella Season 2 (traccia e livelli).
+
+**Great Vault**
+- Per dungeon, raid e mondo: barra con le soglie degli slot, quanto manca al prossimo e cosa
+  conta (per esempio delve di livello 8+ o Prey Nightmare per la traccia Hero). Prima la categoria
+  più vicina a un nuovo slot.
+- Quanti slot servono per il bonus roll (Nebulous Voidcore) e la tabella dei livelli oggetto della
+  Vault per chiave, livello di delve, Prey e raid.
+
+**Reputazione**
+- Il Renown di ogni fazione con quanto manca al livello successivo.
+- Le world quest che danno reputazione alle fazioni non al massimo, prima quelle più vicine al
+  prossimo livello.
+
+**Oro**
+- Le world quest con ricompensa in oro, dalla più ricca.
+
+Per ogni obiettivo c'è anche un elenco delle **attività settimanali ricorrenti** della 12.1 (Great
+Vault, Spark, Prey, delve abbondanti, Nemesis, world boss, Mitiche+, Coiled Isle, traguardi di
+Renown, ordini delle professioni).
+
+**Limiti**
+- Le ricompense delle world quest arrivano dal server dopo qualche secondo: la lista si completa
+  da sola.
+- Il confronto usa livello oggetto e statistiche secondarie, non gli effetti speciali o i set.
+- L'elenco settimanale e i livelli della Vault vanno aggiornati a ogni stagione.
 
 ## Guida alle professioni
 
@@ -295,6 +349,7 @@ conta cosa entra nelle borse e ne mostra il valore e l'oro all'ora. Se la sessio
 | `/rac delve` · `eventi` · `settimanale` · `levelling` · `oro` | apre la scheda (anche in inglese: `delves`, `events`, `weekly`, `leveling`, `gold`) |
 | `/rac profilo occasionale|medio|assiduo` | profilo per le strategie sull'oro (senza argomento passa al successivo) |
 | `/rac professioni` | apre la scheda Professioni (anche `prof` o `professions`) |
+| `/rac attivita` | apre la scheda Attività (anche `activities` o `obiettivi`) |
 | `/rac stop` | annulla il percorso in corso |
 | `/rac asta` | apre la scheda Asta |
 | `/rac scan` | scansione dei prezzi (con la casa d'aste aperta) |

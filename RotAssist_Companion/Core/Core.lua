@@ -60,6 +60,13 @@ for _, ev in ipairs({ "VIGNETTE_MINIMAP_UPDATED", "VIGNETTES_UPDATED" }) do
     ns:On(ev, function() ns.Pets:ScanVignettes() end)
 end
 
+-- scheda Attivita': ricompense delle world quest, equipaggiamento, Renown
+ns:On("QUEST_LOG_UPDATE", function() ns.Activities:OnQuestData() end)
+for _, ev in ipairs({ "PLAYER_EQUIPMENT_CHANGED", "MAJOR_FACTION_RENOWN_LEVEL_CHANGED", "UPDATE_FACTION",
+                      "ACTIVE_PLAYER_SPECIALIZATION_CHANGED", "TRAIT_CONFIG_UPDATED" }) do
+    ns:On(ev, function() ns.Panel:RequestRefresh() end)
+end
+
 ns:On("PLAYER_XP_UPDATE", function(_, unit)
     if unit == nil or unit == "player" then ns.Leveling:OnXPUpdate() end
 end)
