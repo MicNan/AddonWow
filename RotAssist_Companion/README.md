@@ -165,15 +165,20 @@ La scheda **Professioni** mostra, per ogni professione del personaggio:
    | Jewelcrafting | **Alluring Accessories**: anelli e collane |
    | Engineering | **Combat Analytics**: occhiali, bracciali, stivali e pistole (per il cacciatore a distanza) |
    | Inscription | **Blueprints**: archi per il cacciatore a distanza, bastoni e off-hand per gli incantatori |
-   | Alchemy | **Fluent in Flasks** per raid e Mitiche+; Transmutation Authority per l'Alchemist Stone |
+   | Alchemy | **Fluent in Flasks** (15 punti) per raid e Mitiche+; per l'oro la build delle pozioni; Transmutation Authority per l'Alchemist Stone |
    | Enchanting | **Elevating Equipment** |
 
    Nel client italiano le specializzazioni possono avere nomi tradotti: il tooltip mostra quelli
    del tuo client e cosa sblocca ciascuna.
-5. **Dove prendere i punti conoscenza:** prime creazioni, tesori, libro della reputazione,
+5. **Le build delle specializzazioni** di wow-professions.com, per tutte le 11 professioni
+   (anche quelle di raccolta): per esempio per Alchemy "Durata dei flask", "Consumabili da
+   vendere" e "Trasmutazioni", per Leatherworking "Standard", "Ordini di lavoro" e "Casa
+   d'aste". Il tooltip di ogni build spiega dove mettere i punti, fase per fase.
+6. **Dove prendere i punti conoscenza:** prime creazioni, tesori, libro della reputazione,
    fonti settimanali e mensili, e il reset una tantum della patch 12.1.
 
-Per le professioni di raccolta (Herbalism, Mining, Skinning) la scheda mostra solo la guida.
+Per le professioni di raccolta (Herbalism, Mining, Skinning) la scheda mostra la guida e le
+build, senza il calcolo delle ricette.
 
 **Fonti.** Guide "Leveling 1-100", "Recipes & Knowledge Points" e "Specialization Guide" di
 [wow-professions.com](https://www.wow-professions.com) e la guida alle fonti di conoscenza di
@@ -205,8 +210,24 @@ opzioni:
 Per ogni professione ci sono consigli diversi per ciascun profilo. Senza professioni, la scheda
 suggerisce quali prendere.
 
-Le strategie sono scritte per questo addon e non riportano cifre in oro, perché prezzi e domanda
-cambiano da reame a reame: la scheda ricorda sempre di controllare la casa d'aste.
+Accanto a ogni professione c'è la **fascia per fare oro** della classifica di Icy Veins
+aggiornata per la Season 2 (agosto 2026):
+
+| Fascia | Professioni |
+|---|---|
+| S | Inscription, Jewelcrafting, Tailoring, Alchemy con le pozioni |
+| A | Enchanting, Alchemy con i flask, Blacksmithing, Engineering, Leatherworking (equip su ordinazione) |
+| B | Mining, Herbalism, Skinning, Cooking, Fishing |
+
+I consigli tengono conto della Season 2 e della 12.1. Per esempio: con l'Alchemy rendono le
+pozioni create con Concentrazione, perché le erbe di rango 2 costano molto più di quelle di rango
+1, mentre i flask costano soprattutto materiali senza qualità; il Leatherworking guadagna con gli
+ordini di equipaggiamento, dove il cliente porta i materiali. Ci sono anche le ricette nuove della
+12.1, come la Concentrated Silvermoon Health Potion.
+
+Le strategie sono scritte per questo addon (riassumendo Icy Veins e wow-professions.com) e non
+riportano cifre in oro, perché prezzi e domanda cambiano da reame a reame: la scheda ricorda
+sempre di controllare la casa d'aste.
 
 ## Asta: cosa vendere e cosa farmare
 

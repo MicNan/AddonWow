@@ -115,7 +115,8 @@ function G:Rows()
     for _, p in ipairs(profs) do
         if p.key then
             covered = covered + 1
-            rows[#rows + 1] = { header = L.HDR_GOLD_PROF:format(p.name) }
+            local tier = S:Tier(p.key)
+            rows[#rows + 1] = { header = tier and L.HDR_GOLD_PROF_TIER:format(p.name, tier) or L.HDR_GOLD_PROF:format(p.name) }
             Bullets(rows, S:Get(p.key, profile))
         end
     end
@@ -124,6 +125,7 @@ function G:Rows()
         Bullets(rows, S:Get("none", profile))
     end
     rows[#rows + 1] = { header = "" }
+    rows[#rows + 1] = { text = L.GOLD_SOURCES, dim = true, wrap = true }
     rows[#rows + 1] = { text = L.GOLD_DISCLAIMER, dim = true, wrap = true }
     return rows
 end

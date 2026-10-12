@@ -6,7 +6,8 @@
 --    della ricetta = punti attesi, prezzi d'asta dei materiali);
 --  * cosa comprare: i materiali che servono meno quelli che hai gia' in
 --    borse, banca, banca dei reagenti e banca della brigata;
---  * la specializzazione consigliata per l'equipaggiamento del personaggio.
+--  * la specializzazione consigliata per l'equipaggiamento del personaggio e
+--    le build di wow-professions.com (CraftBuilds.lua).
 -- Solo lettura: l'addon non crea nulla e non compra nulla.
 
 local _, ns = ...
@@ -258,6 +259,20 @@ function C:SpecRows(rows, key, childID)
     end
 end
 
+-- Build delle specializzazioni: una riga per build, i passi nel tooltip
+function C:BuildRows(rows, key)
+    local L = ns.L
+    local builds = ns.CraftBuilds:Get(key)
+    if not builds then return end
+    rows[#rows + 1] = { text = L.CRAFT_BUILDS, color = { 1, 0.82, 0 } }
+    for _, b in ipairs(builds) do
+        local tip = { b[1], b[2] }
+        for i, step in ipairs(b[3]) do tip[#tip + 1] = ("%d. %s"):format(i, step) end
+        tip[#tip + 1] = L.CRAFT_BUILDS_SOURCE
+        rows[#rows + 1] = { text = L.CRAFT_BUILD_LINE:format(b[1], b[2]), wrap = true, tooltip = tip }
+    end
+end
+
 function C:ProfessionRows(rows, p)
     local L = ns.L
     local key = p.key
@@ -307,6 +322,7 @@ function C:ProfessionRows(rows, p)
         end
         self:SpecRows(rows, key, ns.CraftGuide.MIDNIGHT[p.skillLine])
     end
+    self:BuildRows(rows, key)
 end
 
 function C:PlanRows(rows, plan)

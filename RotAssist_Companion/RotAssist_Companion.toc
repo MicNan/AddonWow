@@ -24,6 +24,7 @@ Data\Gold.lua
 Data\Prices.lua
 Data\Market.lua
 Data\CraftGuide.lua
+Data\CraftBuilds.lua
 Data\Craft.lua
 Data\PetsData.lua
 Data\Pets.lua
