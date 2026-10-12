@@ -309,15 +309,59 @@ Dump("craft")
 C.db.craftSection = "level"
 Dump("craft")
 C.db.craftSection = "specs"
+local realSpec = MOCK.specID
 UnitClass = function() return "Warrior", "WARRIOR" end
+MOCK.specID = 71
 MOCK.profInfo[1] = { "Blacksmithing", 101, 55, 100, 0, 0, 164 }
 C.db.craftProf = 164
 Dump("craft")
 UnitClass = function() return "Mage", "MAGE" end
+MOCK.specID = 63
 MOCK.profInfo[1] = { "Inscription", 101, 100, 100, 0, 0, 773 }
 C.db.craftProf = 773
 Dump("craft")
-MOCK.profInfo[1], UnitClass, MOCK.bank = realProf, realClass, nil
+-- consiglio per ogni specializzazione e professione: chiavi esistenti nei testi
+do
+    local classOf = {}
+    for _, e in ipairs({ { "WARRIOR", 71, 72, 73 }, { "PALADIN", 65, 66, 70 }, { "DEATHKNIGHT", 250, 251, 252 },
+                         { "ROGUE", 259, 260, 261 }, { "DEMONHUNTER", 577, 581, 1480 }, { "MONK", 268, 269, 270 },
+                         { "DRUID", 102, 103, 104, 105 }, { "HUNTER", 253, 254, 255 }, { "MAGE", 62, 63, 64 },
+                         { "PRIEST", 256, 257, 258 }, { "SHAMAN", 262, 263, 264 }, { "WARLOCK", 265, 266, 267 },
+                         { "EVOKER", 1467, 1468, 1473 } }) do
+        for i = 2, #e do classOf[e[i]] = e[1] end
+    end
+    local n, bad, sample = 0, {}, {}
+    for specID, class in pairs(classOf) do
+        if not C.CraftGuide.WIELD[specID] then bad[#bad + 1] = "arma " .. specID end
+        for _, prof in ipairs({ "blacksmithing", "inscription", "engineering", "leatherworking", "tailoring" }) do
+            local keys = C.CraftGuide:Advice(prof, class, specID)
+            for _, k in ipairs(keys) do
+                n = n + 1
+                if not (C.L[k] and C.L[k] ~= k) then bad[#bad + 1] = k end
+            end
+        end
+    end
+    -- senza specializzazione
+    for _, class in ipairs({ "WARRIOR", "HUNTER", "PRIEST", "SHAMAN" }) do
+        if #C.CraftGuide:Advice("blacksmithing", class, nil) == 0 then bad[#bad + 1] = "senza spec " .. class end
+    end
+    print("consigli per specializzazione:", n, "| errati:", #bad == 0 and "nessuno" or table.concat(bad, ","))
+    if #bad > 0 then table.insert(MOCK.errors, "consigli errati") end
+    for _, spec in ipairs({ 73, 260, 1480, 255, 65, 264, 253 }) do
+        print("  fabbro/inscription", spec, table.concat(C.CraftGuide:Advice("blacksmithing", classOf[spec], spec), "+"),
+              "|", table.concat(C.CraftGuide:Advice("inscription", classOf[spec], spec), "+"))
+    end
+end
+MOCK.profInfo[1], UnitClass, MOCK.bank, MOCK.specID = realProf, realClass, nil, realSpec
+-- Cucina e Pesca (professioni secondarie)
+MOCK.profInfo[4] = { "Fishing", 104, 140, 300, 0, 0, 356 }
+MOCK.profInfo[5] = { "Cooking", 105, 30, 100, 0, 0, 185 }
+MOCK.profs[4], MOCK.profs[5] = 4, 5
+C.db.craftProf, C.db.craftSection = 356, "specs"
+Dump("craft")
+C.db.craftProf = 185
+Dump("craft")
+MOCK.profs[4], MOCK.profs[5] = nil, nil
 C.db.craftProf, C.db.craftSection = nil, "level"
 
 -- ===================== Attivita' =====================
@@ -339,7 +383,31 @@ MOCK.specID, MOCK.heroTree = 263, 54
 print("Enhancement Totemic:", table.concat(C.StatPriority:Current().order, " > "), "|", C.StatPriority:Current().heroName)
 MOCK.heroTree = 55
 print("Enhancement Stormbringer:", table.concat(C.StatPriority:Current().order, " > "))
-MOCK.specID = 70                                      -- specializzazione senza priorita' (Paladin Retribution)
+-- tutte le specializzazioni: un ordine con le 4 secondarie, oppure "nessuna priorita' fissa"
+do
+    local n, bad = 0, {}
+    for specID, entry in pairs(C.StatPriority.SPECS) do
+        MOCK.specID, MOCK.heroTree = specID, nil
+        local p = C.StatPriority:Current()
+        n = n + 1
+        if not (p.flat or (p.order and #p.order == 4)) then bad[#bad + 1] = specID end
+        if entry.hero and not p.heroChoice then bad[#bad + 1] = specID .. "(eroe)" end
+    end
+    print("specializzazioni con priorita':", n, "| errate:", #bad == 0 and "nessuna" or table.concat(bad, ","))
+    if #bad > 0 then table.insert(MOCK.errors, "priorita' errate") end
+end
+MOCK.specID, MOCK.heroTree = 72, nil                  -- Fury: Critico = Versatilita'
+Dump("activities")
+MOCK.specID, MOCK.heroTree = 250, 31                  -- Blood San'layn (riconosciuto dal nome)
+print("Blood San'layn:", table.concat(C.StatPriority:Current().order, " > "), "|", C.StatPriority:Current().heroName)
+MOCK.heroTree = 990                                   -- nome tradotto: selettore
+C.Panel:Refresh()
+ClickPill("Deathbringer")
+print("Blood scelto a mano:", table.concat(C.StatPriority:Current().order, " > "), "|", C.StatPriority:Current().heroKey)
+Dump("activities")
+MOCK.specID, MOCK.heroTree = 103, nil                 -- Feral: nessuna priorita' fissa
+Dump("activities")
+MOCK.specID = 9999                                    -- specializzazione sconosciuta
 Dump("activities")
 MOCK.specID, MOCK.heroTree = 253, nil
 -- ricompense non ancora arrivate dal server

@@ -47,12 +47,13 @@ Le sue sei schede coprono:
 - **Oggi:** un riepilogo (cosa fare adesso, eventi e festività, world quest in scadenza, Traveler's
   Log e reset) e le attività consigliate per obiettivo (equipaggiamento, Great Vault,
   reputazione, oro), con le ricompense delle world quest confrontate con il tuo equipaggiamento
-  e con la priorità delle statistiche della tua specializzazione.
+  e con la priorità delle statistiche della tua specializzazione (tutte le 40).
 - **Delve:** delve attive con le abbondanti in evidenza, chiavi, compagno.
 - **Levelling:** XP/ora e zone adatte al tuo livello.
-- **Professioni:** Concentrazione e punti conoscenza, guida 1-100 secondo il tuo livello, cosa
-  creare adesso al costo più basso, cosa comprare in base a quello che hai già, specializzazione
-  consigliata per il tuo equipaggiamento.
+- **Professioni:** Concentrazione e punti conoscenza, guida al livellamento secondo il tuo
+  livello, cosa creare adesso al costo più basso, cosa comprare in base a quello che hai già,
+  specializzazione consigliata per il tuo equipaggiamento e le armi della tua specializzazione;
+  anche Cucina e Pesca.
 - **Oro:** strategie per le tue professioni secondo il profilo (occasionale, medio, assiduo),
   cosa mettere all'asta e cosa vendere al vendor, quali materiali farmare, oro all'ora misurato.
 - **Pet:** pet da cacciatore rari di Midnight e spirit beast di tutte le espansioni, con
@@ -80,7 +81,7 @@ Documentazione completa, piano di test e limiti noti sono in
 | `RotAssist_Companion/` | l'addon fuori dal combattimento: attività di oggi, delve, levelling, professioni, oro e asta, pet da cacciatore, percorsi |
 | `docs/` | dati e analisi raccolti per i moduli |
 | `tests/` | test in WoW simulato: sintassi Lua 5.1 e scenari con i dati nascosti del combattimento |
-| `TODO.md` | piano di lavoro e attività aperte: verifica in gioco, estensione a tutte le classi e professioni |
+| `TODO.md` | piano di lavoro e attività aperte: verifica in gioco, RotAssist per altre classi |
 
 ## Test
 

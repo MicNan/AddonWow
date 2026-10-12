@@ -9,7 +9,7 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
 |---|---|---|---|
 | 0 | Verifica in gioco dopo la patch 12.1.5 (13 ottobre), con screenshot | - | da fare |
 | 1 + 2 | Sei schede (Oggi, Delve, Levelling, Professioni, Oro, Pet) e grafica uniforme | Companion 0.8.0 | fatta in simulazione |
-| 3 | Priorità delle statistiche per tutte le specializzazioni, armi per specializzazione, Cucina e Pesca | Companion 0.9.0 | da fare |
+| 3 | Priorità delle statistiche per tutte le specializzazioni, armi per specializzazione, Cucina e Pesca | Companion 0.9.0 | fatta in simulazione |
 | 4 | RotAssist per altre classi, una alla volta (classe da scegliere) | RotAssist | da fare |
 
 ## 0. Verifica in gioco
@@ -19,6 +19,8 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
       simulazione), anche con il client in italiano.
 - [ ] Scansione d'asta corretta (una sola elaborazione per scansione).
 - [ ] RotAssist in una delve (AoE) e le nuove specializzazioni con `/rotassist verify`.
+- [ ] Talento eroico riconosciuto (nome inglese o selettore con il client in italiano) e ID
+      di Cucina (2908) e Pesca (2911).
 
 ## 1. Razionalizzare le schede del Companion (0.8.0)
 
@@ -48,14 +50,14 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
 
 ## 3. Estendere le funzionalità a tutte le classi e professioni (0.9.0)
 
-- [ ] **Priorità delle statistiche** (Oggi > Equipaggiamento): oggi solo cacciatore e sciamano (6
-      specializzazioni). Aggiungere tutte le altre, con le varianti per contenuto o talento
-      eroico dove l'ordine cambia.
-- [ ] **Consiglio della specializzazione di professione** (scheda Professioni): oggi si basa sul
-      tipo di armatura e su poche regole per le armi. Rendere il consiglio sulle armi preciso per
-      ogni specializzazione di classe (per esempio armi ad asta, pugnali, bastoni, archi,
-      pistole).
-- [ ] **Cucina e Pesca:** oggi escluse dalla scheda Professioni (nessuna guida né build).
+- [x] **Priorità delle statistiche** (Oggi > Equipaggiamento) per tutte le 40 specializzazioni,
+      con pari merito, varianti per contenuto (raid / Mitiche+) e per talento eroico (Blood,
+      Subtlety, Shadow, Enhancement). Feral senza priorità fissa.
+- [x] **Armi per specializzazione** (scheda Professioni): Blacksmithing con il ramo giusto
+      (Hafted Weapons o Blades, scudi da Large Plate), Inscription (bastoni, off-hand, archi),
+      Engineering (fucili).
+- [x] **Cucina e Pesca** nella scheda Professioni: livellamento (Pesca fino a 300), cosa
+      cucinare o pescare, attrezzatura; Cucina anche con il calcolo delle ricette.
 
 ## 4. RotAssist per altre classi
 

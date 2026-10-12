@@ -198,7 +198,7 @@ MOCK.profInfo = {
     [1] = { "Alchemy", 101, 85, 100, 0, 0, 171 },
     [2] = { "Herbalism", 102, 100, 100, 0, 0, 182 },
 }
-GetProfessions = function() return MOCK.profs[1], MOCK.profs[2], nil, nil, nil end
+GetProfessions = function() return MOCK.profs[1], MOCK.profs[2], nil, MOCK.profs[4], MOCK.profs[5] end
 GetProfessionInfo = function(i) local t = MOCK.profInfo[i]; if t then return table.unpack(t) end end
 C_TradeSkillUI = {
     GetBaseProfessionInfo = function() return { professionID = 171 } end,
@@ -322,7 +322,8 @@ GetMasteryEffect = function() return 45.1 end
 GetCombatRatingBonus = function() return 6.0 end
 GetVersatilityBonus = function() return 0 end
 C_ClassTalents = { GetActiveHeroTalentSpec = function() return MOCK.heroTree end, GetActiveConfigID = function() return 1 end }
-C_Traits = { GetSubTreeInfo = function(_, id) return { name = id == 54 and "Totemic" or (id == 55 and "Stormbringer" or "Pack Leader") } end }
+MOCK.subTreeNames = { [54] = "Totemic", [55] = "Stormbringer", [31] = "San'layn", [990] = "Portatore di Morte" }
+C_Traits = { GetSubTreeInfo = function(_, id) return { name = MOCK.subTreeNames[id] or "Pack Leader" } end }
 MOCK.factions = {
     [2600] = { name = "Silvermoon Court", renownLevel = 12, renownReputationEarned = 2000, renownLevelThreshold = 2500, isUnlocked = true },
     [2601] = { name = "Amani Tribe", renownLevel = 8, renownReputationEarned = 500, renownLevelThreshold = 2500, isUnlocked = true },

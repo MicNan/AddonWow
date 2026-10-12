@@ -148,8 +148,8 @@ function AC:Evaluate(item, prio)
     end
     local e = { delta = item.ilvl - worst, equipped = worst, slot = worstSlot }
     if prio and prio.order then
-        e.match, e.stats = ns.StatPriority:ItemMatch(item.link, prio.order)
-        e.oldMatch = ns.StatPriority:ItemMatch(worstLink, prio.order)
+        e.match, e.stats = ns.StatPriority:ItemMatch(item.link, prio.order, prio.ranks)
+        e.oldMatch = ns.StatPriority:ItemMatch(worstLink, prio.order, prio.ranks)
     end
     return e
 end
@@ -198,13 +198,22 @@ end
 function AC:StatRows(rows, prio)
     local L, SP = ns.L, ns.StatPriority
     rows[#rows + 1] = { header = L.ACT_STATS }
-    if not prio.order then
+    if not (prio.order or prio.flat) then
         rows[#rows + 1] = { kind = "callout", style = "info", text = L.ACT_STATS_NONE }
         return
     end
     local title = L.ACT_STATS_FOR
     if prio.heroName then title = title .. " - " .. prio.heroName end
     rows[#rows + 1] = { kind = "sub", text = title }
+    if prio.heroChoice then
+        -- il gioco non dice quale talento eroico hai (client in un'altra lingua)
+        local items = {}
+        for _, key in ipairs(prio.heroOrder) do
+            items[#items + 1] = { label = SP.HERO_LABELS[key] or key, selected = prio.heroKey == key,
+                                  onClick = function() SP:SetHero(prio.specID, key) end }
+        end
+        rows[#rows + 1] = { kind = "pills", items = items }
+    end
     if prio.contentChoice then
         local items = {}
         for _, mode in ipairs({ "raid", "mplus" }) do
@@ -223,13 +232,19 @@ function AC:StatRows(rows, prio)
                             cols = { tostring(n), L.ACT_ILVL .. " (" .. SP:Name(prio.primary) .. ")", "" },
                             colors = { nil, { 1, 0.82, 0 } } }
     end
-    for _, stat in ipairs(prio.order) do
-        n = n + 1
+    local base = n
+    for i, stat in ipairs(prio.order or {}) do
+        -- pari merito: stesso numero, con "=" accanto
+        local rank = (prio.ranks and prio.ranks[stat]) or i
+        local tied = (prio.order[i - 1] and prio.ranks and prio.ranks[prio.order[i - 1]] == rank)
+                  or (prio.order[i + 1] and prio.ranks and prio.ranks[prio.order[i + 1]] == rank)
         local v = values[stat]
         rows[#rows + 1] = { kind = "tr", widths = widths, align = align,
-                            cols = { tostring(n), SP:Name(stat), type(v) == "number" and ("%.1f%%"):format(v) or "-" },
-                            colors = { nil, n <= (prio.ilvlFirst and 3 or 2) and { 0.4, 1, 0.4 } or nil } }
+                            cols = { tostring(base + rank) .. (tied and "=" or ""), SP:Name(stat),
+                                     type(v) == "number" and ("%.1f%%"):format(v) or "-" },
+                            colors = { nil, rank <= 2 and { 0.4, 1, 0.4 } or nil } }
     end
+    if prio.flat then rows[#rows + 1] = { kind = "callout", style = "info", text = L.ACT_STATS_FLAT } end
     if prio.note then rows[#rows + 1] = { kind = "note", text = L[prio.note] } end
 end
 

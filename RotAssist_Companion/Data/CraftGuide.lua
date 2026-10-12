@@ -21,6 +21,10 @@ G.MIDNIGHT = {
 
 -- Professioni di raccolta: niente ricette, solo la guida
 G.GATHERING = { [182] = true, [186] = true, [393] = true }
+-- Professioni secondarie (Cucina, Pesca): niente specializzazioni ne' conoscenza
+G.SECONDARY = { [185] = true, [356] = true }
+-- Senza la sezione "cosa creare": raccolta e Pesca
+G.NO_MAKE = { [182] = true, [186] = true, [393] = true, [356] = true }
 
 -- Armatura per classe (UnitClass, secondo valore)
 G.ARMOR = {
@@ -30,12 +34,52 @@ G.ARMOR = {
     WARRIOR = "plate", PALADIN = "plate", DEATHKNIGHT = "plate",
 }
 
--- Classi che usano armi da mischia fatte dal fabbro (spade, asce, mazze,
--- pugnali, armi ad asta, glaive). Il cacciatore solo in Survival (255).
-G.MELEE = { WARRIOR = true, PALADIN = true, DEATHKNIGHT = true, ROGUE = true,
-            DEMONHUNTER = true, MONK = true, SHAMAN = true }
--- Bastoni e off-hand (Inscription)
-G.STAFF = { MAGE = true, PRIEST = true, WARLOCK = true, DRUID = true, EVOKER = true }
+-- Armi usate da ogni specializzazione di classe. Chi le crea in Midnight:
+-- Blacksmithing (Weaponsmithing: Hafted Weapons = asce, mazze, armi ad asta;
+-- Blades = spade, pugnali, warglaive; anche con Intelletto; scudi nel ramo
+-- Large Plate di Armorsmithing), Inscription (bastoni, off-hand, archi),
+-- Engineering (fucili).
+--   TWOHAND   arma a due mani con Forza
+--   DUAL      due armi, a due mani o a una mano secondo i talenti
+--   SHIELD    arma a una mano e scudo (tank)
+--   DAGGERS   pugnali
+--   ONEHAND   armi a una mano con Agilita' (asce, mazze, spade, pugni)
+--   GLAIVES   warglaive
+--   POLE      bastone o arma ad asta con Agilita'
+--   RANGED    arco, fucile o balestra
+--   CASTER    bastone, oppure arma a una mano con Intelletto e off-hand
+--   CASTER_SH arma a una mano con Intelletto e scudo (o off-hand)
+G.WIELD = {
+    [71] = "TWOHAND", [72] = "DUAL", [73] = "SHIELD",
+    [65] = "CASTER_SH", [66] = "SHIELD", [70] = "TWOHAND",
+    [250] = "TWOHAND", [251] = "DUAL", [252] = "TWOHAND",
+    [259] = "DAGGERS", [260] = "ONEHAND", [261] = "DAGGERS",
+    [577] = "GLAIVES", [581] = "GLAIVES", [1480] = "GLAIVES",
+    [268] = "POLE", [269] = "POLE", [270] = "CASTER",
+    [102] = "CASTER", [103] = "POLE", [104] = "POLE", [105] = "CASTER",
+    [253] = "RANGED", [254] = "RANGED", [255] = "POLE",
+    [62] = "CASTER", [63] = "CASTER", [64] = "CASTER",
+    [256] = "CASTER", [257] = "CASTER", [258] = "CASTER",
+    [262] = "CASTER_SH", [263] = "ONEHAND", [264] = "CASTER_SH",
+    [265] = "CASTER", [266] = "CASTER", [267] = "CASTER",
+    [1467] = "CASTER", [1468] = "CASTER", [1473] = "CASTER",
+}
+-- Senza specializzazione (personaggi di basso livello): la piu' comune della classe
+G.CLASS_WIELD = {
+    WARRIOR = "TWOHAND", PALADIN = "TWOHAND", DEATHKNIGHT = "TWOHAND", ROGUE = "DAGGERS",
+    DEMONHUNTER = "GLAIVES", MONK = "POLE", DRUID = "CASTER", HUNTER = "RANGED",
+    MAGE = "CASTER", PRIEST = "CASTER", SHAMAN = "CASTER_SH", WARLOCK = "CASTER", EVOKER = "CASTER",
+}
+-- Consiglio di Blacksmithing per tipo di arma
+local BS_WEAPON = {
+    TWOHAND = "ADV_BS_2H", DUAL = "ADV_BS_DUAL", SHIELD = "ADV_BS_SHIELD", DAGGERS = "ADV_BS_DAGGERS",
+    ONEHAND = "ADV_BS_1H", GLAIVES = "ADV_BS_GLAIVES", POLE = "ADV_BS_POLE",
+    CASTER = "ADV_BS_CASTER", CASTER_SH = "ADV_BS_CASTER",
+}
+-- Consiglio di Inscription per tipo di arma
+local INSC_WEAPON = {
+    RANGED = "ADV_INSC_BOW", CASTER = "ADV_INSC_STAFF", CASTER_SH = "ADV_INSC_OFFHAND", POLE = "ADV_INSC_AGI",
+}
 
 ---------------------------------------------------------------------------
 -- Testi
@@ -197,6 +241,48 @@ G.it = {
             { 1, 100, "Scuoia tutte le bestie che uccidi. Le High Value Beast (icona del coltello sulla minimappa) danno molto piu' cuoio; i Diffuser lanciati sui mob danno Mote; le esche di zona (specializzazione Talented Tracker) richiamano le bestie rinomate." },
         },
         tips = "Fonti settimanali: missione del trainer e drop durante la scuoiatura (con recupero se salti settimane).",
+    },
+    -- Cucina e Pesca: professioni secondarie, senza specializzazioni ne' conoscenza
+    cooking = {
+        trainer = "Sylann (Wayfarer's Rest, la locanda di Silvermoon City); materiali base dal venditore accanto",
+        phases = {
+            { 1, 25, "Spiced Biscuits con burro e spezie del venditore: circa 50 creazioni, finche' la ricetta diventa verde." },
+            { 25, 35, "Nuove ricette dal trainer: circa 10 Felberry Figs. Plant Protein dall'asta, il resto dal venditore." },
+            { 35, 100, "A 35 si sblocca Hearty: alterna Spiced Biscuits e la loro versione Hearty (o Hearty Felberry Figs). Piu' sali, piu' porzioni rende ogni creazione, quindi conviene alternare invece di creare tutto subito. Gli ultimi 25 punti sono verdi: servono molte creazioni, ma bastano i materiali del venditore." },
+        },
+        tips = "Cucina e Pesca non hanno specializzazioni ne' punti conoscenza. Darkmoon Faire: una missione di Stamp Thunderhorn da' 2 punti, tienila per ultima.",
+        extra = {
+            title = "Cosa cucinare",
+            lines = {
+                "Banchetti (Stamina per tutto il gruppo): Blooming Feast e Quel'dorei Medley danno la statistica secondaria piu' alta, Harandar Celebration e Silvermoon Parade la statistica primaria.",
+                "Cibo migliore: Royal Roast e Impossibly Royal Roast (statistica primaria), Champion's Bento e Flora Frenzy (secondaria piu' alta). Flora Frenzy si impara con la missione Gomphusta a Harandar, le altre ricette dal trainer.",
+                "Cibo economico: Arcano Cutlets e simili danno una sola secondaria (Critico, Celerita', Maestria o Versatilita') e costano meno.",
+                "Il pesce va prima lavorato in Thalassian Fillet: con Pesca hai la materia prima gratis.",
+                "Attrezzi: matterello da Inscription e cappello da cuoco da Tailoring. Verdi e blu all'asta, gli epici solo su ordinazione (vincolati al personaggio).",
+            },
+        },
+    },
+    fishing = {
+        trainer = "Drathen, vicino al laghetto al centro di Silvermoon City; dal venditore accanto l'Angler's Guide, che mostra i banchi sulla minimappa",
+        phases = {
+            { 1, 75, "Acqua libera a Eversong Woods o a Silvermoon City: a questo livello i banchi non conviene cercarli." },
+            { 75, 150, "Ancora Eversong Woods. Resta in una zona finche' peschi oggetti grigi solo di rado: i livelli consigliati delle zone sono ottimisti." },
+            { 150, 225, "Zul'Aman, oppure le zone precedenti. Da qui i banchi rendono piu' dell'acqua libera." },
+            { 225, 300, "Harandar, oppure le zone precedenti. Eversong ha i banchi piu' vicini tra loro, lungo i fiumi centrali." },
+        },
+        tips = "Pesca arriva a 300 e non ha specializzazioni ne' punti conoscenza. Punti extra: Abyss Angler's Fishlog (+3) dal tesoro Bait and Tackle all'ingresso di una grotta di Zul'Aman (circa 21.1, 67.1), una volta per personaggio ma spedibile agli alt; missione della Darkmoon Faire (+3, tienila per ultima); An Angler's Deep Dive (+10) dai forzieri Patient Treasure.",
+        extra = {
+            title = "Cosa pescare e attrezzatura",
+            lines = {
+                "Banchetti: Eversong Trout e Restored Songfish (Quel'dorei Medley), Lynxfish e Arcane Wyrmfish (Silvermoon Parade).",
+                "Esche per Skinning: Arcane Wyrmfish, Lynxfish, Gore Guppy, Fungalskin Pike, Tender Lumifin, Ominous Octopus e Null Voidfish. Probabilmente i pesci che valgono di piu' all'asta.",
+                "Banchi del tesoro (Careless Cargo, Lost Treasures): compaiono ovunque e danno le ricette delle esche, che per 30 minuti aumentano la probabilita' di un pesce preciso.",
+                "Canna: Farstrider Hobbyist Rod e Sin'dorei Angler's Rod si comprano all'asta; l'epica Sin'dorei Reeler's Rod la crea un ingegnere su ordinazione (serve Fused Vitality).",
+                "Midnight Angler's Grand Line raddoppia i tesori pescati: si crea con i frammenti Bloomline e Glimmerline pescati, senza abilita' di professione.",
+                "Amani Angler's Ward: per 30 minuti niente Blood Hunter Spirits.",
+                "Voidstorm ha poca acqua libera: due punti in acque profonde intorno a 35.9, 47.1 e 35.2, 46.0.",
+            },
+        },
     },
     -- fonti dei punti conoscenza: { fonte, punti, quando }
     knowledge = {
@@ -373,6 +459,48 @@ G.en = {
         },
         tips = "Weekly sources: trainer quest and drops while skinning (with catch-up if you skip weeks).",
     },
+    -- Cooking and Fishing: secondary professions, no specializations or knowledge
+    cooking = {
+        trainer = "Sylann (Wayfarer's Rest, the inn in Silvermoon City); basic materials from the vendor next to them",
+        phases = {
+            { 1, 25, "Spiced Biscuits with butter and spices from the vendor: about 50 crafts, until the recipe turns green." },
+            { 25, 35, "New recipes from the trainer: about 10 Felberry Figs. Plant Protein from the auction house, the rest from the vendor." },
+            { 35, 100, "Hearty unlocks at 35: alternate Spiced Biscuits and their Hearty version (or Hearty Felberry Figs). The higher your skill, the more servings each craft gives, so alternate instead of crafting everything at once. The last 25 points are green: many crafts, but vendor materials are enough." },
+        },
+        tips = "Cooking and Fishing have no specializations or knowledge points. Darkmoon Faire: a quest from Stamp Thunderhorn gives 2 points, keep it for last.",
+        extra = {
+            title = "What to cook",
+            lines = {
+                "Feasts (Stamina for the whole group): Blooming Feast and Quel'dorei Medley give your highest secondary stat, Harandar Celebration and Silvermoon Parade your primary stat.",
+                "Best food: Royal Roast and Impossibly Royal Roast (primary stat), Champion's Bento and Flora Frenzy (highest secondary). Flora Frenzy comes from the Gomphusta quest in Harandar, the other recipes from the trainer.",
+                "Cheap food: Arcano Cutlets and similar dishes give a single secondary (Crit, Haste, Mastery or Versatility) for less.",
+                "Fish must first be processed into Thalassian Fillet: with Fishing you get the raw material for free.",
+                "Tools: rolling pin from Inscription and chef's hat from Tailoring. Green and blue ones on the auction house, epic ones only through crafting orders (soulbound).",
+            },
+        },
+    },
+    fishing = {
+        trainer = "Drathen, by the pond in the center of Silvermoon City; the vendor next to them sells the Angler's Guide, which shows pools on the minimap",
+        phases = {
+            { 1, 75, "Open water in Eversong Woods or Silvermoon City: at this level pools are not worth looking for." },
+            { 75, 150, "Still Eversong Woods. Stay in a zone until you rarely fish grey items: the zones' recommended levels are optimistic." },
+            { 150, 225, "Zul'Aman, or the earlier zones. From here pools are better than open water." },
+            { 225, 300, "Harandar, or the earlier zones. Eversong has the pools closest together, along the central rivers." },
+        },
+        tips = "Fishing goes to 300 and has no specializations or knowledge points. Extra points: Abyss Angler's Fishlog (+3) from the Bait and Tackle treasure at a cave entrance in Zul'Aman (about 21.1, 67.1), once per character but mailable to alts; the Darkmoon Faire quest (+3, keep it for last); An Angler's Deep Dive (+10) from Patient Treasure chests.",
+        extra = {
+            title = "What to fish and gear",
+            lines = {
+                "Feasts: Eversong Trout and Restored Songfish (Quel'dorei Medley), Lynxfish and Arcane Wyrmfish (Silvermoon Parade).",
+                "Skinning lures: Arcane Wyrmfish, Lynxfish, Gore Guppy, Fungalskin Pike, Tender Lumifin, Ominous Octopus and Null Voidfish. Likely the most valuable fish on the auction house.",
+                "Treasure pools (Careless Cargo, Lost Treasures): they appear anywhere and give lure recipes, which raise the chance of a specific fish for 30 minutes.",
+                "Rod: Farstrider Hobbyist Rod and Sin'dorei Angler's Rod are on the auction house; the epic Sin'dorei Reeler's Rod is made by an engineer through a crafting order (needs Fused Vitality).",
+                "Midnight Angler's Grand Line doubles fished treasure: craft it from fished Bloomline and Glimmerline fragments, no profession skill needed.",
+                "Amani Angler's Ward: no Blood Hunter Spirits for 30 minutes.",
+                "Voidstorm has little open water: two deep-water spots around 35.9, 47.1 and 35.2, 46.0.",
+            },
+        },
+    },
     knowledge = {
         { "First crafts", "1 each", "once per recipe" },
         { "Profession treasures", "3 x 8", "once" },
@@ -398,8 +526,7 @@ G.en = {
 -- (CraftBuilds.lua) da mostrare per prima.
 function G:Advice(key, class, specID)
     local armor = self.ARMOR[class]
-    local hunterRanged = class == "HUNTER" and specID ~= 255
-    local melee = self.MELEE[class] or (class == "HUNTER" and specID == 255)
+    local wield = (specID and self.WIELD[specID]) or self.CLASS_WIELD[class]
     local out, build = {}, 1
     local function add(k) out[#out + 1] = k end
     if key == "leatherworking" then
@@ -407,8 +534,9 @@ function G:Advice(key, class, specID)
         elseif armor == "leather" then add("ADV_LW_LEATHER")
         else add("ADV_LW_OTHER"); build = 3 end
     elseif key == "blacksmithing" then
-        if melee then add("ADV_BS_WEAPON") end
-        if armor == "plate" then add("ADV_BS_PLATE"); if not melee then build = 2 end end
+        local weapon = wield and BS_WEAPON[wield]
+        if weapon then add(weapon) end
+        if armor == "plate" then add("ADV_BS_PLATE"); if not weapon then build = 2 end end
         if #out == 0 then add("ADV_BS_OTHER"); build = 3 end
     elseif key == "tailoring" then
         if armor == "cloth" then add("ADV_TAILOR_CLOTH"); build = 4 end
@@ -416,11 +544,10 @@ function G:Advice(key, class, specID)
     elseif key == "jewelcrafting" then
         add("ADV_JC"); build = 2
     elseif key == "engineering" then
-        add(hunterRanged and "ADV_ENG_GUN" or "ADV_ENG")
+        add(wield == "RANGED" and "ADV_ENG_GUN" or "ADV_ENG")
     elseif key == "inscription" then
-        if hunterRanged then add("ADV_INSC_BOW")
-        elseif self.STAFF[class] then add("ADV_INSC_STAFF")
-        else add("ADV_INSC_OTHER"); build = 2 end
+        local weapon = wield and INSC_WEAPON[wield]
+        if weapon then add(weapon) else add("ADV_INSC_OTHER"); build = 2 end
     elseif key == "alchemy" then
         add("ADV_ALCH"); build = 2
     elseif key == "enchanting" then

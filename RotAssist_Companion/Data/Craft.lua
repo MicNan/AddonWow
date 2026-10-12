@@ -9,6 +9,8 @@
 --  * la specializzazione consigliata per l'equipaggiamento del personaggio e
 --    le build delle specializzazioni, fase per fase (CraftBuilds.lua);
 --  * le fonti dei punti conoscenza.
+-- Cucina e Pesca (secondarie) hanno solo la guida e, per la Cucina, il
+-- calcolo delle ricette: niente specializzazioni ne' conoscenza.
 -- Selettori in alto: professione e sezione (livellamento, cosa creare,
 -- specializzazioni, conoscenza), ricordati in RotAssistCompanionDB.
 -- Solo lettura: l'addon non crea nulla e non compra nulla.
@@ -249,11 +251,11 @@ local function PlayerSpec()
     return class, index and A.Call(getInfo, index)
 end
 
--- Professioni mostrate (cucina e pesca escluse) e quella selezionata
+-- Professioni mostrate e quella selezionata
 function C:Selected(profs)
     local list = {}
     for _, p in ipairs(profs) do
-        if p.key and p.key ~= "cooking" and p.key ~= "fishing" then list[#list + 1] = p end
+        if p.key then list[#list + 1] = p end
     end
     local sel = list[1]
     for _, p in ipairs(list) do
@@ -291,6 +293,13 @@ function C:LevelRows(rows, p, guide, level, max)
     end
     if guide.tips then rows[#rows + 1] = { kind = "callout", style = "tip", text = guide.tips } end
     rows[#rows + 1] = { text = L.CRAFT_TRAINER:format(guide.trainer), icon = "Interface\\Icons\\INV_Misc_Book_09", dim = true }
+    -- consigli extra (Cucina e Pesca: cosa creare o pescare, attrezzatura)
+    if guide.extra then
+        rows[#rows + 1] = { kind = "sub", text = guide.extra.title }
+        for _, line in ipairs(guide.extra.lines) do
+            rows[#rows + 1] = { kind = "step", badge = "-", badgeColor = { 0.35, 0.65, 1 }, text = line }
+        end
+    end
 
     -- tutte le fasi, per avere il quadro completo
     rows[#rows + 1] = { kind = "sub", text = L.CRAFT_ALL_PHASES }
@@ -526,18 +535,24 @@ function C:Rows()
     end
     rows[#rows + 1] = { kind = "pills", items = items }
 
-    -- selettore della sezione
-    local gathering = ns.CraftGuide.GATHERING[p.skillLine]
+    -- selettore della sezione: raccolta e Pesca senza "cosa creare",
+    -- Cucina e Pesca senza specializzazioni e conoscenza
+    local G = ns.CraftGuide
+    local function Allowed(s)
+        if s == "make" then return not G.NO_MAKE[p.skillLine] end
+        if s == "specs" or s == "knowledge" then return not G.SECONDARY[p.skillLine] end
+        return true
+    end
     local section = ns.db.craftSection or "level"
-    if gathering and section == "make" then section = "level" end
+    if not Allowed(section) then section = "level" end
     local sItems = {}
     for _, s in ipairs(SECTIONS) do
-        if not (gathering and s == "make") then
+        if Allowed(s) then
             sItems[#sItems + 1] = { label = L["CRAFT_SEC_" .. s], selected = s == section,
                                     onClick = function() ns.db.craftSection = s end }
         end
     end
-    rows[#rows + 1] = { kind = "pills", items = sItems }
+    if #sItems > 1 then rows[#rows + 1] = { kind = "pills", items = sItems } end
 
     local guide = p.key and ns.CraftGuide:Text(p.key)
     if not guide then
@@ -548,7 +563,7 @@ function C:Rows()
     local level = (scan and scan.level) or p.rank or 0
     local max = (scan and scan.max) or p.max or 100
 
-    self:StatusRows(rows, p)
+    if not G.SECONDARY[p.skillLine] then self:StatusRows(rows, p) end
     rows[#rows + 1] = { header = L["CRAFT_SEC_" .. section] }
     if section == "level" then
         self:LevelRows(rows, p, guide, level, max)

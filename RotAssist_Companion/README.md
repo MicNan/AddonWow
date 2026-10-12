@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.8.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.9.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -175,18 +175,61 @@ ti trovi, con le loro ricompense; il clic su una riga calcola il percorso.
 - Le world quest con **crest** (Mistcrest) per potenziare quello che hai.
 - La **priorità delle statistiche** della tua specializzazione con i tuoi valori attuali:
 
-  | Specializzazione | Priorità (12.1) |
-  |---|---|
-  | Beast Mastery | Mitiche+ e il resto: Maestria > Critico > Versatilità > Celerità; raid (bersaglio singolo): Maestria > Celerità > Critico > Versatilità |
-  | Marksmanship | Critico > Maestria > Versatilità > Celerità |
-  | Survival | Maestria > Critico > Celerità > Versatilità (Critico e Celerità quasi uguali) |
-  | Elemental | livello oggetto, poi Maestria > Celerità > Critico > Versatilità |
-  | Enhancement | livello oggetto; Stormbringer: Maestria > Critico > Celerità > Versatilità; Totemic: Maestria > Celerità > Critico > Versatilità |
-  | Restoration | livello oggetto, poi Critico > Versatilità > Celerità > Maestria |
+  Tutte le 40 specializzazioni. "Livello oggetto" vuol dire che conta prima di tutto il resto;
+  "=" indica statistiche che valgono uguale. Abbreviazioni: Crit = Critico, Cel = Celerità,
+  Mae = Maestria, Vers = Versatilità.
 
-  Per il Beast Mastery un selettore sceglie raid o Mitiche+; per l'Enhancement la priorità segue il
-  **talento eroico attivo**, letto dal gioco. Le altre specializzazioni mostrano solo il livello
-  oggetto. Una priorità generica non sostituisce una simulazione del personaggio.
+  | Classe | Specializzazione | Priorità (12.1) |
+  |---|---|---|
+  | Warrior | Arms | Crit > Cel > Mae > Vers |
+  | | Fury | Mae > Cel > Crit = Vers |
+  | | Protection | livello oggetto, poi Cel > Crit = Vers > Mae |
+  | Paladin | Holy | livello oggetto; raid: Mae > Cel = Crit > Vers; Mitiche+: Cel = Crit > Vers > Mae |
+  | | Protection | livello oggetto, poi Cel > Crit > Vers > Mae |
+  | | Retribution | Mae > Cel > Crit > Vers |
+  | Death Knight | Blood | Deathbringer: Crit = Vers = Mae > Cel; San'layn: Cel > Crit = Vers = Mae |
+  | | Frost | Crit > Mae > Cel > Vers |
+  | | Unholy | Crit > Mae > Cel > Vers |
+  | Rogue | Assassination | Crit > Cel > Mae > Vers |
+  | | Outlaw | Cel > Crit > Vers > Mae |
+  | | Subtlety | Trickster: Mae > Cel > Crit > Vers; Deathstalker: Cel > Mae > Crit > Vers |
+  | Demon Hunter | Havoc | Crit > Mae > Cel > Vers |
+  | | Vengeance | livello oggetto, poi Cel > Crit = Vers = Mae |
+  | | Devourer | Mae > Cel > Crit > Vers |
+  | Monk | Brewmaster | livello oggetto, poi Crit = Vers > Mae > Cel |
+  | | Windwalker | Cel > Mae = Crit > Vers |
+  | | Mistweaver | Cel > Crit = Vers > Mae |
+  | Druid | Balance | Mae > Cel = Crit > Vers |
+  | | Feral | livello oggetto, nessuna priorità fissa |
+  | | Guardian | livello oggetto, poi Cel > Vers > Crit > Mae |
+  | | Restoration | livello oggetto; raid: Cel = Mae > Crit > Vers; Mitiche+: Cel > Mae > Vers > Crit |
+  | Hunter | Beast Mastery | raid (bersaglio singolo): Mae > Cel > Crit > Vers; Mitiche+ e il resto: Mae > Crit > Vers > Cel |
+  | | Marksmanship | Crit > Mae > Vers > Cel |
+  | | Survival | Mae > Crit > Cel > Vers |
+  | Mage | Arcane | Cel > Vers > Crit > Mae |
+  | | Fire | Cel > Vers > Mae > Crit |
+  | | Frost | Mae = Crit > Cel > Vers |
+  | Priest | Discipline | livello oggetto, poi Cel > Mae > Crit > Vers |
+  | | Holy | livello oggetto; raid: Crit > Mae > Vers > Cel; Mitiche+: Cel > Vers = Crit > Mae |
+  | | Shadow | livello oggetto; Voidweaver e Archon, ciascuno con bersaglio singolo e più bersagli (Mae o Cel in testa) |
+  | Shaman | Elemental | livello oggetto, poi Mae > Cel > Crit > Vers |
+  | | Enhancement | livello oggetto; Stormbringer: Mae > Crit > Cel > Vers; Totemic: Mae > Cel > Crit > Vers |
+  | | Restoration | livello oggetto, poi Crit > Vers > Cel > Mae |
+  | Warlock | Affliction | bersaglio singolo: Crit > Cel = Mae > Vers; più bersagli: Cel = Crit > Mae > Vers |
+  | | Demonology | Crit > Cel = Mae > Vers |
+  | | Destruction | Cel > Crit = Mae > Vers |
+  | Evoker | Devastation | Crit > Cel = Mae > Vers |
+  | | Preservation | Mae > Crit > Cel > Vers |
+  | | Augmentation | Mae > Cel = Crit > Vers |
+
+  Dove l'ordine cambia per contenuto c'è un selettore raid / Mitiche+. Dove cambia con il
+  **talento eroico** (Blood, Subtlety, Shadow, Enhancement) l'addon lo legge dal gioco; se non lo
+  riconosce, per esempio con il client in italiano, compare un selettore con i due talenti. Sotto
+  la tabella una nota spiega soglie e varianti (per esempio il tetto di Celerità del Subtlety).
+  Una priorità generica non sostituisce una simulazione del personaggio.
+
+  Fonti: per cacciatore e sciamano le guide di Icy Veins, per le altre classi le pagine sulle
+  statistiche di method.gg aggiornate alla 12.1 (agosto-ottobre 2026), riassunte con parole nostre.
 - Da dove arriva l'equipaggiamento nella Season 2 (traccia e livelli).
 
 **Great Vault**
@@ -224,7 +267,7 @@ selettori, per la professione scelta:
 Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno una volta.
 
 **Livellamento**
-- Una **barra da 1 a 100** divisa nelle fasi della guida, con il segno del tuo livello.
+- Una **barra da 1 a 100** (da 1 a 300 per la Pesca) divisa nelle fasi della guida, con il segno del tuo livello.
 - La **fase attuale** in evidenza (per esempio Leatherworking 60-91: "crea una delle ricette di
   livello medio, circa 35 creazioni") e la fase successiva.
 - Il trainer di Silvermoon e l'elenco di **tutte le fasi**, con quella attuale evidenziata.
@@ -246,14 +289,33 @@ Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno 
   | Professione | Consiglio |
   |---|---|
   | Leatherworking | maglia (cacciatore, sciamano, evocatore): **Safeguarding Scales**, con il set epico Farstrider's; cuoio: **Lasting Leather**, con il set Silvermoon Agent's |
-  | Blacksmithing | armi da mischia: **Weaponsmithing** (di solito l'upgrade più grande); piastre: **Armorsmithing** |
+  | Blacksmithing | **Weaponsmithing** con il ramo dell'arma della tua specializzazione (vedi sotto, di solito l'upgrade più grande); piastre: **Armorsmithing** |
   | Tailoring | stoffa: **Sin'dorei Finery**; per tutti: i cooldown dei tessuti e il mantello abbellito |
   | Jewelcrafting | **Alluring Accessories**: anelli e collane |
   | Engineering | **Combat Analytics**: occhiali, bracciali, stivali e pistole (per il cacciatore a distanza) |
-  | Inscription | **Blueprints**: archi per il cacciatore a distanza, bastoni e off-hand per gli incantatori |
+  | Inscription | **Blueprints**: archi, bastoni (anche con Agilità) e off-hand, secondo la specializzazione |
   | Alchemy | 15 punti in **Fluent in Flasks** per raid e Mitiche+; per l'oro la build delle pozioni |
   | Enchanting | **Concentrazione** se hai poco tempo, **Vendita di incantamenti** per l'oro in serie |
   | Herbalism | druido: subito Bountiful Harvests; altre classi: prima Botany (raccolta in sella) |
+
+- **Armi per specializzazione di classe.** In Midnight le armi si creano così: Blacksmithing
+  (Weaponsmithing: ramo **Hafted Weapons** per asce, mazze e armi ad asta, ramo **Blades** per
+  spade, pugnali e warglaive, anche con Intelletto; scudi nel ramo Large Plate di Armorsmithing),
+  Inscription (bastoni, off-hand, archi), Engineering (fucili). Il consiglio segue l'arma che usa
+  la tua specializzazione:
+
+  | Armi | Specializzazioni | Consiglio |
+  |---|---|---|
+  | due mani con Forza | Arms, Retribution, Blood, Unholy | Weaponsmithing, Hafted o Blades |
+  | due armi | Fury, Frost (Death Knight) | Weaponsmithing (vale doppio) |
+  | una mano e scudo | Protection (Warrior e Paladin) | Weaponsmithing per l'arma, Large Plate per lo scudo |
+  | pugnali | Assassination, Subtlety | Weaponsmithing, Blades |
+  | una mano con Agilità | Outlaw, Enhancement | Weaponsmithing, Hafted e/o Blades |
+  | warglaive | Havoc, Vengeance, Devourer | Weaponsmithing, Blades |
+  | bastone o arma ad asta | Brewmaster, Windwalker, Feral, Guardian, Survival | Hafted (armi ad asta) o bastone con Agilità di Inscription |
+  | arco o fucile | Beast Mastery, Marksmanship | arco di Inscription o fucile di Engineering |
+  | incantatori | Mage, Priest, Warlock, Evoker, Balance, Restoration (Druid), Mistweaver | bastone e off-hand di Inscription, oppure arma a una mano con Intelletto di Blacksmithing |
+  | incantatori con scudo | Holy (Paladin), Elemental, Restoration (Shaman) | arma a una mano con Intelletto di Blacksmithing; off-hand di Inscription al posto dello scudo |
 
 - La **panoramica** delle quattro specializzazioni e cosa sblocca ciascuna (con i nomi del tuo
   client, che in italiano possono essere tradotti).
@@ -269,8 +331,16 @@ Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno 
 Per le professioni di raccolta (Herbalism, Mining, Skinning) ci sono Livellamento,
 Specializzazioni e Conoscenza, senza il calcolo delle ricette.
 
-**Fonti.** Guide pubbliche sulle professioni di Midnight (livellamento 1-100, fonti di
-conoscenza, build delle specializzazioni), riassunte con parole nostre. ID delle professioni di
+**Cucina e Pesca.** Sono professioni secondarie: niente specializzazioni né punti conoscenza.
+- **Cucina** (1-100): Livellamento (Spiced Biscuits, Felberry Figs, poi l'alternanza con le
+  versioni Hearty) e Cosa creare, con lo stesso calcolo delle ricette delle altre professioni.
+  In più: banchetti e cibo migliore, cibo economico, attrezzi.
+- **Pesca** (1-300): solo Livellamento, con le zone per fascia di livello (Eversong Woods,
+  Zul'Aman, Harandar), i punti extra (Fishlog, Darkmoon Faire, Patient Treasure), i pesci che
+  servono per banchetti ed esche, canne, esche e lenza.
+
+**Fonti.** Guide pubbliche sulle professioni di Midnight (livellamento, fonti di conoscenza,
+build delle specializzazioni, ricette delle armi, Cucina e Pesca), riassunte con parole nostre. ID delle professioni di
 Midnight dalla tabella SkillLine di wago.tools.
 
 **Limiti**
@@ -419,6 +489,11 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
     materiali obbligatori di `GetRecipeSchematic` e conteggio con la banca della brigata
     (`C_Item.GetItemCount`). Le probabilità di punto per le ricette gialle (50%) e verdi (15%)
     sono stime.
+12. **Talento eroico:** riconosciuto per ID (Enhancement) o per nome inglese (Blood, Subtlety,
+    Shadow). Con il client in italiano i nomi potrebbero essere tradotti: in quel caso compare
+    il selettore. Gli ID dei talenti eroici delle altre classi vanno letti in gioco.
+13. **Cucina e Pesca:** ID delle professioni di Midnight (Cucina 2908, Pesca 2911), livello
+    massimo della Pesca (300) e lettura delle ricette di Cucina con la finestra aperta.
 
 ## Installazione
 
