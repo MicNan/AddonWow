@@ -131,7 +131,7 @@ function E:Rows()
     for _, h in ipairs(hol) do
         rows[#rows + 1] = { text = h.name, icon = h.icon, link = { search = h.name }, linkTitle = h.name }
     end
-    if #hol == 0 then rows[#rows + 1] = { text = L.NO_HOLIDAYS, dim = true } end
+    if #hol == 0 then rows[#rows + 1] = { kind = "note", text = L.NO_HOLIDAYS } end
 
     rows[#rows + 1] = { header = L.HDR_EVENTS }
     local evs = self:MapEvents()
@@ -144,7 +144,7 @@ function E:Rows()
             link = { search = e.name }, linkTitle = e.name,
         }
     end
-    if #evs == 0 then rows[#rows + 1] = { text = L.NO_EVENTS, dim = true } end
+    if #evs == 0 then rows[#rows + 1] = { kind = "note", text = L.NO_EVENTS } end
 
     local wqs, continent = self:WorldQuests()
     rows[#rows + 1] = { header = L.HDR_WORLD_QUESTS:format(continent or "?") }
@@ -158,6 +158,6 @@ function E:Rows()
             link = { quest = q.questID }, linkTitle = q.name,
         }
     end
-    if #wqs == 0 then rows[#rows + 1] = { text = L.NO_WORLD_QUESTS, dim = true } end
+    if #wqs == 0 then rows[#rows + 1] = { kind = "note", text = L.NO_WORLD_QUESTS } end
     return rows
 end

@@ -57,22 +57,22 @@ function LV:Rows()
     local maxLevel = MaxLevel()
 
     rows[#rows + 1] = { header = L.HDR_CHARACTER }
-    rows[#rows + 1] = { text = L.LEVEL:format(level, maxLevel) }
+    rows[#rows + 1] = { kind = "sub", text = L.LEVEL:format(level, maxLevel) }
     if level >= maxLevel then
-        rows[#rows + 1] = { text = L.MAX_LEVEL, color = { 0.3, 1, 0.3 } }
+        rows[#rows + 1] = { kind = "callout", style = "tip", text = L.MAX_LEVEL }
     else
         local cur, max = XP()
         local pct = max > 0 and math.floor(cur / max * 100) or 0
-        rows[#rows + 1] = { text = L.XP:format(A.Number(cur), A.Number(max), pct) }
         local rested = A.Call(GetXPExhaustion)
-        if rested and rested > 0 then
-            rows[#rows + 1] = { text = L.RESTED:format(A.Number(rested)), color = { 0.4, 0.6, 1 } }
-        end
+        rows[#rows + 1] = { kind = "bar", min = 0, max = math.max(1, max), value = cur, color = { 0.6, 0.4, 1 },
+                            marker = (rested and rested > 0) and math.min(max, cur + rested) or nil,
+                            label = L.XP:format(A.Number(cur), A.Number(max), pct),
+                            right = (rested and rested > 0) and L.RESTED:format(A.Number(rested)) or nil }
         local rate = self:Rate()
         if rate and rate > 0 then
             rows[#rows + 1] = { text = L.XP_RATE:format(A.Number(rate), A.TimeText((max - cur) / rate * 3600)) }
         else
-            rows[#rows + 1] = { text = L.XP_RATE_WAIT, dim = true }
+            rows[#rows + 1] = { kind = "note", text = L.XP_RATE_WAIT }
         end
     end
 
@@ -104,16 +104,19 @@ function LV:Rows()
             rows[#rows + 1] = { text = L.ZONE_LEVELS:format(z.name, z.min, z.max),
                                 link = { search = z.name }, linkTitle = z.name }
         end
-        if #found == 0 then rows[#rows + 1] = { text = L.NO_ZONES, dim = true } end
+        if #found == 0 then rows[#rows + 1] = { kind = "note", text = L.NO_ZONES } end
     end
 
     -- diario delle missioni
     if C_QuestLog and C_QuestLog.GetNumQuestLogEntries then
         local _, numQuests = A.Call(C_QuestLog.GetNumQuestLogEntries)
         if numQuests then
-            rows[#rows + 1] = { header = "" }
-            rows[#rows + 1] = { text = L.QUEST_LOG:format(numQuests, QUEST_LOG_MAX),
-                                color = numQuests >= QUEST_LOG_MAX - 2 and { 1, 0.5, 0.2 } or nil }
+            local full = numQuests >= QUEST_LOG_MAX - 2
+            rows[#rows + 1] = { header = L.HDR_QUEST_LOG }
+            rows[#rows + 1] = { kind = "bar", min = 0, max = QUEST_LOG_MAX, value = numQuests,
+                                color = full and { 1, 0.6, 0.2 } or { 0.35, 0.65, 1 },
+                                label = L.QUEST_LOG:format(numQuests, QUEST_LOG_MAX),
+                                right = full and L.QUEST_LOG_FULL or nil }
         end
     end
     return rows

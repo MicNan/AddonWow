@@ -12,17 +12,53 @@ MOCK.fire("ADDON_LOADED", "RotAssist_Companion")
 MOCK.fire("PLAYER_ENTERING_WORLD", true, false)
 print("lingua:", C.lang)
 
+-- Una riga del pannello in forma di testo, secondo il tipo
+local function RowText(d)
+    if d.header then return "  # " .. d.header end
+    local k = d.kind
+    if k == "pills" then
+        local t = {}
+        for _, it in ipairs(d.items) do t[#t + 1] = it.selected and ("[" .. it.label .. "]") or it.label end
+        return "    < " .. table.concat(t, " | ") .. " >"
+    elseif k == "callout" then
+        return "    {" .. (d.style or "info") .. "} " .. (d.title and (d.title .. ": ") or "") .. tostring(d.text)
+    elseif k == "sub" then return "   ## " .. tostring(d.text)
+    elseif k == "phase" then return "   >> " .. tostring(d.text)
+    elseif k == "step" then return "    (" .. tostring(d.badge) .. ") " .. tostring(d.text)
+    elseif k == "thead" then return "    || " .. table.concat(d.cols, " | ")
+    elseif k == "tr" then
+        return "    :: " .. table.concat(d.cols, " | ") .. (d.link and "  [link]" or "")
+    elseif k == "bar" then
+        return ("    [bar %s/%s%s%s] %s%s"):format(tostring(d.value or "-"), tostring(d.max),
+            d.marker and (" marker " .. d.marker) or "", d.ticks and (" soglie " .. table.concat(d.ticks, ",")) or "",
+            tostring(d.label), d.right and ("  | " .. d.right) or "")
+    elseif k == "note" then return "    ~ " .. tostring(d.text)
+    end
+    return "    " .. tostring(d.text) .. (d.right and ("  | " .. d.right) or "")
+        .. (d.badge and ("  <" .. tostring(d.badge[1]) .. ">") or "")
+        .. (d.waypoint and "  [wp]" or "") .. (d.dest and (d.dest.x and "  [dest]" or "  [zona]") or "")
+        .. (d.link and "  [link]" or "")
+end
+
 local function Dump(tab)
     C.Panel:Show(tab)
     print(("=== scheda %s (stato: %s)"):format(tab, tostring(C.Panel.frame.status._text)))
     for i, row in ipairs(C.Panel.rows) do
-        if row._shown and row.data then
-            local d = row.data
-            print(d.header and ("  # " .. d.header) or ("    " .. tostring(d.text) .. (d.right and ("  | " .. d.right) or "")
-                .. (d.waypoint and "  [wp]" or "") .. (d.dest and (d.dest.x and "  [dest]" or "  [zona]") or "")
-                .. (d.link and "  [link]" or "")))
+        if row._shown and row.data then print(RowText(row.data)) end
+    end
+end
+
+-- Clic su un selettore del pannello (per etichetta)
+local function ClickPill(label)
+    for _, row in ipairs(C.Panel.rows) do
+        if row._shown and row.data and row.data.kind == "pills" then
+            for i, it in ipairs(row.data.items) do
+                if it.label == label then row.pills[i]._scripts.OnClick(row.pills[i]) return end
+            end
         end
     end
+    print("!!! selettore non trovato: " .. label)
+    table.insert(MOCK.errors, "selettore " .. label)
 end
 
 -- il mock dei FontString non conserva il testo: aggiungiamolo
@@ -143,10 +179,13 @@ for _, prof in ipairs({ "occasionale", "assiduo" }) do
 end
 SlashCmdList.ROTASSISTCOMPANION("profilo")
 print("profilo dopo il ciclo:", C.db.playerType)
+ClickPill(C.L.PROFILE_medium)
+print("profilo dal selettore:", C.db.playerType)
 MOCK.profs = {}
 Dump("gold")
 MOCK.profs = { 1, 2 }
 print("--- professioni prima della scansione dei prezzi")
+C.db.craftSection = "make"
 Dump("craft")
 
 -- ===================== Asta =====================
@@ -221,12 +260,25 @@ MOCK.fire("AUCTION_HOUSE_CLOSED")
 -- ===================== Professioni =====================
 print("--- professioni")
 SlashCmdList.ROTASSISTCOMPANION("professioni")
+C.db.craft = nil
 Dump("craft")                                         -- prima della lettura: invito ad aprire la professione
 MOCK.bank = { [1004] = 3 }                            -- 3 Mycobloom in banca
 MOCK.fire("TRADE_SKILL_SHOW")
 local scan = C.db.craft and C.db.craft[171]
 print("ricette lette:", scan and #scan.recipes, "(attese 3: arancione, gialla prima creazione, arancione prima creazione)")
 Dump("craft")
+for _, sec in ipairs({ "level", "specs", "knowledge" }) do
+    ClickPill(C.L["CRAFT_SEC_" .. sec])
+    Dump("craft")
+end
+ClickPill(C.L.CRAFT_SEC_specs)
+ClickPill("Transmutes")                               -- un'altra build dal selettore
+print("build scelta per Alchemy:", C.db.craftBuild.alchemy)
+Dump("craft")
+ClickPill("Herbalism 100/100")                        -- l'altra professione (raccolta: niente 'Cosa creare')
+Dump("craft")
+ClickPill("Alchemy 37/100")
+ClickPill(C.L.CRAFT_SEC_make)
 local plan = C.Craft:Plan(171)
 print("migliore:", plan.best[1].recipe.name, "| a punto:", plan.best[1].perPoint, "| creazioni per 10 punti:", plan.topCrafts)
 for _, s in ipairs(plan.shopping) do print("   compra", s.itemID, "servono", s.need, "hai", s.have, "mancano", s.missing, "costo", s.cost) end
@@ -250,14 +302,21 @@ MOCK.tsChild = nil; MOCK.fire("TRADE_SKILL_SHOW")
 -- specializzazione consigliata: cacciatore con Leatherworking, guerriero con Blacksmithing, mago con Inscription
 local realProf, realClass = MOCK.profInfo[1], UnitClass
 MOCK.profInfo[1] = { "Leatherworking", 101, 72, 100, 0, 0, 165 }
+C.db.craftSection, C.db.craftProf = "specs", 165
 Dump("craft")
+C.db.craftSection = "level"
+Dump("craft")
+C.db.craftSection = "specs"
 UnitClass = function() return "Warrior", "WARRIOR" end
 MOCK.profInfo[1] = { "Blacksmithing", 101, 55, 100, 0, 0, 164 }
+C.db.craftProf = 164
 Dump("craft")
 UnitClass = function() return "Mage", "MAGE" end
 MOCK.profInfo[1] = { "Inscription", 101, 100, 100, 0, 0, 773 }
+C.db.craftProf = 773
 Dump("craft")
 MOCK.profInfo[1], UnitClass, MOCK.bank = realProf, realClass, nil
+C.db.craftProf, C.db.craftSection = nil, "level"
 
 -- ===================== Pet =====================
 print("--- pet da cacciatore")
@@ -327,11 +386,11 @@ Dump("pets")
 print("destinazione Bloated Snapdragon (vista):", C.Pets:Destination(C.Pets.byNpc[250582]).x)
 
 -- filtri (tutti -> esotici -> spirit beast -> non domati -> tutti)
-for _ = 1, 4 do
-    C.Panel.frame.petFilter._scripts.OnClick(C.Panel.frame.petFilter)
+for _, key in ipairs({ "exotic", "spirit", "missing", "all" }) do
+    ClickPill(C.L["PET_FILTER_" .. key])
     local n = 0
     for _, row in ipairs(C.Panel.rows) do if row._shown and row.data and row.data.preview then n = n + 1 end end
-    print("filtro", C.Pets.filter, "->", n, "pet | pulsante:", C.Panel.frame.petFilter._text)
+    print("filtro", C.Pets.filter, "->", n, "pet")
     if C.Pets.filter == "spirit" then Dump("pets") end
 end
 

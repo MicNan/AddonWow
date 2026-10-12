@@ -8,7 +8,7 @@
 -- Testi scritti per RotAssist Companion, riassumendo (ottobre 2026):
 --  * Icy Veins, "Best Professions to Make Gold in Midnight" (aggiornata per
 --    il lancio della Season 2, agosto 2026): fasce S/A/B e consigli
---  * wow-professions.com: build delle specializzazioni e novita' della 12.1
+--  * guide pubbliche sulle novita' della 12.1
 -- Niente cifre in oro: i prezzi cambiano da reame a reame, quindi si
 -- rimanda sempre alla casa d'aste.
 --
@@ -287,6 +287,45 @@ S.en = {
         hardcore = { "No professions: one gathering/crafting pair per character, covering different markets." },
     },
 }
+
+-- Perche' la professione e' in quella fascia (una frase)
+S.WHY = {
+    it = {
+        alchemy = "Rendono le pozioni create con Concentrazione: le erbe di rango 2 costano molto piu' di quelle di rango 1. I flask rendono meno, perche' gran parte del costo sono materiali senza qualita'.",
+        inscription = "Ottime build di Concentrazione per i consumabili; in Season 2 i bastoni a due mani sono molto richiesti.",
+        jewelcrafting = "Le gemme servono sempre e le build di Concentrazione funzionano bene; in Season 2 anelli e collane sono molto richiesti.",
+        tailoring = "I cooldown giornalieri dei tessuti rendono bene; in Season 2 l'equip di stoffa e' molto richiesto.",
+        enchanting = "Finora debole: molti costi sono materiali senza qualita'. Dovrebbe crescere con i nuovi contenuti di alto livello.",
+        blacksmithing = "Ottimo per l'equip su ordinazione in Season 2, meno per chi non vuole fare ordini: pochi consumabili da Concentrazione.",
+        engineering = "Ottimo per l'equip su ordinazione in Season 2, meno per chi non vuole fare ordini: pochi consumabili da Concentrazione.",
+        leatherworking = "Ottimo per l'equip su ordinazione in Season 2: il cliente porta i materiali. Meno adatto a chi non vuole fare ordini.",
+        mining = "C'e' molta offerta di materiali e i margini sono bassi; dovrebbero risalire con la Season 2.",
+        herbalism = "C'e' molta offerta di materiali e i margini sono bassi; dovrebbero risalire con la Season 2.",
+        skinning = "C'e' molta offerta di materiali e i margini sono bassi; dovrebbero risalire con la Season 2.",
+        cooking = "Tutti possono farlo e non c'e' qualita': margini minimi.",
+        fishing = "Tutti possono farlo e non c'e' qualita': margini minimi.",
+    },
+    en = {
+        alchemy = "Potions crafted with Concentration earn: rank 2 herbs cost much more than rank 1. Flasks earn less, because most of their cost is materials without quality.",
+        inscription = "Great Concentration builds for consumables; in Season 2 two-handed staves are in high demand.",
+        jewelcrafting = "Gems are always needed and Concentration builds work well; in Season 2 rings and necklaces are in high demand.",
+        tailoring = "The daily bolt cooldowns earn well; in Season 2 cloth gear is in high demand.",
+        enchanting = "Weak so far: many costs are materials without quality. It should grow with new high-end content.",
+        blacksmithing = "Great for gear on order in Season 2, less so if you don't want to do orders: few Concentration consumables.",
+        engineering = "Great for gear on order in Season 2, less so if you don't want to do orders: few Concentration consumables.",
+        leatherworking = "Great for gear on order in Season 2: the customer brings the materials. Less suited if you don't want to do orders.",
+        mining = "There is a lot of material on the market and margins are low; they should recover with Season 2.",
+        herbalism = "There is a lot of material on the market and margins are low; they should recover with Season 2.",
+        skinning = "There is a lot of material on the market and margins are low; they should recover with Season 2.",
+        cooking = "Anyone can do it and there is no quality: minimal margins.",
+        fishing = "Anyone can do it and there is no quality: minimal margins.",
+    },
+}
+
+function S:Why(key)
+    local t = (ns.lang == "it") and self.WHY.it or self.WHY.en
+    return t[key]
+end
 
 -- Testi per lingua, profilo e chiave ("general", professione o "none")
 function S:Get(key, profile)

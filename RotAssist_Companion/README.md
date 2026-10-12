@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.5.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.6.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -22,6 +22,19 @@ confermate in gioco (vedi "Da verificare in gioco").
 
 Il levelling è volutamente leggero: per le guide passo per passo esistono addon dedicati,
 come RestedXP.
+
+**Come leggere il pannello**
+- **Selettori** in cima ad alcune schede: professione e sezione (Professioni), profilo di gioco
+  (Oro), filtro (Pet). La scelta viene ricordata.
+- **Riquadri colorati:** blu per le informazioni e le cose da fare (aprire una finestra, fare
+  una scansione), verde per i consigli, arancione per gli avvisi.
+- **Barre:** livello della professione con le fasi della guida e il segno del punto in cui sei,
+  Concentrazione, esperienza (con il riposo), Great Vault (con le soglie degli slot),
+  frammenti delle delve, diario delle missioni.
+- **Passi numerati:** il numero a sinistra indica l'ordine oppure i punti da mettere in un nodo
+  della specializzazione.
+- **Tabelle:** ricette (punti e costo a punto), lista della spesa (quanto comprare, quanto hai,
+  costo), fonti dei punti conoscenza, pet consigliati per contenuto.
 
 **Clic sulle righe**
 - **Clic sinistro:** calcola il **percorso più veloce** (vedi sotto) e mette il waypoint sul
@@ -105,8 +118,8 @@ divise per continente:
   Spectral Gryphon (da evocare), Hati e Gara (catene di missioni).
 
 Per ognuna il tooltip spiega **come domarla** (togliere l'armatura, portarla sotto il 30%,
-usare Flare, cosa cliccare per evocarla, quale sblocco serve). Il filtro in basso ha anche la
-voce "solo spirit beast". Sono tutte esotiche: servono la specializzazione Beast Mastery.
+usare Flare, cosa cliccare per evocarla, quale sblocco serve). Il filtro in cima alla scheda ha
+anche la voce "solo spirit beast". Sono tutte esotiche: servono la specializzazione Beast Mastery.
 
 **Anteprima.** Passando il mouse su una riga compare a lato del pannello il **modello 3D**
 della creatura (trascina per ruotarlo, rotellina per lo zoom). Se il client non ha ancora il
@@ -120,9 +133,10 @@ alla zona e indica la sottozona da cercare.
 avviso in chat con la posizione esatta presa dal gioco, e la riga diventa gialla per 30 minuti
 (con il percorso verso quel punto). L'avviso si disattiva dalle opzioni.
 
-**Quale pet usare.** In cima alla scheda c'è un riassunto dei consigli di Icy Veins per
-Beast Mastery (12.1): Aqiri per raid e Mitiche+, famiglie con riduzione delle cure, Clefthoof
-per il gioco in solitaria, Whiptail per il PvP, Feathermane per Updraft.
+**Quale pet usare.** Una tabella "contenuto → pet consigliato" riassume i consigli di Icy Veins
+per Beast Mastery (12.1): Aqiri per raid e Mitiche+, famiglie con riduzione delle cure,
+Clefthoof per il gioco in solitaria, Whiptail per il PvP, Feathermane per Updraft. Il tooltip
+di ogni riga spiega il perché.
 
 **Fonti.** Elenchi, note di posizione e istruzioni da [wow-petopia.com](https://www.wow-petopia.com),
 coordinate dalle pagine degli NPC su Wowhead, rari Florafaun dalla guida di
@@ -137,53 +151,57 @@ I testi sono riassunti, non copiati.
 
 ## Guida alle professioni
 
-La scheda **Professioni** mostra, per ogni professione del personaggio:
+La scheda **Professioni** ha due selettori in cima: la **professione** e la **sezione**.
 
-1. **La fase della guida** in cui ti trovi, secondo il livello attuale (per esempio
-   Leatherworking 60-91: "crea una delle ricette di livello medio, circa 35 creazioni"), con la
-   fase successiva e il trainer di Silvermoon. Il tooltip mostra tutte le fasi da 1 a 100.
-2. **Cosa creare adesso.** Quando apri la finestra della professione, l'addon legge le ricette
-   di Midnight che conosci: colore (arancione, gialla, verde), punti per creazione, prime
-   creazioni ancora da fare e materiali. Poi:
-   - elenca le **prime creazioni** (ognuna vale 1 punto conoscenza);
-   - ordina le ricette per **costo per punto**, usando i prezzi della scansione d'asta (o di
-     Auctionator e TSM). Per le ricette gialle e verdi i punti sono una stima;
-   - dice quante volte creare la migliore per i prossimi 10 punti.
-3. **Cosa comprare.** Per le prime creazioni e per la ricetta migliore somma i materiali che
-   servono, toglie quelli che hai già in borse, banca, banca dei reagenti e banca della brigata,
-   e mostra cosa manca con il costo. Per i materiali con più qualità conta tutte quelle che hai e
-   propone la più economica. Un materiale senza prezzo d'asta di solito si compra dal venditore
-   accanto al trainer.
-4. **La specializzazione consigliata** per l'equipaggiamento del tuo personaggio, in base alla
-   classe (tipo di armatura) e alla specializzazione:
+**Livellamento**
+- Una **barra da 1 a 100** divisa nelle fasi della guida, con il segno del tuo livello.
+- La **fase attuale** in evidenza (per esempio Leatherworking 60-91: "crea una delle ricette di
+  livello medio, circa 35 creazioni") e la fase successiva.
+- Il trainer di Silvermoon e l'elenco di **tutte le fasi**, con quella attuale evidenziata.
 
-   | Professione | Consiglio |
-   |---|---|
-   | Leatherworking | maglia (cacciatore, sciamano, evocatore): **Safeguarding Scales**, con il set epico Farstrider's; cuoio: **Lasting Leather**, con il set Silvermoon Agent's |
-   | Blacksmithing | armi da mischia: **Weaponsmithing** (di solito l'upgrade più grande); piastre: **Armorsmithing** |
-   | Tailoring | stoffa: **Sin'dorei Finery**; per tutti: **Nimble Needlework** (cooldown dei tessuti, mantello abbellito) |
-   | Jewelcrafting | **Alluring Accessories**: anelli e collane |
-   | Engineering | **Combat Analytics**: occhiali, bracciali, stivali e pistole (per il cacciatore a distanza) |
-   | Inscription | **Blueprints**: archi per il cacciatore a distanza, bastoni e off-hand per gli incantatori |
-   | Alchemy | **Fluent in Flasks** (15 punti) per raid e Mitiche+; per l'oro la build delle pozioni; Transmutation Authority per l'Alchemist Stone |
-   | Enchanting | **Elevating Equipment** |
+**Cosa creare** (solo professioni di creazione)
+- Quando apri la finestra della professione, l'addon legge le ricette di Midnight che conosci:
+  colore (arancione, gialla, verde), punti per creazione, prime creazioni e materiali.
+- In cima, **cosa fare adesso**: quale ricetta creare e quante volte per i prossimi 10 punti.
+- Una tabella delle ricette per salire, dalla più economica (**costo a punto** con i prezzi della
+  scansione d'asta, di Auctionator o di TSM; per le gialle e le verdi i punti sono una stima).
+- Le **prime creazioni** ancora da fare (1 punto conoscenza ciascuna).
+- La **lista della spesa**: quanto comprare, quanto hai già (borse, banca, banca dei reagenti,
+  banca della brigata) e il costo. Per i materiali con più qualità conta tutte quelle che hai e
+  propone la più economica.
 
-   Nel client italiano le specializzazioni possono avere nomi tradotti: il tooltip mostra quelli
-   del tuo client e cosa sblocca ciascuna.
-5. **Le build delle specializzazioni** di wow-professions.com, per tutte le 11 professioni
-   (anche quelle di raccolta): per esempio per Alchemy "Durata dei flask", "Consumabili da
-   vendere" e "Trasmutazioni", per Leatherworking "Standard", "Ordini di lavoro" e "Casa
-   d'aste". Il tooltip di ogni build spiega dove mettere i punti, fase per fase.
-6. **Dove prendere i punti conoscenza:** prime creazioni, tesori, libro della reputazione,
-   fonti settimanali e mensili, e il reset una tantum della patch 12.1.
+**Specializzazioni**
+- Il **consiglio per il tuo personaggio**, in base a classe (tipo di armatura) e specializzazione:
 
-Per le professioni di raccolta (Herbalism, Mining, Skinning) la scheda mostra la guida e le
-build, senza il calcolo delle ricette.
+  | Professione | Consiglio |
+  |---|---|
+  | Leatherworking | maglia (cacciatore, sciamano, evocatore): **Safeguarding Scales**, con il set epico Farstrider's; cuoio: **Lasting Leather**, con il set Silvermoon Agent's |
+  | Blacksmithing | armi da mischia: **Weaponsmithing** (di solito l'upgrade più grande); piastre: **Armorsmithing** |
+  | Tailoring | stoffa: **Sin'dorei Finery**; per tutti: i cooldown dei tessuti e il mantello abbellito |
+  | Jewelcrafting | **Alluring Accessories**: anelli e collane |
+  | Engineering | **Combat Analytics**: occhiali, bracciali, stivali e pistole (per il cacciatore a distanza) |
+  | Inscription | **Blueprints**: archi per il cacciatore a distanza, bastoni e off-hand per gli incantatori |
+  | Alchemy | 15 punti in **Fluent in Flasks** per raid e Mitiche+; per l'oro la build delle pozioni |
+  | Enchanting | **Concentrazione** se hai poco tempo, **Vendita di incantamenti** per l'oro in serie |
+  | Herbalism | druido: subito Bountiful Harvests; altre classi: prima Botany (raccolta in sella) |
 
-**Fonti.** Guide "Leveling 1-100", "Recipes & Knowledge Points" e "Specialization Guide" di
-[wow-professions.com](https://www.wow-professions.com) e la guida alle fonti di conoscenza di
-[method.gg](https://www.method.gg/guides/all-profession-knowledge-point-sources-in-midnight),
-riassunte. ID delle professioni di Midnight dalla tabella SkillLine di wago.tools.
+- La **panoramica** delle quattro specializzazioni e cosa sblocca ciascuna (con i nomi del tuo
+  client, che in italiano possono essere tradotti).
+- **Quale build scegliere:** una tabella con lo scopo di ogni build (in verde quella consigliata
+  per te) e un selettore per vederne una. La build scelta è divisa in **fasi** ("Fase 1 -
+  Multicraft") con i **punti da mettere in ogni nodo** e il totale.
+
+**Conoscenza**
+- Una tabella delle fonti dei punti conoscenza (punti e frequenza) e le eccezioni: catena di
+  missioni per sbloccare la missione del trainer, Treatise, Enchanting, raccolta, reset unico
+  della 12.1.
+
+Per le professioni di raccolta (Herbalism, Mining, Skinning) ci sono Livellamento,
+Specializzazioni e Conoscenza, senza il calcolo delle ricette.
+
+**Fonti.** Guide pubbliche sulle professioni di Midnight (livellamento 1-100, fonti di
+conoscenza, build delle specializzazioni), riassunte con parole nostre. ID delle professioni di
+Midnight dalla tabella SkillLine di wago.tools.
 
 **Limiti**
 - La lettura avviene solo con la finestra della professione aperta, quindi i dati invecchiano:
@@ -192,14 +210,17 @@ riassunte. ID delle professioni di Midnight dalla tabella SkillLine di wago.tool
 
 ## Strategie per l'oro
 
-La scheda **Oro** legge le tue professioni. Per ogni professione mostra:
-- la **Concentrazione**, in arancione quando è piena e la stai sprecando;
+La scheda **Oro** ha in cima il selettore del **profilo** di gioco. Per ogni tua professione
+mostra:
+- la **fascia per fare oro** (S, A o B) accanto al nome;
+- una barra della **Concentrazione**, arancione quando è piena e la stai sprecando;
 - i **punti conoscenza** non spesi.
 
-Questi due valori compaiono dopo che hai aperto la professione almeno una volta.
+Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno una volta.
+Poi, per ogni professione, un riquadro con il **perché** della sua fascia e i **passi numerati**
+adatti al profilo; in fondo i consigli validi per tutti.
 
-Il **profilo** si sceglie con il pulsante in basso nella scheda, con `/rac profilo` o dalle
-opzioni:
+Il profilo si sceglie con il selettore, con `/rac profilo` o dalle opzioni:
 
 | Profilo | Pensato per | Tipo di strategie |
 |---|---|---|
@@ -225,7 +246,7 @@ pozioni create con Concentrazione, perché le erbe di rango 2 costano molto più
 ordini di equipaggiamento, dove il cliente porta i materiali. Ci sono anche le ricette nuove della
 12.1, come la Concentrated Silvermoon Health Potion.
 
-Le strategie sono scritte per questo addon (riassumendo Icy Veins e wow-professions.com) e non
+Le strategie sono scritte per questo addon (riassumendo Icy Veins e guide pubbliche sulla 12.1) e non
 riportano cifre in oro, perché prezzi e domanda cambiano da reame a reame: la scheda ricorda
 sempre di controllare la casa d'aste.
 

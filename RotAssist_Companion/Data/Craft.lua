@@ -7,7 +7,10 @@
 --  * cosa comprare: i materiali che servono meno quelli che hai gia' in
 --    borse, banca, banca dei reagenti e banca della brigata;
 --  * la specializzazione consigliata per l'equipaggiamento del personaggio e
---    le build di wow-professions.com (CraftBuilds.lua).
+--    le build delle specializzazioni, fase per fase (CraftBuilds.lua);
+--  * le fonti dei punti conoscenza.
+-- Selettori in alto: professione e sezione (livellamento, cosa creare,
+-- specializzazioni, conoscenza), ricordati in RotAssistCompanionDB.
 -- Solo lettura: l'addon non crea nulla e non compra nulla.
 
 local _, ns = ...
@@ -212,11 +215,19 @@ local function ItemName(itemID)
 end
 
 local DIFF_COLOR = { [0] = { 1, 0.5, 0.25 }, [1] = { 1, 1, 0 }, [2] = { 0.25, 0.75, 0.25 }, [3] = { 0.6, 0.6, 0.6 } }
+local SECTIONS = { "level", "make", "specs", "knowledge" }
+-- tonalita' delle fasi nella barra dei livelli (dalla prima all'ultima)
+local PHASE_COLORS = { { 0.55, 0.75, 1 }, { 0.4, 0.62, 0.95 }, { 0.3, 0.5, 0.85 }, { 0.22, 0.4, 0.75 }, { 0.16, 0.32, 0.65 } }
 
-local function PhaseOf(phases, level)
+local function PhaseIndex(phases, level)
     for i, ph in ipairs(phases) do
-        if level < ph[2] or i == #phases then return ph, phases[i + 1] end
+        if level < ph[2] then return i end
     end
+    return #phases
+end
+
+local function HasPrices()
+    return (ns.Prices:ScanAge() or (Auctionator and Auctionator.API) or TSM_API) and true or false
 end
 
 -- Dettaglio dei materiali per una creazione (tooltip)
@@ -230,190 +241,307 @@ local function ReagentLines(recipe, cache)
     return lines
 end
 
-function C:SpecRows(rows, key, childID)
-    local L = ns.L
-    local guide = ns.CraftGuide:Text(key)
-    if not (guide and guide.specs) then return end
+local function PlayerSpec()
     local _, class = A.Call(UnitClass, "player")
     local getSpec = (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization) or GetSpecialization
     local getInfo = (C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo) or GetSpecializationInfo
     local index = A.Call(getSpec)
-    local specID = index and A.Call(getInfo, index)
-    local tip = { L.CRAFT_SPECS_ALL }
-    for _, line in ipairs(guide.specs) do tip[#tip + 1] = "- " .. line end
-    if guide.unlock then tip[#tip + 1] = guide.unlock end
-    -- nomi delle specializzazioni nel tuo client (possono essere tradotti)
-    if C_ProfSpecs and C_ProfSpecs.GetSpecTabIDsForSkillLine and C_ProfSpecs.GetTabInfo and childID then
-        local tabs = A.Call(C_ProfSpecs.GetSpecTabIDsForSkillLine, childID)
-        local names = {}
-        if type(tabs) == "table" then
-            for _, tabID in ipairs(tabs) do
-                local info = A.Call(C_ProfSpecs.GetTabInfo, tabID)
-                if type(info) == "table" and info.name then names[#names + 1] = info.name end
+    return class, index and A.Call(getInfo, index)
+end
+
+-- Professioni mostrate (cucina e pesca escluse) e quella selezionata
+function C:Selected(profs)
+    local list = {}
+    for _, p in ipairs(profs) do
+        if p.key and p.key ~= "cooking" and p.key ~= "fishing" then list[#list + 1] = p end
+    end
+    local sel = list[1]
+    for _, p in ipairs(list) do
+        if p.skillLine == ns.db.craftProf then sel = p end
+    end
+    return list, sel
+end
+
+---------------------------------------------------------------------------
+-- Sezione: livellamento
+---------------------------------------------------------------------------
+function C:LevelRows(rows, p, guide, level, max)
+    local L = ns.L
+    local phases = guide.phases or {}
+    if #phases > 0 then
+        local cur = PhaseIndex(phases, level)
+        local segments = {}
+        for i, ph in ipairs(phases) do
+            local c = PHASE_COLORS[math.min(i, #PHASE_COLORS)]
+            segments[#segments + 1] = { ph[1] - 1, ph[2], c, i == cur and 1 or 0.45 }
+        end
+        rows[#rows + 1] = { kind = "bar", min = 0, max = max > 0 and max or 100, segments = segments, marker = level,
+                            label = L.CRAFT_BAR_LABEL:format(level, max), right = L.CRAFT_BAR_PHASE:format(phases[cur][1], phases[cur][2]) }
+        if level >= max then
+            rows[#rows + 1] = { kind = "callout", style = "tip", title = L.CRAFT_MAXED_TITLE, text = L.CRAFT_MAXED }
+        else
+            local ph = phases[cur]
+            rows[#rows + 1] = { kind = "callout", style = "info", title = L.CRAFT_NOW:format(ph[1], ph[2]), text = ph[3] }
+            local nextPh = phases[cur + 1]
+            if nextPh then
+                rows[#rows + 1] = { kind = "step", badge = tostring(nextPh[1]), badgeColor = { 0.6, 0.6, 0.6 },
+                                    text = L.CRAFT_NEXT:format(nextPh[3]), color = { 0.75, 0.75, 0.75 } }
             end
         end
-        if #names > 0 then tip[#tip + 1] = L.CRAFT_SPECS_CLIENT:format(table.concat(names, ", ")) end
     end
-    for _, adv in ipairs(ns.CraftGuide:Advice(key, class, specID)) do
-        rows[#rows + 1] = { text = L[adv], wrap = true, color = { 0.6, 1, 0.6 }, tooltip = tip }
+    if guide.tips then rows[#rows + 1] = { kind = "callout", style = "tip", text = guide.tips } end
+    rows[#rows + 1] = { text = L.CRAFT_TRAINER:format(guide.trainer), icon = "Interface\\Icons\\INV_Misc_Book_09", dim = true }
+
+    -- tutte le fasi, per avere il quadro completo
+    rows[#rows + 1] = { kind = "sub", text = L.CRAFT_ALL_PHASES }
+    for _, ph in ipairs(phases) do
+        rows[#rows + 1] = { kind = "step", badge = ("%d-%d"):format(ph[1], ph[2]), text = ph[3],
+                            badgeColor = (level >= ph[1] - 1 and level < ph[2]) and { 0.35, 0.65, 1 } or { 0.6, 0.6, 0.6 } }
     end
 end
 
--- Build delle specializzazioni: una riga per build, i passi nel tooltip
-function C:BuildRows(rows, key)
+---------------------------------------------------------------------------
+-- Sezione: cosa creare e cosa comprare
+---------------------------------------------------------------------------
+function C:MakeRows(rows, p)
     local L = ns.L
-    local builds = ns.CraftBuilds:Get(key)
-    if not builds then return end
-    rows[#rows + 1] = { text = L.CRAFT_BUILDS, color = { 1, 0.82, 0 } }
-    for _, b in ipairs(builds) do
-        local tip = { b[1], b[2] }
-        for i, step in ipairs(b[3]) do tip[#tip + 1] = ("%d. %s"):format(i, step) end
-        tip[#tip + 1] = L.CRAFT_BUILDS_SOURCE
-        rows[#rows + 1] = { text = L.CRAFT_BUILD_LINE:format(b[1], b[2]), wrap = true, tooltip = tip }
+    if self.otherExpansion and self.otherExpansion.base == p.skillLine then
+        rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_OTHER_EXPANSION:format(self.otherExpansion.name or "?") }
     end
-end
-
-function C:ProfessionRows(rows, p)
-    local L = ns.L
-    local key = p.key
-    local guide = key and ns.CraftGuide:Text(key)
-    local scan = ns.db.craft and ns.db.craft[p.skillLine]
-    local level = (scan and scan.level) or p.rank or 0
-    local max = (scan and scan.max) or p.max or 100
-    local knowledge = ns.Gold:Knowledge(p.skillLine)
-    rows[#rows + 1] = { header = L.HDR_CRAFT_PROF:format(p.name, level, max) }
-    if knowledge and knowledge > 0 then
-        rows[#rows + 1] = { text = L.KNOWLEDGE:format(knowledge), color = { 1, 0.82, 0 } }
-    end
-    if not guide then
-        rows[#rows + 1] = { text = L.CRAFT_NO_GUIDE, dim = true }
+    local plan = self:Plan(p.skillLine)
+    if not plan then
+        rows[#rows + 1] = { kind = "callout", style = "info", title = L.CRAFT_OPEN_TITLE, text = L.CRAFT_OPEN }
         return
     end
-
-    -- fase della guida
-    if guide.phases then
-        local ph, nextPh = PhaseOf(guide.phases, level)
-        if level >= max then
-            rows[#rows + 1] = { text = L.CRAFT_MAXED, color = { 0.5, 0.9, 0.5 } }
-        elseif ph then
-            local tip = { L.CRAFT_TRAINER:format(guide.trainer) }
-            for _, x in ipairs(guide.phases) do tip[#tip + 1] = ("%d-%d: %s"):format(x[1], x[2], x[3]) end
-            rows[#rows + 1] = { text = L.CRAFT_PHASE:format(ph[1], ph[2], ph[3]), wrap = true, tooltip = tip,
-                                link = { search = p.name }, linkTitle = p.name }
-            if nextPh then
-                rows[#rows + 1] = { text = L.CRAFT_NEXT:format(nextPh[1], nextPh[3]), wrap = true, dim = true }
-            end
-        end
+    local hasPrices = HasPrices()
+    if not hasPrices then
+        rows[#rows + 1] = { kind = "callout", style = "info", title = L.CRAFT_NEED_PRICES_TITLE, text = L.CRAFT_NEED_PRICES }
     end
-    if guide.tips then rows[#rows + 1] = { text = guide.tips, wrap = true, dim = true } end
-    rows[#rows + 1] = { text = L.CRAFT_TRAINER:format(guide.trainer), dim = true }
-
-    -- cosa creare e cosa comprare (solo professioni di creazione)
-    if not ns.CraftGuide.GATHERING[p.skillLine] then
-        if self.otherExpansion and self.otherExpansion.base == p.skillLine then
-            rows[#rows + 1] = { text = L.CRAFT_OTHER_EXPANSION:format(self.otherExpansion.name or "?"),
-                                wrap = true, color = { 1, 0.6, 0.2 } }
-        end
-        local plan = self:Plan(p.skillLine)
-        if not plan then
-            rows[#rows + 1] = { text = L.CRAFT_OPEN, wrap = true, color = { 0.5, 0.85, 1 } }
-        else
-            self:PlanRows(rows, plan)
-        end
-        self:SpecRows(rows, key, ns.CraftGuide.MIDNIGHT[p.skillLine])
-    end
-    self:BuildRows(rows, key)
-end
-
-function C:PlanRows(rows, plan)
-    local L = ns.L
     local cache = {}
     local age = time() - (plan.scan.time or time())
-    rows[#rows + 1] = { text = L.CRAFT_SCAN_AGE:format(A.TimeText(math.max(60, age))), dim = true }
-    -- senza prezzi i costi restano "prezzo?": serve la casa d'aste aperta
-    local hasPrices = (ns.Prices:ScanAge() or (Auctionator and Auctionator.API) or TSM_API) and true or false
-    if not hasPrices then
-        rows[#rows + 1] = { text = L.CRAFT_NEED_PRICES, wrap = true, color = { 0.5, 0.85, 1 } }
-    end
 
-    -- prime creazioni: punti conoscenza
-    if #plan.firsts > 0 then
-        rows[#rows + 1] = { text = L.CRAFT_FIRSTS:format(#plan.firsts), color = { 1, 0.82, 0 } }
-        for i = 1, math.min(MAX_FIRST, #plan.firsts) do
-            local e = plan.firsts[i]
-            local tip = { e.recipe.name, L.CRAFT_FIRST_TIP }
-            for _, l in ipairs(ReagentLines(e.recipe, cache)) do tip[#tip + 1] = l end
-            rows[#rows + 1] = {
-                text = "   " .. e.recipe.name, icon = e.recipe.icon,
-                right = e.canCraft > 0 and L.CRAFT_READY or (e.cost and A.Money(e.cost) or ""),
-                color = DIFF_COLOR[e.recipe.diff], tooltip = tip,
-                link = { spell = e.recipe.id }, linkTitle = e.recipe.name,
-            }
-        end
-        if #plan.firsts > MAX_FIRST then
-            rows[#rows + 1] = { text = L.CRAFT_MORE:format(#plan.firsts - MAX_FIRST), dim = true }
-        end
-    end
-
-    -- ricette migliori per salire
-    if #plan.best == 0 then
-        rows[#rows + 1] = { text = L.CRAFT_NO_SKILLUPS, wrap = true, dim = true }
+    -- l'azione da fare subito
+    if plan.top then
+        rows[#rows + 1] = { kind = "callout", style = "tip", title = L.CRAFT_TOP_TITLE,
+                            text = L.CRAFT_TOP:format(plan.top.recipe.name, plan.topCrafts) }
     else
-        rows[#rows + 1] = { text = L.CRAFT_BEST, color = { 1, 0.82, 0 } }
+        rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_NO_SKILLUPS }
+    end
+
+    -- ricette per salire
+    if #plan.best > 0 then
+        rows[#rows + 1] = { kind = "sub", text = L.CRAFT_BEST }
+        local widths, align = { 0.56, 0.16, 0.28 }, { "LEFT", "RIGHT", "RIGHT" }
+        rows[#rows + 1] = { kind = "thead", cols = { L.CRAFT_COL_RECIPE, L.CRAFT_COL_POINTS, L.CRAFT_COL_PER_POINT },
+                            widths = widths, align = align }
         for i = 1, math.min(MAX_BEST, #plan.best) do
             local e = plan.best[i]
             local tip = { e.recipe.name, L["CRAFT_DIFF_" .. e.recipe.diff]:format(e.points) }
             for _, l in ipairs(ReagentLines(e.recipe, cache)) do tip[#tip + 1] = l end
             if e.cost then tip[#tip + 1] = L.CRAFT_COST:format(A.Money(e.cost)) end
             if e.canCraft > 0 then tip[#tip + 1] = L.CRAFT_CAN:format(e.canCraft) end
-            if i == 1 then tip[#tip + 1] = L.CRAFT_TIMES:format(plan.topCrafts) end
             rows[#rows + 1] = {
-                text = "   " .. e.recipe.name, icon = e.recipe.icon,
-                right = e.perPoint and L.CRAFT_PER_POINT:format(A.Money(e.perPoint)) or L.CRAFT_NO_PRICE,
-                color = DIFF_COLOR[e.recipe.diff], tooltip = tip,
-                link = { spell = e.recipe.id }, linkTitle = e.recipe.name,
+                kind = "tr", icon = e.recipe.icon, widths = widths, align = align,
+                cols = { e.recipe.name, ("%.2g"):format(e.points), e.perPoint and A.Money(e.perPoint) or L.CRAFT_NO_PRICE },
+                colors = { DIFF_COLOR[e.recipe.diff] },
+                tooltip = tip, link = { spell = e.recipe.id }, linkTitle = e.recipe.name,
             }
         end
-        rows[#rows + 1] = { text = L.CRAFT_TOP:format(plan.top.recipe.name, plan.topCrafts), wrap = true }
+    end
+
+    -- prime creazioni
+    if #plan.firsts > 0 then
+        rows[#rows + 1] = { kind = "sub", text = L.CRAFT_FIRSTS:format(#plan.firsts) }
+        local widths, align = { 0.7, 0.3 }, { "LEFT", "RIGHT" }
+        rows[#rows + 1] = { kind = "thead", cols = { L.CRAFT_COL_RECIPE, L.CRAFT_COL_STATUS }, widths = widths, align = align }
+        for i = 1, math.min(MAX_FIRST, #plan.firsts) do
+            local e = plan.firsts[i]
+            local tip = { e.recipe.name, L.CRAFT_FIRST_TIP }
+            for _, l in ipairs(ReagentLines(e.recipe, cache)) do tip[#tip + 1] = l end
+            local status = e.canCraft > 0 and L.CRAFT_READY or (e.cost and A.Money(e.cost) or L.CRAFT_NO_PRICE)
+            rows[#rows + 1] = {
+                kind = "tr", icon = e.recipe.icon, widths = widths, align = align,
+                cols = { e.recipe.name, status },
+                colors = { DIFF_COLOR[e.recipe.diff], e.canCraft > 0 and { 0.4, 1, 0.4 } or nil },
+                tooltip = tip, link = { spell = e.recipe.id }, linkTitle = e.recipe.name,
+            }
+        end
+        if #plan.firsts > MAX_FIRST then
+            rows[#rows + 1] = { kind = "note", text = L.CRAFT_MORE:format(#plan.firsts - MAX_FIRST) }
+        end
     end
 
     -- lista della spesa
     if #plan.shopping == 0 then
-        rows[#rows + 1] = { text = L.CRAFT_SHOP_NONE, color = { 0.5, 0.9, 0.5 } }
+        rows[#rows + 1] = { kind = "callout", style = "tip", text = L.CRAFT_SHOP_NONE }
     else
-        rows[#rows + 1] = { text = plan.total > 0 and L.CRAFT_SHOP:format(A.Money(plan.total)) or L.CRAFT_SHOP_PLAIN,
-                            color = { 1, 0.82, 0 } }
+        rows[#rows + 1] = { kind = "sub", text = plan.total > 0 and L.CRAFT_SHOP:format(A.Money(plan.total)) or L.CRAFT_SHOP_PLAIN }
+        local widths, align = { 0.12, 0.52, 0.14, 0.22 }, { "RIGHT", "LEFT", "RIGHT", "RIGHT" }
+        rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
+                            cols = { L.CRAFT_COL_QTY, L.CRAFT_COL_ITEM, L.CRAFT_COL_HAVE, L.CRAFT_COL_COST } }
         for _, s in ipairs(plan.shopping) do
             local name = ItemName(s.itemID)
             rows[#rows + 1] = {
-                text = L.CRAFT_BUY:format(s.missing, name), right = s.cost and A.Money(s.cost) or (hasPrices and L.CRAFT_VENDOR or L.CRAFT_NO_PRICE),
+                kind = "tr", widths = widths, align = align,
+                cols = { tostring(s.missing), name, tostring(s.have),
+                         s.cost and A.Money(s.cost) or (hasPrices and L.CRAFT_VENDOR or L.CRAFT_NO_PRICE) },
                 tooltip = { name, L.CRAFT_BUY_TIP:format(s.need, s.have, s.missing) },
                 link = { item = s.itemID }, linkTitle = name,
             }
         end
-        if plan.unknown > 0 and hasPrices then rows[#rows + 1] = { text = L.CRAFT_SHOP_UNKNOWN, wrap = true, dim = true } end
+        if plan.unknown > 0 and hasPrices then rows[#rows + 1] = { kind = "note", text = L.CRAFT_SHOP_UNKNOWN } end
+    end
+    rows[#rows + 1] = { kind = "note", text = L.CRAFT_SCAN_AGE:format(A.TimeText(math.max(60, age))) }
+end
+
+---------------------------------------------------------------------------
+-- Sezione: specializzazioni e build
+---------------------------------------------------------------------------
+function C:SpecRows(rows, p, guide)
+    local L = ns.L
+    local key = p.key
+    local childID = ns.CraftGuide.MIDNIGHT[p.skillLine]
+    local knowledge = ns.Gold:Knowledge(p.skillLine)
+    if knowledge and knowledge > 0 then
+        rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_KP_TO_SPEND:format(knowledge) }
+    end
+
+    -- consiglio per il personaggio
+    local class, specID = PlayerSpec()
+    local advice, suggested = ns.CraftGuide:Advice(key, class, specID)
+    if #advice > 0 then
+        local lines = {}
+        for _, k in ipairs(advice) do lines[#lines + 1] = L[k] end
+        rows[#rows + 1] = { kind = "callout", style = "tip", title = L.CRAFT_FOR_YOU, text = table.concat(lines, "\n") }
+    end
+
+    -- panoramica delle specializzazioni
+    if guide.specs then
+        rows[#rows + 1] = { kind = "sub", text = L.CRAFT_SPECS_OVERVIEW }
+        for _, line in ipairs(guide.specs) do
+            local name, desc = line:match("^(.-):%s*(.*)$")
+            rows[#rows + 1] = { kind = "step", badge = "-", badgeColor = { 0.35, 0.65, 1 },
+                                text = name and ("|cffffd100" .. name .. "|r  " .. desc) or line }
+        end
+        if guide.unlock then rows[#rows + 1] = { kind = "note", text = guide.unlock } end
+        -- nomi nel client (possono essere tradotti)
+        if C_ProfSpecs and C_ProfSpecs.GetSpecTabIDsForSkillLine and C_ProfSpecs.GetTabInfo and childID then
+            local tabs = A.Call(C_ProfSpecs.GetSpecTabIDsForSkillLine, childID)
+            local names = {}
+            if type(tabs) == "table" then
+                for _, tabID in ipairs(tabs) do
+                    local info = A.Call(C_ProfSpecs.GetTabInfo, tabID)
+                    if type(info) == "table" and info.name then names[#names + 1] = info.name end
+                end
+            end
+            if #names > 0 then rows[#rows + 1] = { kind = "note", text = L.CRAFT_SPECS_CLIENT:format(table.concat(names, ", ")) } end
+        end
+    end
+
+    -- quale build scegliere
+    local builds = ns.CraftBuilds:Get(key)
+    if not builds then return end
+    rows[#rows + 1] = { kind = "sub", text = L.CRAFT_WHICH_BUILD }
+    local widths = { 0.4, 0.6 }
+    for i, b in ipairs(builds) do
+        rows[#rows + 1] = { kind = "tr", widths = widths, cols = { b.name, b.use },
+                            colors = { i == suggested and { 0.4, 1, 0.4 } or { 1, 0.82, 0 }, { 0.8, 0.8, 0.8 } } }
+    end
+    ns.db.craftBuild = ns.db.craftBuild or {}
+    local chosen = ns.db.craftBuild[key]
+    if not (chosen and builds[chosen]) then chosen = suggested end
+    local items = {}
+    for i, b in ipairs(builds) do
+        items[#items + 1] = { label = b.short or b.name, selected = i == chosen,
+                              onClick = function() ns.db.craftBuild[key] = i end }
+    end
+    rows[#rows + 1] = { kind = "pills", items = items }
+    local b = builds[chosen]
+    rows[#rows + 1] = { kind = "callout", style = "info", title = b.name, text = b.use }
+    local total = 0
+    for n, ph in ipairs(b.phases or {}) do
+        rows[#rows + 1] = { kind = "phase", text = L.CRAFT_PHASE_TITLE:format(n, ph[1]) }
+        for _, st in ipairs(ph[2]) do
+            if st[1] then total = total + st[1] end
+            rows[#rows + 1] = { kind = "step", badge = st[1] and tostring(st[1]) or "-", text = st[2] }
+        end
+    end
+    for _, note in ipairs(b.notes or {}) do rows[#rows + 1] = { kind = "note", text = note } end
+    if total > 0 then rows[#rows + 1] = { kind = "note", text = L.CRAFT_BUILD_TOTAL:format(total) } end
+end
+
+---------------------------------------------------------------------------
+-- Sezione: punti conoscenza
+---------------------------------------------------------------------------
+function C:KnowledgeRows(rows, p)
+    local L = ns.L
+    local knowledge = ns.Gold:Knowledge(p.skillLine)
+    if knowledge and knowledge > 0 then
+        rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_KP_TO_SPEND:format(knowledge) }
+    end
+    local widths, align = { 0.5, 0.2, 0.3 }, { "LEFT", "RIGHT", "RIGHT" }
+    rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
+                        cols = { L.CRAFT_COL_SOURCE, L.CRAFT_COL_KP, L.CRAFT_COL_WHEN } }
+    for _, k in ipairs(ns.CraftGuide:Text("knowledge")) do
+        rows[#rows + 1] = { kind = "tr", widths = widths, align = align, cols = { k[1], k[2], k[3] } }
+    end
+    for _, note in ipairs(ns.CraftGuide:Text("knowledgeNotes")) do
+        rows[#rows + 1] = { kind = "step", badge = "!", badgeColor = { 0.35, 0.65, 1 }, text = note }
     end
 end
 
+---------------------------------------------------------------------------
+-- Scheda
+---------------------------------------------------------------------------
 function C:Rows()
     local L, rows = ns.L, {}
-    local profs = ns.Gold:Professions()
-    local shown = 0
-    for _, p in ipairs(profs) do
-        if p.key and p.key ~= "cooking" and p.key ~= "fishing" then
-            self:ProfessionRows(rows, p)
-            shown = shown + 1
+    local list, p = self:Selected(ns.Gold:Professions())
+    if not p then
+        rows[#rows + 1] = { kind = "callout", style = "info", title = L.HDR_CRAFT, text = L.CRAFT_NONE }
+        return rows
+    end
+
+    -- selettore della professione
+    local items = {}
+    for _, x in ipairs(list) do
+        local scan = ns.db.craft and ns.db.craft[x.skillLine]
+        local lvl = (scan and scan.level) or x.rank or 0
+        items[#items + 1] = { label = ("%s %d/%d"):format(x.name, lvl, (scan and scan.max) or x.max or 100),
+                              selected = x == p, onClick = function() ns.db.craftProf = x.skillLine end }
+    end
+    rows[#rows + 1] = { kind = "pills", items = items }
+
+    -- selettore della sezione
+    local gathering = ns.CraftGuide.GATHERING[p.skillLine]
+    local section = ns.db.craftSection or "level"
+    if gathering and section == "make" then section = "level" end
+    local sItems = {}
+    for _, s in ipairs(SECTIONS) do
+        if not (gathering and s == "make") then
+            sItems[#sItems + 1] = { label = L["CRAFT_SEC_" .. s], selected = s == section,
+                                    onClick = function() ns.db.craftSection = s end }
         end
     end
-    if shown == 0 then
-        rows[#rows + 1] = { header = L.HDR_CRAFT }
-        rows[#rows + 1] = { text = L.CRAFT_NONE, wrap = true, dim = true }
+    rows[#rows + 1] = { kind = "pills", items = sItems }
+
+    local guide = p.key and ns.CraftGuide:Text(p.key)
+    if not guide then
+        rows[#rows + 1] = { kind = "callout", style = "info", text = L.CRAFT_NO_GUIDE }
+        return rows
     end
-    rows[#rows + 1] = { header = L.HDR_CRAFT_KNOWLEDGE }
-    for _, line in ipairs(ns.CraftGuide:Text("knowledge")) do
-        rows[#rows + 1] = { text = "- " .. line, wrap = true }
+    local scan = ns.db.craft and ns.db.craft[p.skillLine]
+    local level = (scan and scan.level) or p.rank or 0
+    local max = (scan and scan.max) or p.max or 100
+
+    rows[#rows + 1] = { header = L["CRAFT_SEC_" .. section] }
+    if section == "level" then
+        self:LevelRows(rows, p, guide, level, max)
+    elseif section == "make" then
+        self:MakeRows(rows, p)
+    elseif section == "specs" then
+        self:SpecRows(rows, p, guide)
+    else
+        self:KnowledgeRows(rows, p)
     end
-    rows[#rows + 1] = { header = "" }
-    rows[#rows + 1] = { text = L.CRAFT_NOTE, wrap = true, dim = true }
     return rows
 end

@@ -1,13 +1,13 @@
 -- RotAssist Companion - CraftBuilds
--- Build delle specializzazioni di Midnight per ogni professione: nome, a cosa
--- serve e come distribuire i punti conoscenza, fase per fase.
+-- Build delle specializzazioni di Midnight per ogni professione, divise in
+-- fasi: ogni passo indica quanti punti conoscenza mettere e in quale nodo.
+-- I nomi dei nodi sono quelli inglesi del client (nel client italiano possono
+-- essere tradotti).
 --
--- Riferimento: wow-professions.com, guide "<Profession> Specialization Guide &
--- Best Builds" (Midnight, ottobre 2026) e, per Skinning, la guida generale.
--- Testi riassunti con parole nostre; i nomi dei nodi sono quelli inglesi del
--- client (nel client italiano possono essere tradotti).
---
--- Formato: [professione] = { { nome, uso, { passi } }, ... }
+-- Formato di una build:
+--   { name, short (etichetta del selettore), use (a cosa serve),
+--     phases = { { titolo, { { punti | nil, testo }, ... } }, ... },
+--     notes = { ... } }
 
 local _, ns = ...
 
@@ -15,284 +15,489 @@ local B = { it = {}, en = {} }
 ns.CraftBuilds = B
 
 B.it.alchemy = {
-    { "Durata dei flask", "raid e Mitiche+", {
-        "15 punti nella radice di Fluent in Flasks: la durata di flask e fiale aumenta a 5 e a 15 punti.",
-        "Poi prosegui con la build 'Consumabili da vendere', linea dei flask." } },
-    { "Consumabili da vendere", "casa d'aste: pozioni (le piu' redditizie oggi), flask o fiale", {
-        "Fase 1, Multicraft: 10 nella radice della linea, 10 nel sotto-ramo (flask: Sin'dorei Specialist; pozioni: Path of Void o Path of Light), 20 nel nodo Multicraft (Flask Abundance o Prolific Potioneer).",
-        "Fase 2, Resourcefulness: 10 in Alchemical Mastery, poi 20 in Recycle (flask) o Reuse (pozioni).",
-        "Fase 3, qualita' oro: porta a 30 i nodi gia' usati; a 30 punti nella radice si sblocca il calderone.",
-        "Strumento con Multicraft e incantamento Multicraft." } },
-    { "Trasmutazioni", "giornaliero e Mote", {
-        "10 nella radice di Transmutation Authority: Synthesis Synergy insegna il giornaliero Wondrous Synergist.",
-        "20 in Metamorphic Mastery (Multicraft), poi 20 in Synthesis Synergy: ricarica del giornaliero da 18 a circa 9 ore.",
-        "10 nella radice di Alchemical Mastery e 20 in Reduce (Resourcefulness, utile su tutte le trasmutazioni).",
-        "Le trasmutazioni di materiali (Bouquet of Herbs, Box of Rocks, School of Gems) non fanno Multicraft: per quelle serve Resourcefulness." } },
+    { name = "Durata dei flask", short = "Durata flask", use = "raid e Mitiche+",
+      phases = {
+        { "Durata", { { 15, "Fluent in Flasks (radice): la durata di flask e fiale sale a 5 e a 15 punti" } } },
+      },
+      notes = { "Poi prosegui con la build 'Flask da vendere'." } },
+    { name = "Pozioni da vendere", short = "Pozioni", use = "oro: oggi la linea piu' redditizia",
+      phases = {
+        { "Multicraft", { { 10, "Potion Prowess (radice)" }, { 10, "Path of Void oppure Path of Light" },
+                          { 20, "Prolific Potioneer (Void o Light)" } } },
+        { "Resourcefulness", { { 10, "Alchemical Mastery (radice)" }, { 20, "Reuse" } } },
+        { "Qualita' oro e calderone", { { 20, "Potion Prowess fino a 30: sblocca il Voidlight Potion Cauldron" },
+                                         { 20, "Path of Void (o Light) fino a 30" }, { 20, "Alchemical Mastery fino a 30" } } },
+      },
+      notes = { "Strumento con Multicraft e incantamento Multicraft.", "Dopo 130 punti aggiungi una seconda linea (flask)." } },
+    { name = "Flask da vendere", short = "Flask", use = "oro: domanda alta, margini oggi piu' bassi",
+      phases = {
+        { "Multicraft", { { 10, "Fluent in Flasks (radice)" }, { 10, "Sin'dorei Specialist" }, { 20, "Flask Abundance" } } },
+        { "Resourcefulness", { { 10, "Alchemical Mastery (radice)" }, { 20, "Recycle" } } },
+        { "Qualita' oro e calderone", { { 20, "Fluent in Flasks fino a 30: sblocca il Cauldron of Sin'dorei Flasks" },
+                                         { 20, "Sin'dorei Specialist" }, { 20, "Alchemical Mastery" } } },
+      },
+      notes = { "Fiale: stessa struttura con Haranir Secrets e Phial Abundance; mercato piu' piccolo." } },
+    { name = "Trasmutazioni", short = "Trasmutazioni", use = "giornaliero e Mote",
+      phases = {
+        { "Multicraft e giornaliero", { { 10, "Transmutation Authority (radice): Synthesis Synergy insegna Wondrous Synergist" },
+                                        { 20, "Metamorphic Mastery" } } },
+        { "Ricarica piu' breve", { { 20, "Synthesis Synergy: il giornaliero passa da 18 a circa 9 ore" } } },
+        { "Resourcefulness", { { 10, "Alchemical Mastery (radice)" }, { 20, "Reduce" } } },
+      },
+      notes = { "Le trasmutazioni di materiali (Bouquet of Herbs, Box of Rocks, School of Gems) non fanno Multicraft: per quelle serve Resourcefulness." } },
 }
 B.en.alchemy = {
-    { "Extra Flask Duration", "raids and Mythic+", {
-        "15 points in the Fluent in Flasks root: flask and phial duration goes up at 5 and at 15 points.",
-        "Then continue with the 'Selling Consumables' build, flask line." } },
-    { "Selling Consumables", "auction house: potions (the most profitable right now), flasks or phials", {
-        "Phase 1, Multicraft: 10 in the line's root, 10 in the sub-branch (flasks: Sin'dorei Specialist; potions: Path of Void or Path of Light), 20 in the Multicraft node (Flask Abundance or Prolific Potioneer).",
-        "Phase 2, Resourcefulness: 10 in Alchemical Mastery, then 20 in Recycle (flasks) or Reuse (potions).",
-        "Phase 3, gold quality: bring the nodes you used to 30; 30 points in the root unlock the cauldron.",
-        "Multicraft tool with a Multicraft enchant." } },
-    { "Transmutes", "daily cooldown and Motes", {
-        "10 in the Transmutation Authority root: Synthesis Synergy teaches the Wondrous Synergist daily.",
-        "20 in Metamorphic Mastery (Multicraft), then 20 in Synthesis Synergy: daily cooldown from 18 to about 9 hours.",
-        "10 in the Alchemical Mastery root and 20 in Reduce (Resourcefulness, good on every transmute).",
-        "Material transmutes (Bouquet of Herbs, Box of Rocks, School of Gems) cannot Multicraft: they need Resourcefulness." } },
+    { name = "Extra flask duration", short = "Flask duration", use = "raids and Mythic+",
+      phases = {
+        { "Duration", { { 15, "Fluent in Flasks (root): flask and phial duration goes up at 5 and at 15 points" } } },
+      },
+      notes = { "Then continue with the 'Flasks to sell' build." } },
+    { name = "Potions to sell", short = "Potions", use = "gold: the most profitable line right now",
+      phases = {
+        { "Multicraft", { { 10, "Potion Prowess (root)" }, { 10, "Path of Void or Path of Light" },
+                          { 20, "Prolific Potioneer (Void or Light)" } } },
+        { "Resourcefulness", { { 10, "Alchemical Mastery (root)" }, { 20, "Reuse" } } },
+        { "Gold quality and cauldron", { { 20, "Potion Prowess to 30: unlocks the Voidlight Potion Cauldron" },
+                                          { 20, "Path of Void (or Light) to 30" }, { 20, "Alchemical Mastery to 30" } } },
+      },
+      notes = { "Multicraft tool with a Multicraft enchant.", "After 130 points add a second line (flasks)." } },
+    { name = "Flasks to sell", short = "Flasks", use = "gold: high demand, thinner margins right now",
+      phases = {
+        { "Multicraft", { { 10, "Fluent in Flasks (root)" }, { 10, "Sin'dorei Specialist" }, { 20, "Flask Abundance" } } },
+        { "Resourcefulness", { { 10, "Alchemical Mastery (root)" }, { 20, "Recycle" } } },
+        { "Gold quality and cauldron", { { 20, "Fluent in Flasks to 30: unlocks the Cauldron of Sin'dorei Flasks" },
+                                          { 20, "Sin'dorei Specialist" }, { 20, "Alchemical Mastery" } } },
+      },
+      notes = { "Phials: same structure with Haranir Secrets and Phial Abundance; smaller market." } },
+    { name = "Transmutes", short = "Transmutes", use = "daily cooldown and Motes",
+      phases = {
+        { "Multicraft and daily", { { 10, "Transmutation Authority (root): Synthesis Synergy teaches Wondrous Synergist" },
+                                    { 20, "Metamorphic Mastery" } } },
+        { "Shorter cooldown", { { 20, "Synthesis Synergy: the daily goes from 18 to about 9 hours" } } },
+        { "Resourcefulness", { { 10, "Alchemical Mastery (root)" }, { 20, "Reduce" } } },
+      },
+      notes = { "Material transmutes (Bouquet of Herbs, Box of Rocks, School of Gems) cannot Multicraft: they need Resourcefulness." } },
 }
 
 B.it.leatherworking = {
-    { "Standard", "equip di rango massimo per te", {
-        "30 nella radice della specializzazione del tuo tipo di armatura: Lasting Leather (cuoio) o Safeguarding Scales (maglia).",
-        "30 nel lato che ti serve: sinistro (testa, petto, spalle, polsi) o destro (gambe, mani, vita, piedi); sblocca 4 ricette.",
-        "30 nell'altro lato per le ricette restanti.",
-        "Poi: l'altro tipo di armatura (alt e amici) o Learned Leatherworker per Multicraft, Ingenuity e Resourcefulness." } },
-    { "Ordini di lavoro", "creare armature per gli altri (chat commercio)", {
-        "Meglio le armature degli attrezzi da professione: la domanda dura tutta la stagione, quella degli attrezzi cala presto.",
-        "30 nella radice, 30 nel lato con lo slot che vuoi, 20 per portare lo slot al massimo: circa uno slot nuovo a settimana." } },
-    { "Casa d'aste", "produzione in serie", {
-        "Consumabili (kit per armature, tamburi): 10 in Flawless Fortes, scegli Commanding Commodities e poi Crucial Consumables.",
-        "5 nella radice di Learned Leatherworker, 30 in Mastering Multicraft, 10 per il secondo sotto-ramo, 30 in Waning Waste.",
-        "Poi torna in Flawless Fortes e completa il percorso fino al tuo ramo (reagenti: Brimming Basics; opzionali: Overwhelming Optionals)." } },
+    { name = "Equip per te", short = "Equip", use = "armature di rango massimo, senza ordini",
+      phases = {
+        { "Base", { { 30, "Radice della tua armatura: Lasting Leather (cuoio) o Safeguarding Scales (maglia)" } } },
+        { "Primi 4 slot", { { 30, "Lato sinistro (testa, petto, spalle, polsi) oppure destro (gambe, mani, vita, piedi)" } } },
+        { "Tutti gli slot", { { 30, "L'altro lato" } } },
+      },
+      notes = { "Poi: l'altro tipo di armatura (alt e amici) o Learned Leatherworker per Multicraft, Ingenuity e Resourcefulness." } },
+    { name = "Ordini di lavoro", short = "Ordini", use = "creare armature per gli altri",
+      phases = {
+        { "Base", { { 30, "Radice della specializzazione dell'armatura" } } },
+        { "Lo slot richiesto", { { 30, "Il lato con lo slot che vuoi" }, { 20, "Lo slot, fino al massimo" } } },
+      },
+      notes = { "Meglio le armature degli attrezzi da professione: la domanda dura tutta la stagione.",
+                "Circa uno slot nuovo al rango massimo ogni settimana." } },
+    { name = "Casa d'aste", short = "Asta", use = "kit per armature, tamburi e reagenti in serie",
+      phases = {
+        { "Sblocco", { { 10, "Flawless Fortes: scegli Commanding Commodities, poi Crucial Consumables" },
+                       { 5, "Learned Leatherworker (radice)" } } },
+        { "Multicraft e Resourcefulness", { { 30, "Mastering Multicraft" }, { 10, "Learned Leatherworker: secondo sotto-ramo" },
+                                             { 30, "Waning Waste" } } },
+        { "Piu' abilita'", { { nil, "Torna in Flawless Fortes e completa il percorso fino al tuo ramo" } } },
+      },
+      notes = { "Rami: Crucial Consumables (kit e tamburi), Brimming Basics (reagenti), Overwhelming Optionals (reagenti opzionali)." } },
 }
 B.en.leatherworking = {
-    { "Standard", "max-rank gear for yourself", {
-        "30 in the root of your armor type's specialization: Lasting Leather (leather) or Safeguarding Scales (mail).",
-        "30 in the side you need: left (head, chest, shoulders, wrists) or right (legs, hands, waist, feet); unlocks 4 recipes.",
-        "30 in the other side for the remaining recipes.",
-        "Then: the other armor type (alts and friends) or Learned Leatherworker for Multicraft, Ingenuity and Resourcefulness." } },
-    { "Crafting Orders", "crafting armor for others (trade chat)", {
-        "Armor rather than profession tools: armor demand lasts all season, tool demand drops early.",
-        "30 in the root, 30 in the side with the slot you want, 20 to max that slot: about one new slot a week." } },
-    { "Auction House", "mass production", {
-        "Consumables (armor kits, drums): 10 in Flawless Fortes, pick Commanding Commodities then Crucial Consumables.",
-        "5 in the Learned Leatherworker root, 30 in Mastering Multicraft, 10 for the second sub-branch, 30 in Waning Waste.",
-        "Then go back to Flawless Fortes and finish the path to your branch (reagents: Brimming Basics; optionals: Overwhelming Optionals)." } },
+    { name = "Gear for yourself", short = "Gear", use = "max-rank armor, no orders",
+      phases = {
+        { "Base", { { 30, "Root of your armor type: Lasting Leather (leather) or Safeguarding Scales (mail)" } } },
+        { "First 4 slots", { { 30, "Left side (head, chest, shoulders, wrists) or right side (legs, hands, waist, feet)" } } },
+        { "Every slot", { { 30, "The other side" } } },
+      },
+      notes = { "Then: the other armor type (alts and friends) or Learned Leatherworker for Multicraft, Ingenuity and Resourcefulness." } },
+    { name = "Crafting orders", short = "Orders", use = "crafting armor for others",
+      phases = {
+        { "Base", { { 30, "Root of the armor specialization" } } },
+        { "The requested slot", { { 30, "The side with the slot you want" }, { 20, "That slot, maxed" } } },
+      },
+      notes = { "Armor rather than profession tools: demand lasts all season.", "About one new max-rank slot a week." } },
+    { name = "Auction house", short = "Auction", use = "armor kits, drums and reagents in bulk",
+      phases = {
+        { "Unlock", { { 10, "Flawless Fortes: pick Commanding Commodities, then Crucial Consumables" },
+                      { 5, "Learned Leatherworker (root)" } } },
+        { "Multicraft and Resourcefulness", { { 30, "Mastering Multicraft" }, { 10, "Learned Leatherworker: second sub-branch" },
+                                              { 30, "Waning Waste" } } },
+        { "More skill", { { nil, "Go back to Flawless Fortes and finish the path to your branch" } } },
+      },
+      notes = { "Branches: Crucial Consumables (kits and drums), Brimming Basics (reagents), Overwhelming Optionals (optional reagents)." } },
 }
 
 B.it.blacksmithing = {
-    { "Standard", "equip di rango massimo per te", {
-        "Decidi armi o armature: le armi di solito sono l'upgrade maggiore, le armature danno piu' slot.",
-        "Armorsmithing: 30 nella radice, poi 30 nel ramo con i tuoi slot (Articulating: vita, polsi, mani; Sculpted: elmo, spalle, piedi; Large Plate: petto, gambe, scudi). Meglio iniziare dagli slot che non competono con il set.",
-        "Weaponsmithing: 30 nella radice, poi 25 in Hafted Weapons (asce, armi ad asta, mazze) o Blades (spade, pugnali, glaive)." } },
-    { "Ordini di lavoro", "armi e armature per gli altri", {
-        "Armi o armature, non attrezzi: la domanda con le Spark dura tutta la stagione.",
-        "30 nella radice di Armorsmithing o Weaponsmithing, 30 nel sotto-ramo dello slot, 20 o piu' nel nodo dell'oggetto." } },
-    { "Casa d'aste", "leghe, Tool Stones, pietre per armi", {
-        "Leghe (consigliate, servono in quasi tutte le ricette di alto livello): 40 nella radice di The Old Ways, 20 in Prolific Worker (Multicraft).",
-        "Poi Resourcefulness, oppure qualita' oro se hai 3 attrezzi blu e abilita' 100.",
-        "In seguito: 30 nella radice di Craftsmithing e 25 in Tool Stones, o 30 in Weaponsmithing e 25 in Weaponstones." } },
+    { name = "Armi per te", short = "Armi", use = "di solito l'upgrade piu' grande",
+      phases = {
+        { "Base", { { 30, "Weaponsmithing (radice): sblocca i 3 sotto-rami" } } },
+        { "Il tuo tipo di arma", { { 25, "Hafted Weapons (asce, armi ad asta, mazze) oppure Blades (spade, pugnali, glaive)" },
+                                   { 20, "Il nodo della tua arma" } } },
+      },
+      notes = {} },
+    { name = "Armature per te", short = "Armature", use = "piastre di rango massimo",
+      phases = {
+        { "Base", { { 30, "Armorsmithing (radice): sblocca i 3 sotto-rami" } } },
+        { "I tuoi slot", { { 30, "Articulating (vita, polsi, mani), Sculpted (elmo, spalle, piedi) o Large Plate (petto, gambe, scudi)" } } },
+        { "Tutti gli slot", { { nil, "Da 60 a 120 punti: gli altri rami, nell'ordine che ti serve" } } },
+      },
+      notes = { "Inizia dagli slot che non competono con il set: polsi, vita, piedi." } },
+    { name = "Casa d'aste", short = "Asta", use = "leghe, Tool Stones, pietre per armi",
+      phases = {
+        { "Leghe", { { 40, "The Old Ways (radice)" }, { 20, "Prolific Worker (Multicraft)" } } },
+        { "Margini o qualita'", { { nil, "Resourcefulness, oppure qualita' oro se hai 3 attrezzi blu e abilita' 100" } } },
+        { "Consumabili", { { 30, "Craftsmithing (radice)" }, { 25, "Tool Stones (oppure Weaponsmithing 30 e Weaponstones 25)" } } },
+      },
+      notes = { "Le leghe servono in quasi tutte le ricette di alto livello: sono la scelta piu' sicura." } },
 }
 B.en.blacksmithing = {
-    { "Standard", "max-rank gear for yourself", {
-        "Pick weapons or armor: weapons are usually the bigger upgrade, armor gives more slots.",
-        "Armorsmithing: 30 in the root, then 30 in the branch with your slots (Articulating: waist, wrists, hands; Sculpted: helm, shoulders, feet; Large Plate: chest, legs, shields). Start with slots that do not compete with tier.",
-        "Weaponsmithing: 30 in the root, then 25 in Hafted Weapons (axes, polearms, maces) or Blades (swords, daggers, warglaives)." } },
-    { "Crafting Orders", "weapons and armor for others", {
-        "Weapons or armor, not tools: with Sparks the demand lasts all season.",
-        "30 in the Armorsmithing or Weaponsmithing root, 30 in the slot's sub-branch, 20 or more in the item node." } },
-    { "Auction House", "alloys, Tool Stones, weapon stones", {
-        "Alloys (recommended, used in almost every high-end recipe): 40 in The Old Ways root, 20 in Prolific Worker (Multicraft).",
-        "Then Resourcefulness, or gold quality if you have 3 blue tools and 100 skill.",
-        "Later: 30 in the Craftsmithing root and 25 in Tool Stones, or 30 in Weaponsmithing and 25 in Weaponstones." } },
+    { name = "Weapons for yourself", short = "Weapons", use = "usually the biggest upgrade",
+      phases = {
+        { "Base", { { 30, "Weaponsmithing (root): unlocks the 3 sub-branches" } } },
+        { "Your weapon type", { { 25, "Hafted Weapons (axes, polearms, maces) or Blades (swords, daggers, warglaives)" },
+                                { 20, "Your weapon's node" } } },
+      },
+      notes = {} },
+    { name = "Armor for yourself", short = "Armor", use = "max-rank plate",
+      phases = {
+        { "Base", { { 30, "Armorsmithing (root): unlocks the 3 sub-branches" } } },
+        { "Your slots", { { 30, "Articulating (waist, wrists, hands), Sculpted (helm, shoulders, feet) or Large Plate (chest, legs, shields)" } } },
+        { "Every slot", { { nil, "From 60 to 120 points: the other branches, in the order you need" } } },
+      },
+      notes = { "Start with slots that do not compete with tier: wrists, waist, feet." } },
+    { name = "Auction house", short = "Auction", use = "alloys, Tool Stones, weapon stones",
+      phases = {
+        { "Alloys", { { 40, "The Old Ways (root)" }, { 20, "Prolific Worker (Multicraft)" } } },
+        { "Margins or quality", { { nil, "Resourcefulness, or gold quality if you have 3 blue tools and 100 skill" } } },
+        { "Consumables", { { 30, "Craftsmithing (root)" }, { 25, "Tool Stones (or Weaponsmithing 30 and Weaponstones 25)" } } },
+      },
+      notes = { "Alloys go into almost every high-end recipe: the safest pick." } },
 }
 
 B.it.tailoring = {
-    { "Standard", "cooldown giornalieri dei tessuti ed equip abbellito", {
-        "20 nella radice di Nimble Needlework: sblocca entrambi i cooldown (Arcanoweave e Sunfire Silk).",
-        "Scegli un sotto-ramo, poi 15 nel secondo nodo (mantello epico a 10 punti).",
-        "20 nell'ultimo nodo: ricarica da circa 17 a 8 ore e mezza e bracciali epici." } },
-    { "Produzione di tessuti", "Multicraft e Resourcefulness", {
-        "20 in Nimble Needlework per i cooldown, poi 30 in Creative Efficiency (Fiber Arts) per il Multicraft.",
-        "10 nella radice di Fiber Arts e 30 in Textile Utilization (Resourcefulness).",
-        "Per la qualita' oro senza Concentrazione servono molti piu' punti che nelle altre professioni." } },
-    { "Raccolta di stoffa", "chi farma nel mondo, nei dungeon e nelle delve", {
-        "30 nella radice di Fabric Specialist (piu' stoffa e piu' qualita' oro in tutte le zone).",
-        "20 nella radice di Nimble Needlework: i mob lasciano anche Sunfire Silk e Arcanoweave.",
-        "25 nel sotto-ramo della zona dove farmi (Harandar/Voidstorm o Eversong/Zul'Aman): solo l'ultimo nodo aumenta i drop." } },
-    { "Armature di stoffa", "equip per te o ordini", {
-        "5 nella radice di Sin'dorei Finery, 10 nel sotto-ramo dello slot che vuoi (prima ricetta).",
-        "Riempi il sotto-ramo centrale e la radice, poi 30 nella radice di Fiber Arts (abilita' per tutte le ricette)." } },
+    { name = "Cooldown dei tessuti", short = "Cooldown", use = "tessuti giornalieri ed equip abbellito",
+      phases = {
+        { "Sblocco", { { 20, "Nimble Needlework (radice): entrambi i cooldown, Arcanoweave e Sunfire Silk" } } },
+        { "Mantello epico", { { 15, "Secondo nodo del sotto-ramo scelto (mantello epico a 10 punti)" } } },
+        { "Ricarica piu' breve", { { 20, "Ultimo nodo: da circa 17 a 8 ore e mezza, e bracciali epici" } } },
+      },
+      notes = {} },
+    { name = "Produzione di tessuti", short = "Tessuti", use = "Multicraft e Resourcefulness",
+      phases = {
+        { "Cooldown e Multicraft", { { 20, "Nimble Needlework (radice)" }, { 30, "Creative Efficiency (Fiber Arts)" } } },
+        { "Resourcefulness", { { 10, "Fiber Arts (radice)" }, { 30, "Textile Utilization" } } },
+      },
+      notes = { "Per la qualita' oro senza Concentrazione servono molti piu' punti che nelle altre professioni." } },
+    { name = "Raccolta di stoffa", short = "Farming", use = "chi farma mondo, dungeon e delve",
+      phases = {
+        { "Piu' stoffa", { { 30, "Fabric Specialist (radice)" }, { 20, "Nimble Needlework (radice): i mob lasciano anche i tessuti rari" } } },
+        { "La tua zona", { { 25, "Sotto-ramo Harandar/Voidstorm oppure Eversong/Zul'Aman: solo l'ultimo nodo aumenta i drop" } } },
+      },
+      notes = {} },
+    { name = "Armature di stoffa", short = "Armature", use = "equip per te o ordini",
+      phases = {
+        { "Prima ricetta", { { 5, "Sin'dorei Finery (radice)" }, { 10, "Sotto-ramo dello slot che vuoi" } } },
+        { "Abilita'", { { nil, "Riempi il sotto-ramo centrale e la radice" }, { 30, "Fiber Arts (radice): abilita' per tutte le ricette" } } },
+      },
+      notes = {} },
 }
 B.en.tailoring = {
-    { "Standard", "daily bolt cooldowns and embellished gear", {
-        "20 in the Nimble Needlework root: unlocks both cooldowns (Arcanoweave and Sunfire Silk).",
-        "Pick a sub-branch, then 15 in the second node (epic cloak at 10 points).",
-        "20 in the last node: cooldown from about 17 to 8 and a half hours, and epic bracers." } },
-    { "Bolt Crafting", "Multicraft and Resourcefulness", {
-        "20 in Nimble Needlework for the cooldowns, then 30 in Creative Efficiency (Fiber Arts) for Multicraft.",
-        "10 in the Fiber Arts root and 30 in Textile Utilization (Resourcefulness).",
-        "Gold quality without Concentration takes many more points than in other professions." } },
-    { "Farming", "for players farming the world, dungeons and delves", {
-        "30 in the Fabric Specialist root (more cloth and more gold quality in every zone).",
-        "20 in the Nimble Needlework root: mobs also drop Sunfire Silk and Arcanoweave.",
-        "25 in the sub-branch for the zone you farm (Harandar/Voidstorm or Eversong/Zul'Aman): only the last node raises drops." } },
-    { "Armor Crafting", "gear for yourself or orders", {
-        "5 in the Sin'dorei Finery root, 10 in the sub-branch for the slot you want (first recipe).",
-        "Fill the middle sub-branch and the root, then 30 in the Fiber Arts root (skill for every recipe)." } },
+    { name = "Bolt cooldowns", short = "Cooldowns", use = "daily bolts and embellished gear",
+      phases = {
+        { "Unlock", { { 20, "Nimble Needlework (root): both cooldowns, Arcanoweave and Sunfire Silk" } } },
+        { "Epic cloak", { { 15, "Second node of your sub-branch (epic cloak at 10 points)" } } },
+        { "Shorter cooldown", { { 20, "Last node: from about 17 to 8 and a half hours, and epic bracers" } } },
+      },
+      notes = {} },
+    { name = "Bolt crafting", short = "Bolts", use = "Multicraft and Resourcefulness",
+      phases = {
+        { "Cooldowns and Multicraft", { { 20, "Nimble Needlework (root)" }, { 30, "Creative Efficiency (Fiber Arts)" } } },
+        { "Resourcefulness", { { 10, "Fiber Arts (root)" }, { 30, "Textile Utilization" } } },
+      },
+      notes = { "Gold quality without Concentration takes many more points than in other professions." } },
+    { name = "Cloth farming", short = "Farming", use = "for players farming the world, dungeons and delves",
+      phases = {
+        { "More cloth", { { 30, "Fabric Specialist (root)" }, { 20, "Nimble Needlework (root): mobs also drop the rare bolts" } } },
+        { "Your zone", { { 25, "Harandar/Voidstorm or Eversong/Zul'Aman sub-branch: only the last node raises drops" } } },
+      },
+      notes = {} },
+    { name = "Cloth armor", short = "Armor", use = "gear for yourself or orders",
+      phases = {
+        { "First recipe", { { 5, "Sin'dorei Finery (root)" }, { 10, "Sub-branch for the slot you want" } } },
+        { "Skill", { { nil, "Fill the middle sub-branch and the root" }, { 30, "Fiber Arts (root): skill for every recipe" } } },
+      },
+      notes = {} },
 }
 
 B.it.jewelcrafting = {
-    { "Taglio delle gemme", "gemme per la casa d'aste", {
-        "Scegli il primo colore guardando le statistiche piu' richieste nelle guide BiS.",
-        "5 in Thoughtful Throughput e 30 in Outrageous Output (Multicraft).",
-        "Poi Resourcefulness (10 e 30 in Skilled Savings) oppure qualita' oro (25 nel colore, 30 nella radice di Glamorous Gems, 15 nella gemma)." } },
-    { "Gioielli e accessori", "anelli, collane, accessori da professione", {
-        "30 nella radice di Alluring Accessories, 40 nel sotto-ramo scelto (anelli o collane sono i piu' sicuri).",
-        "Poi un secondo sotto-ramo, oppure 30 in Skilled Savings: i gioielli non fanno Multicraft." } },
-    { "Reagenti", "Sunglass Vial, Sin'dorei Lens, Kaleidoscopic Prism", {
-        "5 in Thoughtful Throughput e 30 in Outrageous Output (Multicraft).",
-        "Poi Resourcefulness (30 in Skilled Savings) o qualita' oro in Proficient Processor (Material Manufacturer e il ramo dei reagenti)." } },
-    { "Prospezione e frantumazione", "gemme e Glimmering Gemdust", {
-        "10 in Proficient Processor, 30 in Prospecting Pro (l'ultimo nodo da' gemme extra), 1 punto per tipo di minerale.",
-        "5 e 30 in Skilled Savings, poi 20 in Proficient Processor per la qualita' oro." } },
+    { name = "Taglio delle gemme", short = "Gemme", use = "gemme per la casa d'aste",
+      phases = {
+        { "Multicraft", { { 5, "Thoughtful Throughput: scegli Outrageous Output" }, { 30, "Outrageous Output" } } },
+        { "Resourcefulness o qualita' oro", { { 30, "Skilled Savings (Resourcefulness)" },
+                                              { nil, "oppure 25 nel colore, 30 nella radice di Glamorous Gems e 15 nella gemma" } } },
+      },
+      notes = { "Scegli il primo colore guardando le statistiche piu' richieste nelle guide delle classi." } },
+    { name = "Gioielli e accessori", short = "Gioielli", use = "anelli e collane per tutte le classi",
+      phases = {
+        { "Prime ricette", { { 30, "Alluring Accessories (radice)" }, { 40, "Sotto-ramo scelto: anelli o collane sono i piu' sicuri" } } },
+        { "Dopo", { { 40, "Un secondo sotto-ramo" }, { nil, "oppure 30 in Skilled Savings: i gioielli non fanno Multicraft" } } },
+      },
+      notes = {} },
+    { name = "Reagenti", short = "Reagenti", use = "Sunglass Vial, Sin'dorei Lens, Kaleidoscopic Prism",
+      phases = {
+        { "Multicraft", { { 5, "Thoughtful Throughput" }, { 30, "Outrageous Output" } } },
+        { "Resourcefulness o qualita' oro", { { 30, "Skilled Savings" },
+                                              { nil, "oppure Proficient Processor: Material Manufacturer e il ramo dei reagenti" } } },
+      },
+      notes = {} },
+    { name = "Prospezione e frantumazione", short = "Prospezione", use = "gemme e Glimmering Gemdust",
+      phases = {
+        { "Prospezione", { { 10, "Proficient Processor" }, { 30, "Prospecting Pro: l'ultimo nodo da' gemme extra" },
+                           { 1, "Un punto per tipo di minerale" } } },
+        { "Resourcefulness e qualita' oro", { { 35, "Skilled Savings" }, { 20, "Proficient Processor" } } },
+      },
+      notes = {} },
 }
 B.en.jewelcrafting = {
-    { "Gemcutting", "gems for the auction house", {
-        "Pick your first color from the stats most requested in BiS guides.",
-        "5 in Thoughtful Throughput and 30 in Outrageous Output (Multicraft).",
-        "Then Resourcefulness (10 and 30 in Skilled Savings) or gold quality (25 in the color, 30 in the Glamorous Gems root, 15 in the gem)." } },
-    { "Jewelry & Accessories", "rings, necklaces, profession accessories", {
-        "30 in the Alluring Accessories root, 40 in your sub-branch (rings or necklaces are the safest).",
-        "Then a second sub-branch, or 30 in Skilled Savings: jewelry cannot Multicraft." } },
-    { "Reagent Crafter", "Sunglass Vial, Sin'dorei Lens, Kaleidoscopic Prism", {
-        "5 in Thoughtful Throughput and 30 in Outrageous Output (Multicraft).",
-        "Then Resourcefulness (30 in Skilled Savings) or gold quality in Proficient Processor (Material Manufacturer and the reagent branch)." } },
-    { "Prospecting & Crushing", "gems and Glimmering Gemdust", {
-        "10 in Proficient Processor, 30 in Prospecting Pro (the last node gives extra gems), 1 point per ore type.",
-        "5 and 30 in Skilled Savings, then 20 in Proficient Processor for gold quality." } },
+    { name = "Gemcutting", short = "Gems", use = "gems for the auction house",
+      phases = {
+        { "Multicraft", { { 5, "Thoughtful Throughput: pick Outrageous Output" }, { 30, "Outrageous Output" } } },
+        { "Resourcefulness or gold quality", { { 30, "Skilled Savings (Resourcefulness)" },
+                                               { nil, "or 25 in the color, 30 in the Glamorous Gems root and 15 in the gem" } } },
+      },
+      notes = { "Pick your first color from the stats most requested in class guides." } },
+    { name = "Jewelry and accessories", short = "Jewelry", use = "rings and necklaces for every class",
+      phases = {
+        { "First recipes", { { 30, "Alluring Accessories (root)" }, { 40, "Your sub-branch: rings or necklaces are the safest" } } },
+        { "Then", { { 40, "A second sub-branch" }, { nil, "or 30 in Skilled Savings: jewelry cannot Multicraft" } } },
+      },
+      notes = {} },
+    { name = "Reagents", short = "Reagents", use = "Sunglass Vial, Sin'dorei Lens, Kaleidoscopic Prism",
+      phases = {
+        { "Multicraft", { { 5, "Thoughtful Throughput" }, { 30, "Outrageous Output" } } },
+        { "Resourcefulness or gold quality", { { 30, "Skilled Savings" },
+                                               { nil, "or Proficient Processor: Material Manufacturer and the reagent branch" } } },
+      },
+      notes = {} },
+    { name = "Prospecting and crushing", short = "Prospecting", use = "gems and Glimmering Gemdust",
+      phases = {
+        { "Prospecting", { { 10, "Proficient Processor" }, { 30, "Prospecting Pro: the last node gives extra gems" },
+                           { 1, "One point per ore type" } } },
+        { "Resourcefulness and gold quality", { { 35, "Skilled Savings" }, { 20, "Proficient Processor" } } },
+      },
+      notes = {} },
 }
 
 B.it.engineering = {
-    { "Attrezzi da professione", "attrezzi e accessori da vendere", {
-        "10 in Mandatory Tools o Finishing Touches (3 ricette), 25 nella radice di Market Mobility.",
-        "30 in Recycling: grande bonus di abilita' per tutto Engineering.",
-        "30 nel sotto-ramo dell'attrezzo per il rango massimo senza Concentrazione (abilita' 100 e attrezzi blu)." } },
-    { "Equip da combattimento", "occhiali, bracciali, stivali, pistole", {
-        "25 nella radice di Combat Analytics (sblocca i 4 sotto-rami), 35 nello slot scelto.",
-        "30 in Recycling per l'abilita'; poi, se vuoi, 30 in Resourcefulness (vale anche sugli ordini)." } },
-    { "Riciclo", "reagenti di qualita' oro", {
-        "30 in Recycling e 10 in Bits and Bots: con attrezzi verdi ricicli gia' reagenti di base di qualita' oro.",
-        "Poi Resourcefulness (e Multicraft se crei reagenti); per Soul Sprocket ed Emergency Soul Link d'oro 20 in Bits and Bots e 30 in Bits o Bots." } },
+    { name = "Equip da combattimento", short = "Equip", use = "occhiali, bracciali, stivali, pistole",
+      phases = {
+        { "Sblocco", { { 25, "Combat Analytics (radice): i 4 sotto-rami" }, { 35, "Lo slot che vuoi" } } },
+        { "Abilita'", { { 30, "Recycling: grande bonus per tutto Engineering" } } },
+      },
+      notes = { "Facoltativo: 30 in Resourcefulness, vale anche sugli ordini." } },
+    { name = "Attrezzi da professione", short = "Attrezzi", use = "attrezzi e accessori da vendere",
+      phases = {
+        { "Ricette e abilita'", { { 10, "Mandatory Tools o Finishing Touches" }, { 25, "Market Mobility (radice)" },
+                                  { 30, "Recycling" } } },
+        { "Rango massimo", { { 30, "Sotto-ramo dell'attrezzo (abilita' 100 e attrezzi blu)" } } },
+      },
+      notes = { "Rendono soprattutto a inizio stagione." } },
+    { name = "Riciclo", short = "Riciclo", use = "reagenti di qualita' oro",
+      phases = {
+        { "Reagenti d'oro", { { 30, "Recycling" }, { 10, "Bits and Bots" } } },
+        { "Statistiche", { { nil, "Resourcefulness, e Multicraft se crei reagenti" } } },
+        { "Tutto d'oro", { { 20, "Bits and Bots" }, { 30, "Bits (Soul Sprocket) o Bots (Emergency Soul Link)" } } },
+      },
+      notes = {} },
 }
 B.en.engineering = {
-    { "Profession Gear", "tools and accessories to sell", {
-        "10 in Mandatory Tools or Finishing Touches (3 recipes), 25 in the Market Mobility root.",
-        "30 in Recycling: a big skill bonus for all of Engineering.",
-        "30 in the tool's sub-branch for max rank without Concentration (100 skill and blue tools)." } },
-    { "Combat Gear", "goggles, bracers, boots, guns", {
-        "25 in the Combat Analytics root (unlocks the 4 sub-branches), 35 in your slot.",
-        "30 in Recycling for skill; then, if you want, 30 in Resourcefulness (it works on orders too)." } },
-    { "Recycling", "gold-quality reagents", {
-        "30 in Recycling and 10 in Bits and Bots: with green tools you already recycle gold-quality base reagents.",
-        "Then Resourcefulness (and Multicraft if you craft reagents); for gold Soul Sprocket and Emergency Soul Link 20 in Bits and Bots and 30 in Bits or Bots." } },
+    { name = "Combat gear", short = "Gear", use = "goggles, bracers, boots, guns",
+      phases = {
+        { "Unlock", { { 25, "Combat Analytics (root): the 4 sub-branches" }, { 35, "The slot you want" } } },
+        { "Skill", { { 30, "Recycling: a big bonus for all of Engineering" } } },
+      },
+      notes = { "Optional: 30 in Resourcefulness, it works on orders too." } },
+    { name = "Profession tools", short = "Tools", use = "tools and accessories to sell",
+      phases = {
+        { "Recipes and skill", { { 10, "Mandatory Tools or Finishing Touches" }, { 25, "Market Mobility (root)" },
+                                 { 30, "Recycling" } } },
+        { "Max rank", { { 30, "The tool's sub-branch (100 skill and blue tools)" } } },
+      },
+      notes = { "They sell mostly early in the season." } },
+    { name = "Recycling", short = "Recycling", use = "gold-quality reagents",
+      phases = {
+        { "Gold reagents", { { 30, "Recycling" }, { 10, "Bits and Bots" } } },
+        { "Stats", { { nil, "Resourcefulness, and Multicraft if you craft reagents" } } },
+        { "Gold everything", { { 20, "Bits and Bots" }, { 30, "Bits (Soul Sprocket) or Bots (Emergency Soul Link)" } } },
+      },
+      notes = {} },
 }
 
 B.it.inscription = {
-    { "Armi e attrezzi", "bastoni, off-hand, archi e attrezzi", {
-        "Vai subito in Blueprints (non in Calm Hands): conta sbloccare la prima ricetta.",
-        "Bastoni Agilita'/Intelletto (molto richiesti), lampade off-hand, archi (in concorrenza con Engineering); attrezzi per Inscription, Alchemy e Cooking.",
-        "Gli attrezzi rendono a inizio stagione, le armi nel lungo periodo." } },
-    { "Missive e contratti", "casa d'aste", {
-        "Calm Hands: 10 nella radice, 20 in Dextrous Diligence (Multicraft), 20 in Keen Eye (Resourcefulness).",
-        "Poi il nodo Parchment in Perfected Products. Le missive sono il volume piu' alto; le rune Vantus solo quando apre il raid." } },
-    { "Reagenti", "macinatura e inchiostri", {
-        "Calm Hands come sopra (50 punti).",
-        "Perfected Products > Processing > Perfect Milling: 90 punti in tutto per i pigmenti d'oro.",
-        "Poi Perfect Inks e Perfect Ciphers (i cifrari oggi servono meno)." } },
-    { "Carte Darkmoon", "carte, mazzi e monili", {
-        "20 nella radice di Darkmoon Curiosity; ogni seme (Rot, Blood, Hunt, Void) e' un sotto-ramo.",
-        "Aspetta i dati di mercato prima di investire molto." } },
+    { name = "Armi e attrezzi", short = "Armi", use = "bastoni, off-hand, archi",
+      phases = {
+        { "Prima ricetta", { { nil, "Vai subito in Blueprints e sblocca l'arma che vuoi (bastone, lampada, arco)" } } },
+      },
+      notes = { "Bastoni Agilita'/Intelletto molto richiesti; archi in concorrenza con Engineering.",
+                "Gli attrezzi rendono a inizio stagione, le armi nel lungo periodo." } },
+    { name = "Missive e contratti", short = "Missive", use = "il volume piu' alto in asta",
+      phases = {
+        { "Calm Hands", { { 10, "Calm Hands (radice)" }, { 20, "Dextrous Diligence (Multicraft)" }, { 20, "Keen Eye (Resourcefulness)" } } },
+        { "Pergamene", { { nil, "Perfected Products: il nodo Parchment" } } },
+      },
+      notes = { "Rune Vantus solo quando apre il raid." } },
+    { name = "Reagenti", short = "Inchiostri", use = "macinatura e inchiostri",
+      phases = {
+        { "Calm Hands", { { 50, "Come per le missive" } } },
+        { "Pigmenti d'oro", { { 90, "Perfected Products > Processing > Perfect Milling (tutti e tre al massimo)" } } },
+        { "Inchiostri", { { 30, "Perfect Inks" }, { 30, "Perfect Ciphers (oggi servono meno)" } } },
+      },
+      notes = {} },
+    { name = "Carte Darkmoon", short = "Darkmoon", use = "carte, mazzi e monili",
+      phases = {
+        { "Inizio", { { 20, "Darkmoon Curiosity (radice); ogni seme e' un sotto-ramo" } } },
+      },
+      notes = { "Aspetta i dati di mercato prima di investire molto." } },
 }
 B.en.inscription = {
-    { "Weapons & Tools", "staves, off-hands, bows and tools", {
-        "Go straight into Blueprints (not Calm Hands): unlocking the first recipe matters most.",
-        "Agility/Intellect staves (high demand), off-hand lamps, bows (shared market with Engineering); tools for Inscription, Alchemy and Cooking.",
-        "Tools sell early in the season, weapons in the long run." } },
-    { "Missives & Contracts", "auction house", {
-        "Calm Hands: 10 in the root, 20 in Dextrous Diligence (Multicraft), 20 in Keen Eye (Resourcefulness).",
-        "Then the Parchment node in Perfected Products. Missives have the highest volume; Vantus runes only once the raid opens." } },
-    { "Reagents", "milling and inks", {
-        "Calm Hands as above (50 points).",
-        "Perfected Products > Processing > Perfect Milling: 90 points in total for gold pigments.",
-        "Then Perfect Inks and Perfect Ciphers (ciphers are needed less now)." } },
-    { "Darkmoon Cards", "cards, decks and trinkets", {
-        "20 in the Darkmoon Curiosity root; each suit (Rot, Blood, Hunt, Void) is a sub-branch.",
-        "Wait for market data before investing heavily." } },
+    { name = "Weapons and tools", short = "Weapons", use = "staves, off-hands, bows",
+      phases = {
+        { "First recipe", { { nil, "Go straight into Blueprints and unlock the weapon you want (staff, lamp, bow)" } } },
+      },
+      notes = { "Agility/Intellect staves are in high demand; bows compete with Engineering.",
+                "Tools sell early in the season, weapons in the long run." } },
+    { name = "Missives and contracts", short = "Missives", use = "the highest volume on the auction house",
+      phases = {
+        { "Calm Hands", { { 10, "Calm Hands (root)" }, { 20, "Dextrous Diligence (Multicraft)" }, { 20, "Keen Eye (Resourcefulness)" } } },
+        { "Parchment", { { nil, "Perfected Products: the Parchment node" } } },
+      },
+      notes = { "Vantus runes only once the raid opens." } },
+    { name = "Reagents", short = "Inks", use = "milling and inks",
+      phases = {
+        { "Calm Hands", { { 50, "As for missives" } } },
+        { "Gold pigments", { { 90, "Perfected Products > Processing > Perfect Milling (all three maxed)" } } },
+        { "Inks", { { 30, "Perfect Inks" }, { 30, "Perfect Ciphers (needed less now)" } } },
+      },
+      notes = {} },
+    { name = "Darkmoon cards", short = "Darkmoon", use = "cards, decks and trinkets",
+      phases = {
+        { "Start", { { 20, "Darkmoon Curiosity (root); each suit is a sub-branch" } } },
+      },
+      notes = { "Wait for market data before investing heavily." } },
 }
 
 B.it.enchanting = {
-    { "Concentrazione", "poco tempo: un incantamento di qualita' alta ogni pochi giorni", {
-        "20 in Spellbound Shatterer (i bonus di Concentrazione si fermano a 20) e 30 in Infinite Ingenuity.",
-        "Attrezzo con Ingenuity: gli incantamenti non fanno Multicraft.",
-        "Ricette: molte si comprano dai venditori o all'asta, non serve spendere punti per sbloccarle." } },
-    { "Vendita di incantamenti", "produzione in serie", {
-        "30 nella radice di Elevating Equipment e 20 nel sotto-ramo scelto (arma/anello/petto o elmo/spalle/stivali sono i piu' richiesti).",
-        "Se le versioni argento rendono gia', passa a Resourcefulness in Spellbound Shatterer; altrimenti continua verso la qualita' oro." } },
-    { "Disincanto", "vendere i materiali", {
-        "30 in Disenchanting Delegate, poi 30 nel sotto-ramo di cio' che disincanti: Dust Deliverer (verdi), Shard Supplier (blu), Crystal Collector (epici).",
-        "Conta solo l'abilita': bastano verga e accessori blu. Con il tempo sblocca tutti e tre i sotto-rami." } },
+    { name = "Concentrazione", short = "Concentrazione", use = "poco tempo: un incantamento ogni pochi giorni",
+      phases = {
+        { "Base", { { 20, "Spellbound Shatterer (i bonus di Concentrazione si fermano a 20)" }, { 30, "Infinite Ingenuity" } } },
+      },
+      notes = { "Attrezzo con Ingenuity: gli incantamenti non fanno Multicraft.", "Molte ricette si comprano dai venditori o all'asta." } },
+    { name = "Vendita di incantamenti", short = "Incantamenti", use = "produzione in serie",
+      phases = {
+        { "Base", { { 30, "Elevating Equipment (radice)" }, { 20, "Sotto-ramo scelto: arma/anello/petto o elmo/spalle/stivali" } } },
+        { "Dopo", { { nil, "Se l'argento rende gia': Resourcefulness in Spellbound Shatterer; altrimenti verso la qualita' oro" } } },
+      },
+      notes = {} },
+    { name = "Disincanto", short = "Disincanto", use = "vendere i materiali",
+      phases = {
+        { "Base", { { 30, "Disenchanting Delegate (radice)" } } },
+        { "Cosa disincanti", { { 30, "Dust Deliverer (verdi), Shard Supplier (blu) o Crystal Collector (epici)" } } },
+      },
+      notes = { "Conta solo l'abilita': bastano verga e accessori blu." } },
 }
 B.en.enchanting = {
-    { "Concentration", "little time: one high-quality enchant every few days", {
-        "20 in Spellbound Shatterer (Concentration bonuses stop at 20) and 30 in Infinite Ingenuity.",
-        "Tool with Ingenuity: enchants cannot Multicraft.",
-        "Recipes: many come from vendors or the auction house, no need to spend points to unlock them." } },
-    { "Selling Enchants", "mass production", {
-        "30 in the Elevating Equipment root and 20 in your sub-branch (weapon/ring/chest or helm/shoulders/boots are the most requested).",
-        "If silver versions already sell, move to Resourcefulness in Spellbound Shatterer; otherwise keep going toward gold quality." } },
-    { "Disenchanting", "selling the materials", {
-        "30 in Disenchanting Delegate, then 30 in the sub-branch for what you disenchant: Dust Deliverer (green), Shard Supplier (blue), Crystal Collector (epic).",
-        "Only skill matters: a blue rod and blue accessories are enough. Over time unlock all three sub-branches." } },
+    { name = "Concentration", short = "Concentration", use = "little time: one enchant every few days",
+      phases = {
+        { "Base", { { 20, "Spellbound Shatterer (Concentration bonuses stop at 20)" }, { 30, "Infinite Ingenuity" } } },
+      },
+      notes = { "Tool with Ingenuity: enchants cannot Multicraft.", "Many recipes come from vendors or the auction house." } },
+    { name = "Selling enchants", short = "Enchants", use = "mass production",
+      phases = {
+        { "Base", { { 30, "Elevating Equipment (root)" }, { 20, "Your sub-branch: weapon/ring/chest or helm/shoulders/boots" } } },
+        { "Then", { { nil, "If silver already sells: Resourcefulness in Spellbound Shatterer; otherwise toward gold quality" } } },
+      },
+      notes = {} },
+    { name = "Disenchanting", short = "Disenchanting", use = "selling the materials",
+      phases = {
+        { "Base", { { 30, "Disenchanting Delegate (root)" } } },
+        { "What you disenchant", { { 30, "Dust Deliverer (green), Shard Supplier (blue) or Crystal Collector (epic)" } } },
+      },
+      notes = { "Only skill matters: a blue rod and blue accessories are enough." } },
 }
 
 B.it.herbalism = {
-    { "Druido", "raccolta in sella gia' disponibile", {
-        "40 in Bountiful Harvests: piu' erbe per nodo e piu' qualita' oro." } },
-    { "Altre classi", "prima la raccolta in sella", {
-        "40 in Botany per raccogliere senza scendere dalla cavalcatura, poi 40 in Bountiful Harvests.",
-        "Non sono punti sprecati: danno anche Deftness e molta Finesse." } },
+    { name = "Druido", short = "Druido", use = "raccolta in sella gia' disponibile",
+      phases = { { "Raccolto", { { 40, "Bountiful Harvests: piu' erbe per nodo e piu' qualita' oro" } } } },
+      notes = {} },
+    { name = "Altre classi", short = "Altre classi", use = "prima la raccolta in sella",
+      phases = {
+        { "Raccolta in sella", { { 40, "Botany" } } },
+        { "Raccolto", { { 40, "Bountiful Harvests" } } },
+      },
+      notes = { "Non sono punti sprecati: danno anche Deftness e molta Finesse." } },
 }
 B.en.herbalism = {
-    { "Druid", "mounted gathering already available", {
-        "40 in Bountiful Harvests: more herbs per node and more gold quality." } },
-    { "Other classes", "mounted gathering first", {
-        "40 in Botany to gather without dismounting, then 40 in Bountiful Harvests.",
-        "Not wasted points: they also give Deftness and a lot of Finesse." } },
+    { name = "Druid", short = "Druid", use = "mounted gathering already available",
+      phases = { { "Harvest", { { 40, "Bountiful Harvests: more herbs per node and more gold quality" } } } },
+      notes = {} },
+    { name = "Other classes", short = "Other classes", use = "mounted gathering first",
+      phases = {
+        { "Mounted gathering", { { 40, "Botany" } } },
+        { "Harvest", { { 40, "Bountiful Harvests" } } },
+      },
+      notes = { "Not wasted points: they also give Deftness and a lot of Finesse." } },
 }
 
 B.it.mining = {
-    { "Standard", "estrazione in sella e qualita' oro", {
-        "40 nella radice di Meticulous Mining: estrazione senza scendere dalla cavalcatura.",
-        "50 nella radice di Plentiful Ores: abilita' per tutti i minerali, che si trovano in tutte le zone.",
-        "Poi distribuisci sui singoli minerali (prima il piu' caro), un sotto-ramo Over-LODED dove farmi di piu' e Rich Deposits." } },
+    { name = "Standard", short = "Standard", use = "estrazione in sella e qualita' oro",
+      phases = {
+        { "Estrazione in sella", { { 40, "Meticulous Mining (radice)" } } },
+        { "Abilita' sui minerali", { { 50, "Plentiful Ores (radice): tutti i minerali, in tutte le zone" } } },
+        { "Completamento", { { nil, "I singoli minerali (prima il piu' caro), un sotto-ramo Over-LODED dove farmi di piu', Rich Deposits" } } },
+      },
+      notes = {} },
 }
 B.en.mining = {
-    { "Standard", "mounted mining and gold quality", {
-        "40 in the Meticulous Mining root: mine without dismounting.",
-        "50 in the Plentiful Ores root: skill for every ore, found in every zone.",
-        "Then spread points over the individual ores (most expensive first), one Over-LODED sub-branch where you farm most, and Rich Deposits." } },
+    { name = "Standard", short = "Standard", use = "mounted mining and gold quality",
+      phases = {
+        { "Mounted mining", { { 40, "Meticulous Mining (root)" } } },
+        { "Ore skill", { { 50, "Plentiful Ores (root): every ore, in every zone" } } },
+        { "Finishing", { { nil, "The individual ores (most expensive first), one Over-LODED sub-branch where you farm most, Rich Deposits" } } },
+      },
+      notes = {} },
 }
 
 B.it.skinning = {
-    { "Farming puro", "cuoio o scaglie dai mob", {
-        "10 in Thorough Tanning, poi 40 in Lasting Leather (cuoio) o Superb Scales (scaglie), poi 30 in Thorough Tanning.",
-        "10 in Gainful Gathering e 40 in Careful Carving (Finesse) o Trophy Taker (Perception, se i drop specifici valgono di piu')." } },
-    { "Esche e bestie rinomate", "Majestic Materials", {
-        "40 nella radice di Talented Tracker: tutte le esche di zona e la Grand Beast Lure.",
-        "Poi il sotto-ramo Majestic Materials; Gainful Gathering come seconda scelta." } },
+    { name = "Farming puro", short = "Farming", use = "cuoio o scaglie dai mob",
+      phases = {
+        { "Il tuo materiale", { { 10, "Thorough Tanning (radice)" }, { 40, "Lasting Leather (cuoio) o Superb Scales (scaglie)" },
+                                { 30, "Thorough Tanning" } } },
+        { "Quantita'", { { 10, "Gainful Gathering (radice)" }, { 40, "Careful Carving (Finesse) o Trophy Taker (Perception)" } } },
+      },
+      notes = {} },
+    { name = "Esche e bestie rinomate", short = "Esche", use = "Majestic Materials",
+      phases = {
+        { "Esche", { { 40, "Talented Tracker (radice): tutte le esche di zona e la Grand Beast Lure" } } },
+        { "Materiali", { { nil, "Sotto-ramo Majestic Materials, poi Gainful Gathering" } } },
+      },
+      notes = {} },
 }
 B.en.skinning = {
-    { "Pure Farming", "leather or scales from mobs", {
-        "10 in Thorough Tanning, then 40 in Lasting Leather (leather) or Superb Scales (scales), then 30 in Thorough Tanning.",
-        "10 in Gainful Gathering and 40 in Careful Carving (Finesse) or Trophy Taker (Perception, if species drops are worth more)." } },
-    { "Lures & Renowned Beasts", "Majestic Materials", {
-        "40 in the Talented Tracker root: every zone lure and the Grand Beast Lure.",
-        "Then the Majestic Materials sub-branch; Gainful Gathering second." } },
+    { name = "Pure farming", short = "Farming", use = "leather or scales from mobs",
+      phases = {
+        { "Your material", { { 10, "Thorough Tanning (root)" }, { 40, "Lasting Leather (leather) or Superb Scales (scales)" },
+                             { 30, "Thorough Tanning" } } },
+        { "Quantity", { { 10, "Gainful Gathering (root)" }, { 40, "Careful Carving (Finesse) or Trophy Taker (Perception)" } } },
+      },
+      notes = {} },
+    { name = "Lures and renowned beasts", short = "Lures", use = "Majestic Materials",
+      phases = {
+        { "Lures", { { 40, "Talented Tracker (root): every zone lure and the Grand Beast Lure" } } },
+        { "Materials", { { nil, "Majestic Materials sub-branch, then Gainful Gathering" } } },
+      },
+      notes = {} },
 }
 
 function B:Get(key)

@@ -72,60 +72,84 @@ function G:Knowledge(skillLine)
     return type(info) == "table" and info.numAvailable or nil
 end
 
-local function Bullets(rows, lines)
-    for _, line in ipairs(lines) do
-        rows[#rows + 1] = { text = "- " .. line, wrap = true }
+local TIER_COLOR = { S = { 1, 0.55, 0.1 }, A = { 0.35, 0.65, 1 }, B = { 0.65, 0.65, 0.65 } }
+
+-- Passi numerati
+local function Steps(rows, lines)
+    for i, line in ipairs(lines) do
+        rows[#rows + 1] = { kind = "step", badge = tostring(i), badgeColor = { 1, 0.82, 0 }, text = line }
     end
 end
 
 function G:Rows()
     local L, rows = ns.L, {}
+    local S = ns.GoldStrategies
     local profile = ns.db.playerType or "medium"
     local profs = self:Professions()
 
+    -- profilo di gioco
+    local items = {}
+    for _, key in ipairs(self.PROFILES) do
+        items[#items + 1] = { label = L["PROFILE_" .. key], selected = key == profile,
+                              onClick = function() ns:Set("playerType", key) end }
+    end
+    rows[#rows + 1] = { kind = "pills", items = items }
+    rows[#rows + 1] = { kind = "note", text = L["PROFILE_DESC_" .. profile] }
+
+    -- le tue professioni: fascia per l'oro, Concentrazione, conoscenza
     rows[#rows + 1] = { header = L.HDR_PROFESSIONS }
+    if #profs == 0 then
+        rows[#rows + 1] = { kind = "callout", style = "info", text = L.NO_PROFESSIONS }
+    end
     for _, p in ipairs(profs) do
+        local tier = p.key and S:Tier(p.key)
+        local letter = tier and tier:sub(1, 1)
+        rows[#rows + 1] = {
+            text = L.PROF_LINE:format(p.name, p.rank, p.max), icon = p.icon,
+            badge = letter and { L.TIER_BADGE:format(letter), TIER_COLOR[letter] } or nil,
+            tooltip = { p.name, tier and L.TIER_TIP:format(tier) or nil, p.key and S:Why(p.key) or nil },
+            link = { search = p.name }, linkTitle = p.name,
+        }
         local cur, max = self:Concentration(p.skillLine)
-        local tip = { p.name, L.PROF_RANK:format(p.rank, p.max) }
-        local right
         if cur then
-            right = L.CONCENTRATION:format(cur, max)
-            if cur >= max then
-                tip[#tip + 1] = L.CONC_FULL
-            else
-                tip[#tip + 1] = L.CONC_FULL_IN:format(A.TimeText((max - cur) / CONCENTRATION_PER_DAY * 86400))
-            end
-        else
-            tip[#tip + 1] = L.CONC_UNKNOWN
+            local full = cur >= max
+            rows[#rows + 1] = {
+                kind = "bar", min = 0, max = max, value = cur,
+                color = full and { 1, 0.6, 0.2 } or { 0.35, 0.65, 1 },
+                label = L.CONCENTRATION:format(cur, max), labelColor = full and { 1, 0.6, 0.2 } or nil,
+                right = full and L.CONC_FULL_SHORT or L.CONC_FULL_IN:format(A.TimeText((max - cur) / CONCENTRATION_PER_DAY * 86400)),
+            }
+        elseif not (p.key == "herbalism" or p.key == "mining" or p.key == "skinning") then
+            rows[#rows + 1] = { kind = "note", text = L.CONC_UNKNOWN }
         end
         local knowledge = self:Knowledge(p.skillLine)
-        if knowledge and knowledge > 0 then tip[#tip + 1] = L.KNOWLEDGE:format(knowledge) end
-        rows[#rows + 1] = {
-            text = L.PROF_LINE:format(p.name, p.rank, p.max), right = right, icon = p.icon,
-            color = (cur and cur >= max) and { 1, 0.6, 0.2 } or nil,
-            tooltip = tip, link = { search = p.name }, linkTitle = p.name,
-        }
+        if knowledge and knowledge > 0 then
+            rows[#rows + 1] = { kind = "step", badge = tostring(knowledge), badgeColor = { 1, 0.6, 0.2 }, text = L.KNOWLEDGE_SPEND }
+        end
     end
-    if #profs == 0 then rows[#rows + 1] = { text = L.NO_PROFESSIONS, dim = true } end
 
-    local S = ns.GoldStrategies
-    rows[#rows + 1] = { header = L.HDR_GOLD_GENERAL:format(L["PROFILE_" .. profile]) }
-    Bullets(rows, S:Get("general", profile))
+    -- cosa fare con le tue professioni
     local covered = 0
     for _, p in ipairs(profs) do
         if p.key then
+            if covered == 0 then rows[#rows + 1] = { header = L.HDR_GOLD_TODO:format(L["PROFILE_" .. profile]) } end
             covered = covered + 1
             local tier = S:Tier(p.key)
-            rows[#rows + 1] = { header = tier and L.HDR_GOLD_PROF_TIER:format(p.name, tier) or L.HDR_GOLD_PROF:format(p.name) }
-            Bullets(rows, S:Get(p.key, profile))
+            rows[#rows + 1] = { kind = "sub", text = tier and L.HDR_GOLD_PROF_TIER:format(p.name, tier) or p.name }
+            local why = S:Why(p.key)
+            if why then rows[#rows + 1] = { kind = "callout", style = "info", title = L.GOLD_WHY, text = why } end
+            Steps(rows, S:Get(p.key, profile))
         end
     end
     if covered == 0 then
         rows[#rows + 1] = { header = L.HDR_GOLD_NONE }
-        Bullets(rows, S:Get("none", profile))
+        Steps(rows, S:Get("none", profile))
     end
-    rows[#rows + 1] = { header = "" }
-    rows[#rows + 1] = { text = L.GOLD_SOURCES, dim = true, wrap = true }
-    rows[#rows + 1] = { text = L.GOLD_DISCLAIMER, dim = true, wrap = true }
+
+    -- consigli validi per tutti
+    rows[#rows + 1] = { header = L.HDR_GOLD_GENERAL:format(L["PROFILE_" .. profile]) }
+    Steps(rows, S:Get("general", profile))
+    rows[#rows + 1] = { kind = "note", text = L.GOLD_SOURCES }
+    rows[#rows + 1] = { kind = "note", text = L.GOLD_DISCLAIMER }
     return rows
 end

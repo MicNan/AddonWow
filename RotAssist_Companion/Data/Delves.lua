@@ -93,10 +93,24 @@ function D:Rows()
         rows[#rows + 1] = { text = L.SHARDS:format(shards.quantity or 0, shards.quantityEarnedThisWeek or 0,
                                                    shards.maxWeeklyQuantity or 0),
                             icon = shards.iconFileID, link = { currency = CURRENCY_SHARDS }, linkTitle = shards.name }
+        local maxW = shards.maxWeeklyQuantity or 0
+        if maxW > 0 then
+            local got = math.min(maxW, shards.quantityEarnedThisWeek or 0)
+            rows[#rows + 1] = { kind = "bar", min = 0, max = maxW, value = got, color = { 1, 0.75, 0.3 },
+                                label = L.SHARDS_WEEK:format(got, maxW),
+                                right = got >= maxW and L.SHARDS_DONE or L.SHARDS_LEFT:format(maxW - got) }
+        end
     end
     local cname, lvl, max = self:Companion()
     if cname then
-        rows[#rows + 1] = { text = L.COMPANION:format(cname, lvl, max), link = { search = cname }, linkTitle = cname }
+        if max and max > 0 then
+            rows[#rows + 1] = { kind = "bar", min = 0, max = max, value = lvl or 0, color = { 0.35, 0.85, 0.45 },
+                                label = L.COMPANION:format(cname, lvl or 0, max),
+                                tooltip = { cname, L.COMPANION:format(cname, lvl or 0, max) },
+                                link = { search = cname }, linkTitle = cname }
+        else
+            rows[#rows + 1] = { text = L.COMPANION:format(cname, lvl, max), link = { search = cname }, linkTitle = cname }
+        end
     end
 
     rows[#rows + 1] = { header = L.HDR_DELVES }
@@ -114,7 +128,7 @@ function D:Rows()
             }
         end
     end
-    if n == 0 then rows[#rows + 1] = { text = L.NO_DELVES, dim = true } end
+    if n == 0 then rows[#rows + 1] = { kind = "callout", style = "info", text = L.NO_DELVES } end
     return rows
 end
 

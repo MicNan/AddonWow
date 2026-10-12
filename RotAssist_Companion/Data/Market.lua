@@ -276,9 +276,9 @@ function M:Rows()
     if scanStatus then rows[#rows + 1] = { text = scanStatus, color = { 0.5, 0.85, 1 } } end
     local status = ns.Prices:SourceStatus()
     if status then
-        rows[#rows + 1] = { text = L.PRICE_SOURCES:format(status), dim = true }
+        rows[#rows + 1] = { kind = "note", text = L.PRICE_SOURCES:format(status) }
     else
-        rows[#rows + 1] = { text = L.PRICE_NONE, color = { 1, 0.6, 0.2 }, wrap = true }
+        rows[#rows + 1] = { kind = "callout", style = "warn", title = L.PRICE_NONE_TITLE, text = L.PRICE_NONE }
     end
 
     -- sessione di farm
@@ -298,7 +298,7 @@ function M:Rows()
         local ls = ns.db.lastSession
         rows[#rows + 1] = { text = L.FARM_LAST:format(ls.zone or "?", ls.minutes or 0, A.Money(ls.value or 0)), dim = true }
     else
-        rows[#rows + 1] = { text = L.FARM_HINT, dim = true, wrap = true }
+        rows[#rows + 1] = { kind = "callout", style = "info", text = L.FARM_HINT }
     end
 
     -- borse
@@ -316,7 +316,7 @@ function M:Rows()
                       e.reagent and L.TIP_REAGENT or nil }
         rows[#rows + 1] = ItemRow(e, A.Money(e.ahTotal), tip)
     end
-    if #auction == 0 then rows[#rows + 1] = { text = L.BAG_NONE, dim = true } end
+    if #auction == 0 then rows[#rows + 1] = { kind = "note", text = L.BAG_NONE } end
 
     rows[#rows + 1] = { header = L.HDR_BAG_VENDOR:format(#vendor, A.Money(vTotal)) }
     for i = 1, math.min(15, #vendor) do
@@ -328,14 +328,14 @@ function M:Rows()
         if e.noPrice then row.dim = true end
         rows[#rows + 1] = row
     end
-    if #vendor == 0 then rows[#rows + 1] = { text = L.BAG_NONE, dim = true } end
-    if loading > 0 then rows[#rows + 1] = { text = L.ITEMS_LOADING:format(loading), dim = true } end
+    if #vendor == 0 then rows[#rows + 1] = { kind = "note", text = L.BAG_NONE } end
+    if loading > 0 then rows[#rows + 1] = { kind = "note", text = L.ITEMS_LOADING:format(loading) } end
 
     -- da farmare
     rows[#rows + 1] = { header = L.HDR_FARM:format(L["PROFILE_" .. profile]) }
     local list, needScan = self:FarmSuggestions(profile)
     if needScan then
-        rows[#rows + 1] = { text = L.FARM_NEED_SCAN, color = { 1, 0.6, 0.2 }, wrap = true }
+        rows[#rows + 1] = { kind = "callout", style = "warn", text = L.FARM_NEED_SCAN }
     else
         for _, c in ipairs(list) do
             local who = c.gatherer and L["GATHER_" .. c.gatherer] or L.GATHER_ANY
@@ -350,12 +350,11 @@ function M:Rows()
             if c.usable == false then row.dim = true end
             rows[#rows + 1] = row
         end
-        if #list == 0 then rows[#rows + 1] = { text = L.FARM_EMPTY, dim = true, wrap = true } end
-        rows[#rows + 1] = { text = L["FARM_TIP_" .. profile], dim = true, wrap = true }
+        if #list == 0 then rows[#rows + 1] = { kind = "note", text = L.FARM_EMPTY } end
+        rows[#rows + 1] = { kind = "callout", style = "tip", text = L["FARM_TIP_" .. profile] }
     end
 
-    rows[#rows + 1] = { header = "" }
-    rows[#rows + 1] = { text = L.MARKET_DISCLAIMER, dim = true, wrap = true }
+    rows[#rows + 1] = { kind = "note", text = L.MARKET_DISCLAIMER }
     return rows
 end
 

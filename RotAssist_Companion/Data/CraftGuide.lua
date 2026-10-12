@@ -3,12 +3,10 @@
 -- minor tempo, fonti di conoscenza e specializzazioni (con quella consigliata
 -- per l'equipaggiamento del tuo personaggio).
 --
--- Testi scritti per questo addon, riassumendo (ottobre 2026, patch 12.1):
---  * wow-professions.com: guide "Leveling 1-100", "Recipes & Knowledge Points"
---    e "Specialization Guide & Best Builds" di ogni professione
---  * method.gg: "All profession knowledge point sources in Midnight"
--- La parte "cosa creare adesso e cosa comprare" non e' qui: la calcola
--- Data\Craft.lua dalle ricette che conosci (finestra della professione).
+-- Testi scritti per questo addon a partire da guide pubbliche sulle
+-- professioni di Midnight (ottobre 2026, patch 12.1). La parte "cosa creare
+-- adesso e cosa comprare" non e' qui: la calcola Data\Craft.lua dalle ricette
+-- che conosci (finestra della professione). Le build sono in CraftBuilds.lua.
 
 local _, ns = ...
 
@@ -200,13 +198,21 @@ G.it = {
         },
         tips = "Fonti settimanali: missione del trainer e drop durante la scuoiatura (con recupero se salti settimane).",
     },
+    -- fonti dei punti conoscenza: { fonte, punti, quando }
     knowledge = {
-        "Prime creazioni: ogni ricetta creata per la prima volta da' 1 punto conoscenza (filtro 'First Craft Bonus').",
-        "Tesori: 8 per professione, 3 punti ciascuno (24 in tutto).",
-        "Libro della reputazione: una delle quattro fazioni vende un libro da 10 punti (750 Voidlight Marl e 75 Artisan's Moxie), una sola volta.",
-        "Ogni settimana: ordini dei Patron (la fonte principale), missione del trainer (3 ordini = 2-3 punti; per Blacksmithing, Leatherworking e Jewelcrafting prima serve la catena 'Crafters Needed' di Captain Flaresworn), due oggetti dai tesori delle zone (circa 4 punti) e il Treatise di Inscription (1 punto, va chiesto con un ordine pubblico).",
-        "Ogni mese: missione della Darkmoon Faire (3 punti e 2 di abilita').",
-        "Enchanting: al posto della missione degli ordini, punti dal disincanto (circa 9 a settimana). Raccolta: drop settimanali con recupero automatico.",
+        { "Prime creazioni", "1 ciascuna", "una volta per ricetta" },
+        { "Tesori della professione", "3 x 8", "una volta" },
+        { "Libro della reputazione", "10", "una volta" },
+        { "Ordini dei Patron", "circa 12", "ogni settimana" },
+        { "Missione del trainer", "2-3", "ogni settimana" },
+        { "Oggetti dai tesori di zona", "circa 4", "ogni settimana" },
+        { "Treatise (Inscription)", "1", "ogni settimana" },
+        { "Darkmoon Faire", "3 (+2 abilita')", "ogni mese" },
+    },
+    knowledgeNotes = {
+        "Missione del trainer: per Blacksmithing, Leatherworking e Jewelcrafting prima serve la catena 'Crafters Needed' di Captain Flaresworn.",
+        "Treatise: e' legato al personaggio, quindi va chiesto con un ordine pubblico, oppure creato da un tuo personaggio con Inscription.",
+        "Enchanting: invece della missione degli ordini, punti dal disincanto (circa 9 a settimana). Herbalism e Mining: 1 punto per ogni nuovo tipo di nodo raccolto; per la raccolta i drop settimanali recuperano le settimane perse.",
         "Patch 12.1: Theremis, nel Bazaar di Silvermoon vicino al tavolo degli ordini, azzera una volta per professione i punti spesi.",
     },
 }
@@ -368,12 +374,19 @@ G.en = {
         tips = "Weekly sources: trainer quest and drops while skinning (with catch-up if you skip weeks).",
     },
     knowledge = {
-        "First crafts: every recipe crafted for the first time gives 1 knowledge point ('First Craft Bonus' filter).",
-        "Treasures: 8 per profession, 3 points each (24 in total).",
-        "Renown book: one of the four factions sells a 10-point book (750 Voidlight Marl and 75 Artisan's Moxie), once.",
-        "Every week: Patron orders (the main source), the trainer quest (3 orders = 2-3 points; Blacksmithing, Leatherworking and Jewelcrafting first need Captain Flaresworn's 'Crafters Needed' questline), two items from zone treasures (about 4 points) and the Inscription Treatise (1 point, request it with a public order).",
-        "Every month: the Darkmoon Faire quest (3 points and 2 skill).",
-        "Enchanting: instead of the orders quest, points from disenchanting (about 9 a week). Gathering: weekly drops with automatic catch-up.",
+        { "First crafts", "1 each", "once per recipe" },
+        { "Profession treasures", "3 x 8", "once" },
+        { "Renown book", "10", "once" },
+        { "Patron orders", "about 12", "every week" },
+        { "Trainer quest", "2-3", "every week" },
+        { "Zone treasure items", "about 4", "every week" },
+        { "Treatise (Inscription)", "1", "every week" },
+        { "Darkmoon Faire", "3 (+2 skill)", "every month" },
+    },
+    knowledgeNotes = {
+        "Trainer quest: Blacksmithing, Leatherworking and Jewelcrafting first need Captain Flaresworn's 'Crafters Needed' questline.",
+        "Treatise: it is soulbound, so request it with a public order, or craft it on one of your characters with Inscription.",
+        "Enchanting: instead of the orders quest, points from disenchanting (about 9 a week). Herbalism and Mining: 1 point for every new node type gathered; for gathering, weekly drops catch up on missed weeks.",
         "Patch 12.1: Theremis, in the Silvermoon Bazaar near the crafting order table, refunds your spent points once per profession.",
     },
 }
@@ -381,38 +394,41 @@ G.en = {
 ---------------------------------------------------------------------------
 -- Specializzazione consigliata per l'equipaggiamento del personaggio
 ---------------------------------------------------------------------------
--- Restituisce un elenco di righe (chiavi di localizzazione + argomenti).
+-- Restituisce le chiavi di localizzazione dei consigli e l'indice della build
+-- (CraftBuilds.lua) da mostrare per prima.
 function G:Advice(key, class, specID)
     local armor = self.ARMOR[class]
     local hunterRanged = class == "HUNTER" and specID ~= 255
     local melee = self.MELEE[class] or (class == "HUNTER" and specID == 255)
-    local out = {}
+    local out, build = {}, 1
     local function add(k) out[#out + 1] = k end
     if key == "leatherworking" then
         if armor == "mail" then add("ADV_LW_MAIL")
         elseif armor == "leather" then add("ADV_LW_LEATHER")
-        else add("ADV_LW_OTHER") end
+        else add("ADV_LW_OTHER"); build = 3 end
     elseif key == "blacksmithing" then
         if melee then add("ADV_BS_WEAPON") end
-        if armor == "plate" then add("ADV_BS_PLATE") end
-        if #out == 0 then add("ADV_BS_OTHER") end
+        if armor == "plate" then add("ADV_BS_PLATE"); if not melee then build = 2 end end
+        if #out == 0 then add("ADV_BS_OTHER"); build = 3 end
     elseif key == "tailoring" then
-        if armor == "cloth" then add("ADV_TAILOR_CLOTH") end
+        if armor == "cloth" then add("ADV_TAILOR_CLOTH"); build = 4 end
         add("ADV_TAILOR_CLOAK")
     elseif key == "jewelcrafting" then
-        add("ADV_JC")
+        add("ADV_JC"); build = 2
     elseif key == "engineering" then
         add(hunterRanged and "ADV_ENG_GUN" or "ADV_ENG")
     elseif key == "inscription" then
         if hunterRanged then add("ADV_INSC_BOW")
         elseif self.STAFF[class] then add("ADV_INSC_STAFF")
-        else add("ADV_INSC_OTHER") end
+        else add("ADV_INSC_OTHER"); build = 2 end
     elseif key == "alchemy" then
-        add("ADV_ALCH")
+        add("ADV_ALCH"); build = 2
     elseif key == "enchanting" then
         add("ADV_ENCH")
+    elseif key == "herbalism" then
+        build = (class == "DRUID") and 1 or 2
     end
-    return out
+    return out, build
 end
 
 function G:Text(key)

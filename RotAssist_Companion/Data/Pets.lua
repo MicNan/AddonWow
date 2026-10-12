@@ -319,15 +319,6 @@ function Pets:Passes(pet)
     return true
 end
 
-function Pets:CycleFilter()
-    local nextKey = FILTERS[1]
-    for i, key in ipairs(FILTERS) do
-        if key == self.filter then nextKey = FILTERS[i % #FILTERS + 1] end
-    end
-    self.filter = nextKey
-    if ns.Panel then ns.Panel:Refresh() end
-end
-
 ---------------------------------------------------------------------------
 -- Righe della scheda
 ---------------------------------------------------------------------------
@@ -371,26 +362,39 @@ function Pets:Rows()
     local rows = {}
     local function add(r) rows[#rows + 1] = r end
 
+    -- filtro
+    local items = {}
+    for _, key in ipairs(FILTERS) do
+        items[#items + 1] = { label = L["PET_FILTER_" .. key], selected = key == self.filter,
+                              onClick = function() Pets.filter = key end }
+    end
+    add({ kind = "pills", items = items })
+
     -- il tuo cacciatore
     add({ header = L.HDR_PET_YOU })
     if not self:IsHunter() then
-        add({ text = L.PET_NOT_HUNTER, dim = true, wrap = true })
+        add({ kind = "callout", style = "info", text = L.PET_NOT_HUNTER })
     elseif not self:IsBeastMastery() then
-        add({ text = L.PET_NOT_BM, color = { 1, 0.82, 0 }, wrap = true })
+        add({ kind = "callout", style = "warn", text = L.PET_NOT_BM })
     end
     local owned = 0
     for _ in pairs(ns.db.ownedPets or {}) do owned = owned + 1 end
-    add({ text = owned > 0 and L.PET_OWNED_COUNT:format(owned) or L.PET_OWNED_UNKNOWN, dim = owned == 0, wrap = true })
+    if owned > 0 then
+        add({ kind = "step", badge = tostring(owned), badgeColor = { 0.4, 0.9, 0.4 }, text = L.PET_OWNED_COUNT_SHORT })
+    else
+        add({ kind = "callout", style = "info", text = L.PET_OWNED_UNKNOWN })
+    end
 
-    -- quale pet usare
+    -- quale pet usare: contenuto -> famiglia consigliata (dettagli nel tooltip)
     add({ header = L.HDR_PET_ADVICE })
+    local widths = { 0.34, 0.66 }
+    add({ kind = "thead", widths = widths, cols = { L.PET_COL_CONTENT, L.PET_COL_PICK } })
     for _, adv in ipairs(ns.PetsData.advice) do
-        add({ text = L[adv.key], wrap = true, tooltip = { L[adv.key], L.PET_SOURCE_ICY },
+        add({ kind = "tr", widths = widths, cols = { L[adv.key .. "_L"], L[adv.key .. "_P"] },
+              colors = { { 1, 0.82, 0 } }, tooltip = { L[adv.key .. "_L"], L[adv.key], L.PET_SOURCE_ICY },
               link = adv.search and { search = adv.search } or nil, linkTitle = adv.search })
     end
-    add({ text = L.PET_FLORAFAUN_INFO, wrap = true, color = { 0.6, 1, 0.6 },
-          tooltip = { ns.PetsData.tome, L.PET_FLORAFAUN_INFO, L.PET_SOURCE_METHOD },
-          link = { search = ns.PetsData.tome }, linkTitle = ns.PetsData.tome })
+    add({ kind = "callout", style = "tip", title = L.PET_FLORAFAUN_TITLE, text = L.PET_FLORAFAUN_INFO })
 
     -- pet per zona (prima la zona in cui ti trovi)
     local order, hereZone = {}, PlayerZone()
@@ -427,22 +431,20 @@ function Pets:Rows()
     end
     if #continents > 0 then
         add({ header = L.HDR_PET_SPIRIT })
-        add({ text = L.PET_SPIRIT_INFO, wrap = true, color = { 0.6, 0.85, 1 },
-              tooltip = { L.HDR_PET_SPIRIT, L.PET_SPIRIT_INFO }, link = { search = "Spirit Beast" },
-              linkTitle = "Spirit Beast" })
+        add({ kind = "callout", style = "info", text = L.PET_SPIRIT_INFO })
         table.sort(continents)
         for _, continent in ipairs(continents) do
-            add({ header = L.HDR_PET_SPIRIT_IN:format(continent, #groups[continent]) })
+            add({ kind = "sub", text = L.HDR_PET_SPIRIT_IN:format(continent, #groups[continent]) })
             for _, pet in ipairs(groups[continent]) do
                 add(self:PetRow(pet, A.ZoneName(pet.map)))
                 shown = shown + 1
             end
         end
     end
-    if shown == 0 then add({ text = L.PET_NONE_FILTER, dim = true }) end
+    if shown == 0 then add({ kind = "callout", style = "info", text = L.PET_NONE_FILTER }) end
 
     add({ header = L.HDR_PET_NOTES })
-    add({ text = L.PET_RARE_NOTE, dim = true, wrap = true })
-    add({ text = L.PET_SOURCES, dim = true, wrap = true })
+    add({ kind = "note", text = L.PET_RARE_NOTE })
+    add({ kind = "note", text = L.PET_SOURCES })
     return rows
 end
