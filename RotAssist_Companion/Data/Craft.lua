@@ -25,6 +25,9 @@ local TRIVIAL = 3                      -- Enum.TradeskillRelativeDifficulty: 0 a
 local CHANCE = { [0] = 1, [1] = 0.5, [2] = 0.15 }   -- probabilita' stimata di un punto
 local PLAN_POINTS = 10                 -- la lista della spesa copre i prossimi 10 punti
 local MAX_BEST, MAX_FIRST = 5, 8       -- righe mostrate
+local MAX_SELL = 10                    -- righe della sezione "per l'oro"
+local AH_CUT = 0.95                    -- commissione della casa d'aste: 5%
+local THIN_MARKET = 5                  -- meno pezzi in vendita: mercato piccolo
 
 ---------------------------------------------------------------------------
 -- Lettura delle ricette (finestra della professione aperta)
@@ -42,7 +45,17 @@ local function BasicSlot(slot)
     return slot.reagentType == basic
 end
 
--- Ricetta utile: imparata e che da' ancora punti o la prima creazione.
+-- Rango di qualita' atteso con i materiali base (stima del gioco), 1 se non noto
+local function ExpectedRank(recipeID)
+    local T = C_TradeSkillUI
+    if not T.GetCraftingOperationInfo then return 1 end
+    local op = A.Call(T.GetCraftingOperationInfo, recipeID, {}, nil, false)
+    local q = type(op) == "table" and tonumber(op.craftingQuality)
+    return (q and q >= 1) and math.floor(q) or 1
+end
+
+-- Ricetta imparata: punti per salire, prima creazione e cosa produce
+-- (le grigie servono solo al calcolo dei guadagni).
 function C:ReadRecipe(recipeID, childID)
     local T = C_TradeSkillUI
     if T.IsRecipeInSkillLine then
@@ -54,15 +67,21 @@ function C:ReadRecipe(recipeID, childID)
     if type(info) ~= "table" or not info.learned then return nil end
     if info.isRecraft or info.isSalvageRecipe or info.isGatheringRecipe or info.isDummyRecipe then return nil end
     local diff = tonumber(info.relativeDifficulty) or TRIVIAL
-    if diff >= TRIVIAL and not info.firstCraft then return nil end
     local r = {
         id = recipeID, name = info.name or ("#" .. recipeID), icon = info.icon,
         diff = diff, ups = math.max(1, tonumber(info.numSkillUps) or 1),
         first = info.firstCraft and true or false, reagents = {},
     }
+    -- oggetti prodotti per rango di qualita' (se la ricetta ha i ranghi)
+    if info.supportsQualities and type(info.qualityItemIDs) == "table" and #info.qualityItemIDs > 1 then
+        r.outs, r.rank = {}, ExpectedRank(recipeID)
+        for _, id in ipairs(info.qualityItemIDs) do r.outs[#r.outs + 1] = A.Plain(id) end
+    end
     local sch = A.Call(T.GetRecipeSchematic, recipeID, false)
     if type(sch) == "table" then
-        r.out = sch.outputItemID
+        r.out = A.Plain(sch.outputItemID)
+        local qMin, qMax = tonumber(sch.quantityMin) or 1, tonumber(sch.quantityMax) or 1
+        r.qty = math.max(1, (qMin + math.max(qMin, qMax)) / 2)
         if type(sch.reagentSlotSchematics) == "table" then
             for _, slot in ipairs(sch.reagentSlotSchematics) do
                 if BasicSlot(slot) then
@@ -111,7 +130,7 @@ function C:Scan()
         level = tonumber(child.skillLevel), max = tonumber(child.maxSkillLevel),
         time = time(), recipes = recipes,
     }
-    ns:Log(("[prof] %s %s/%s: %d ricette utili"):format(tostring(child.professionName),
+    ns:Log(("[prof] %s %s/%s: %d ricette imparate"):format(tostring(child.professionName),
         tostring(child.skillLevel), tostring(child.maxSkillLevel), #recipes))
     if ns.Panel then ns.Panel:RequestRefresh() end
 end
@@ -208,6 +227,37 @@ function C:Plan(baseID)
              shopping = shopping, total = total, unknown = unknown }
 end
 
+-- Cosa conviene creare per venderlo: per ogni ricetta imparata che produce un
+-- oggetto con prezzo d'asta, il guadagno a creazione = prezzo (al netto della
+-- commissione) x pezzi prodotti - materiali ai prezzi d'asta.
+-- Gli oggetti vincolati non sono all'asta e restano fuori da soli.
+function C:Profits(baseID)
+    local scan = ns.db.craft and ns.db.craft[baseID]
+    if not scan then return nil end
+    local cache, list, noPrice = {}, {}, 0
+    for _, r in ipairs(scan.recipes) do
+        local out = (r.outs and r.outs[math.min(r.rank or 1, #r.outs)]) or r.out
+        if out and #r.reagents > 0 then
+            local price, _, _, listed = ns.Prices:Get(out)
+            if price then
+                -- materiali senza prezzo d'asta (di solito dal venditore): costo parziale
+                local cost, partial = 0, false
+                for _, slot in ipairs(r.reagents) do
+                    local _, p = SlotInfo(slot, cache)
+                    if p then cost = cost + p * slot.qty else partial = true end
+                end
+                local income = price * AH_CUT * (r.qty or 1)
+                list[#list + 1] = { recipe = r, item = out, price = price, listed = listed, cost = cost,
+                                    partial = partial, income = income, profit = income - cost }
+            else
+                noPrice = noPrice + 1
+            end
+        end
+    end
+    table.sort(list, function(a, b) return a.profit > b.profit end)
+    return { scan = scan, list = list, noPrice = noPrice }
+end
+
 ---------------------------------------------------------------------------
 -- Righe della scheda
 ---------------------------------------------------------------------------
@@ -217,7 +267,7 @@ local function ItemName(itemID)
 end
 
 local DIFF_COLOR = { [0] = { 1, 0.5, 0.25 }, [1] = { 1, 1, 0 }, [2] = { 0.25, 0.75, 0.25 }, [3] = { 0.6, 0.6, 0.6 } }
-local SECTIONS = { "level", "make", "specs", "knowledge" }
+local SECTIONS = { "level", "make", "sell", "specs", "knowledge" }
 -- tonalita' delle fasi nella barra dei livelli (dalla prima all'ultima)
 local PHASE_COLORS = { { 0.55, 0.75, 1 }, { 0.4, 0.62, 0.95 }, { 0.3, 0.5, 0.85 }, { 0.22, 0.4, 0.75 }, { 0.16, 0.32, 0.65 } }
 
@@ -404,6 +454,63 @@ function C:MakeRows(rows, p)
 end
 
 ---------------------------------------------------------------------------
+-- Sezione: cosa creare per l'oro
+---------------------------------------------------------------------------
+function C:SellRows(rows, p)
+    local L = ns.L
+    local res = self:Profits(p.skillLine)
+    if not res then
+        rows[#rows + 1] = { kind = "callout", style = "info", title = L.CRAFT_OPEN_TITLE, text = L.CRAFT_OPEN }
+        return
+    end
+    if not HasPrices() then
+        rows[#rows + 1] = { kind = "callout", style = "info", title = L.CRAFT_NEED_PRICES_TITLE, text = L.CRAFT_NEED_PRICES }
+        return
+    end
+    local list = res.list
+    local best = list[1]
+    if best and best.profit > 0 then
+        rows[#rows + 1] = { kind = "callout", style = "tip", title = L.CRAFT_SELL_TOP_TITLE,
+                            text = L.CRAFT_SELL_TOP:format(ItemName(best.item), A.Money(best.profit) .. (best.partial and "*" or ""), best.listed or 0) }
+        if best.listed and best.listed < THIN_MARKET then
+            rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_SELL_THIN }
+        end
+    elseif #list > 0 then
+        rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_SELL_NONE }
+    else
+        rows[#rows + 1] = { kind = "callout", style = "info", text = L.CRAFT_SELL_EMPTY }
+    end
+
+    if #list > 0 then
+        local widths, align = { 0.44, 0.2, 0.18, 0.18 }, { "LEFT", "RIGHT", "RIGHT", "RIGHT" }
+        rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
+                            cols = { L.MKT_COL_ITEM, L.CRAFT_COL_PROFIT, L.MKT_COL_PRICE, L.MKT_COL_LISTED } }
+        local cache = {}
+        for i = 1, math.min(MAX_SELL, #list) do
+            local e = list[i]
+            local name = ItemName(e.item)
+            local r = e.recipe
+            local tip = { name, L.CRAFT_SELL_TIP_PRICE:format(A.Money(e.price), r.qty or 1, A.Money(e.income)) }
+            if r.outs then tip[#tip + 1] = L.CRAFT_SELL_TIP_RANK:format(math.min(r.rank or 1, #r.outs), #r.outs) end
+            for _, l in ipairs(ReagentLines(r, cache)) do tip[#tip + 1] = l end
+            tip[#tip + 1] = L.CRAFT_COST:format(A.Money(e.cost)) .. (e.partial and (" " .. L.CRAFT_SELL_PARTIAL) or "")
+            local profit = (e.profit < 0 and "-" or "") .. A.Money(math.abs(e.profit)) .. (e.partial and "*" or "")
+            rows[#rows + 1] = {
+                kind = "tr", icon = r.icon, widths = widths, align = align,
+                cols = { name, profit, A.Money(e.price), tostring(e.listed or "-") },
+                colors = { nil, e.profit > 0 and (e.partial and { 1, 0.82, 0 } or { 0.4, 1, 0.4 }) or { 1, 0.4, 0.3 }, nil,
+                           (e.listed and e.listed < THIN_MARKET) and { 1, 0.6, 0.2 } or nil },
+                tooltip = tip, link = { item = e.item }, linkTitle = name,
+            }
+        end
+        if #list > MAX_SELL then rows[#rows + 1] = { kind = "note", text = L.CRAFT_MORE:format(#list - MAX_SELL) } end
+    end
+    if res.noPrice > 0 then rows[#rows + 1] = { kind = "note", text = L.CRAFT_SELL_NOPRICE:format(res.noPrice) } end
+    rows[#rows + 1] = { kind = "note", text = L.CRAFT_SELL_HOW }
+    rows[#rows + 1] = { kind = "note", text = L.CRAFT_SCAN_AGE:format(A.TimeText(math.max(60, time() - (res.scan.time or time())))) }
+end
+
+---------------------------------------------------------------------------
 -- Sezione: specializzazioni e build
 ---------------------------------------------------------------------------
 function C:SpecRows(rows, p, guide)
@@ -539,7 +646,7 @@ function C:Rows()
     -- Cucina e Pesca senza specializzazioni e conoscenza
     local G = ns.CraftGuide
     local function Allowed(s)
-        if s == "make" then return not G.NO_MAKE[p.skillLine] end
+        if s == "make" or s == "sell" then return not G.NO_MAKE[p.skillLine] end
         if s == "specs" or s == "knowledge" then return not G.SECONDARY[p.skillLine] end
         return true
     end
@@ -569,6 +676,8 @@ function C:Rows()
         self:LevelRows(rows, p, guide, level, max)
     elseif section == "make" then
         self:MakeRows(rows, p)
+    elseif section == "sell" then
+        self:SellRows(rows, p)
     elseif section == "specs" then
         self:SpecRows(rows, p, guide)
     else

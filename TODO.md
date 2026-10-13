@@ -58,6 +58,9 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
       Engineering (fucili).
 - [x] **Cucina e Pesca** nella scheda Professioni: livellamento (Pesca fino a 300), cosa
       cucinare o pescare, attrezzatura; Cucina anche con il calcolo delle ricette.
+- [x] **Cosa creare per l'oro** (Professioni > Per l'oro, 0.10.0): guadagno a creazione per ogni
+      ricetta che conosci, dai prezzi della scansione d'asta (o Auctionator, TSM), con il rango di
+      qualità atteso e l'avviso per i mercati piccoli. Da verificare in gioco.
 
 ## 4. RotAssist per altre classi
 

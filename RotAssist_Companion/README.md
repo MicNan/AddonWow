@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.9.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.10.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -14,7 +14,7 @@ confermate in gioco (vedi "Da verificare in gioco").
 | **Oggi** | **Riepilogo** (cosa fare adesso per ogni obiettivo, eventi e festività, world quest in scadenza con la ricompensa, Traveler's Log e reset) e attività consigliate per **obiettivo** (equipaggiamento, Great Vault, reputazione, oro): world quest confrontate con il tuo equipaggiamento e con la priorità delle statistiche, slot della Vault, fazioni più vicine al prossimo Renown | `C_TaskQuest`, ricompense delle missioni, `C_Calendar`, `C_AreaPoiInfo.GetEventsForMap`, `C_Item.GetItemStats`, `C_WeeklyRewards`, `C_PerksActivities`, `C_MajorFactions`, `C_ClassTalents` |
 | **Delve** | Restored Coffer Key, Coffer Key Shards della settimana, livello del compagno; tabella delle delve attive su tutte le mappe, con le **abbondanti** in cima (filtro in cima: tutte o solo abbondanti) | `C_AreaPoiInfo.GetDelvesForMap`, `C_CurrencyInfo`, `C_DelvesUI`, `C_GossipInfo` |
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, tabelle della zona attuale e delle zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
-| **Professioni** | per ogni tua professione: Concentrazione e punti conoscenza da spendere, la fase della guida 1-100 in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
+| **Professioni** | per ogni tua professione: Concentrazione e punti conoscenza da spendere, la fase della guida in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa creare per l'oro (guadagno a creazione con i prezzi d'asta), cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
 | **Oro** | tre sezioni con il **profilo** di gioco (occasionale, medio, assiduo) in cima: **Strategie** per le tue professioni, **Borse e prezzi** (cosa mettere all'asta e cosa vendere al vendor), **Da farmare** (materiali di Midnight per il tuo profilo e sessione di farm con oro all'ora reale) | `GetProfessions`, `C_AuctionHouse.ReplicateItems`, `C_Container`, `C_Item` |
 | **Pet** | pet da cacciatore rari e notevoli di Midnight per zona e spirit beast di tutte le espansioni, con anteprima 3D, requisiti (esotico, Florafaun), istruzioni per domarli, percorso con i portali e avviso quando uno compare sulla minimappa; consigli su quale famiglia usare | elenco curato (`Data/PetsData.lua`), `PlayerModel:SetCreature`, `C_StableInfo`, `C_VignetteInfo` |
 
@@ -283,6 +283,22 @@ Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno 
   banca della brigata) e il costo. Per i materiali con più qualità conta tutte quelle che hai e
   propone la più economica.
 
+**Per l'oro** (professioni di creazione e Cucina)
+- Per ogni ricetta che conosci e che produce un oggetto in vendita all'asta: **guadagno a
+  creazione** = prezzo d'asta più basso, meno la commissione del 5%, per i pezzi prodotti, meno i
+  materiali ai prezzi d'asta (anche quelli che hai già, perché l'alternativa è venderli).
+- In cima la ricetta che **conviene di più**, con un avviso se ce ne sono pochi in vendita
+  (mercato piccolo). La tabella mostra guadagno, prezzo e quantità in vendita; il tooltip i
+  materiali e il costo.
+- Per le ricette con ranghi di qualità usa il rango che il gioco calcola con i materiali base.
+- I materiali che si comprano dal venditore non hanno prezzo d'asta: il guadagno è segnato con
+  `*` perché il loro costo manca.
+- L'equipaggiamento vincolato non è all'asta e resta fuori: per quello contano gli ordini di
+  lavoro.
+- Servono la finestra della professione aperta almeno una volta e una scansione dei prezzi (o
+  Auctionator, TSM). Multicraft, Resourcefulness e Concentrazione non sono nel calcolo: possono
+  solo alzare il guadagno.
+
 **Specializzazioni**
 - Il **consiglio per il tuo personaggio**, in base a classe (tipo di armatura) e specializzazione:
 
@@ -492,7 +508,10 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
 12. **Talento eroico:** riconosciuto per ID (Enhancement) o per nome inglese (Blood, Subtlety,
     Shadow). Con il client in italiano i nomi potrebbero essere tradotti: in quel caso compare
     il selettore. Gli ID dei talenti eroici delle altre classi vanno letti in gioco.
-13. **Cucina e Pesca:** ID delle professioni di Midnight (Cucina 2908, Pesca 2911), livello
+13. **Guadagno per ricetta:** campi `supportsQualities` e `qualityItemIDs` di `GetRecipeInfo`,
+    rango atteso da `C_TradeSkillUI.GetCraftingOperationInfo` (senza materiali scelti) e
+    quantità prodotta (`quantityMin`, `quantityMax` dello schema).
+14. **Cucina e Pesca:** ID delle professioni di Midnight (Cucina 2908, Pesca 2911), livello
     massimo della Pesca (300) e lettura delle ricette di Cucina con la finestra aperta.
 
 ## Installazione

@@ -267,11 +267,18 @@ Dump("craft")                                         -- prima della lettura: in
 MOCK.bank = { [1004] = 3 }                            -- 3 Mycobloom in banca
 MOCK.fire("TRADE_SKILL_SHOW")
 local scan = C.db.craft and C.db.craft[171]
-print("ricette lette:", scan and #scan.recipes, "(attese 3: arancione, gialla prima creazione, arancione prima creazione)")
+print("ricette lette:", scan and #scan.recipes, "(attese 5: le 3 per salire, una grigia e una grigia vendibile)")
 Dump("craft")
-for _, sec in ipairs({ "level", "specs", "knowledge" }) do
+for _, sec in ipairs({ "level", "sell", "specs", "knowledge" }) do
     ClickPill(C.L["CRAFT_SEC_" .. sec])
     Dump("craft")
+end
+do
+    local res = C.Craft:Profits(171)
+    for _, e in ipairs(res.list) do
+        print("   guadagno", e.recipe.name, "oggetto", e.item, "prezzo", e.price, "costo", e.cost, "guadagno", e.profit, "parziale", e.partial)
+    end
+    print("   senza prezzo d'asta:", res.noPrice)
 end
 ClickPill(C.L.CRAFT_SEC_specs)
 ClickPill("Transmutes")                               -- un'altra build dal selettore
