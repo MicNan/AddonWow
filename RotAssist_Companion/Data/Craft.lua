@@ -9,6 +9,7 @@
 --  * la specializzazione consigliata per l'equipaggiamento del personaggio e
 --    le build delle specializzazioni, fase per fase (CraftBuilds.lua);
 --  * le fonti dei punti conoscenza.
+-- Sezione "Ordini": ordini di lavoro letti al tavolo degli ordini (Orders.lua).
 -- Cucina e Pesca (secondarie) hanno solo la guida e, per la Cucina, il
 -- calcolo delle ricette: niente specializzazioni ne' conoscenza.
 -- Selettori in alto: professione e sezione (livellamento, cosa creare,
@@ -304,7 +305,7 @@ local function ItemName(itemID)
 end
 
 local DIFF_COLOR = { [0] = { 1, 0.5, 0.25 }, [1] = { 1, 1, 0 }, [2] = { 0.25, 0.75, 0.25 }, [3] = { 0.6, 0.6, 0.6 } }
-local SECTIONS = { "level", "make", "sell", "specs", "knowledge" }
+local SECTIONS = { "level", "make", "sell", "orders", "specs", "knowledge" }
 -- tonalita' delle fasi nella barra dei livelli (dalla prima all'ultima)
 local PHASE_COLORS = { { 0.55, 0.75, 1 }, { 0.4, 0.62, 0.95 }, { 0.3, 0.5, 0.85 }, { 0.22, 0.4, 0.75 }, { 0.16, 0.32, 0.65 } }
 
@@ -728,6 +729,7 @@ function C:Rows()
     local G = ns.CraftGuide
     local function Allowed(s)
         if s == "make" or s == "sell" then return not G.NO_MAKE[p.skillLine] end
+        if s == "orders" then return not (G.NO_MAKE[p.skillLine] or G.SECONDARY[p.skillLine]) end
         if s == "specs" or s == "knowledge" then return not G.SECONDARY[p.skillLine] end
         return true
     end
@@ -759,6 +761,8 @@ function C:Rows()
         self:MakeRows(rows, p)
     elseif section == "sell" then
         self:SellRows(rows, p)
+    elseif section == "orders" then
+        ns.Orders:Rows(rows, p)
     elseif section == "specs" then
         self:SpecRows(rows, p, guide)
     else

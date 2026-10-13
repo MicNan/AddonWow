@@ -284,6 +284,13 @@ do
     end
     print("   ricette da imparare lette:", #C.db.craft[171].locked)
 end
+-- ordini di lavoro: prima del tavolo, poi letti al tavolo
+ClickPill(C.L.CRAFT_SEC_orders)
+Dump("craft")
+MOCK.fire("CRAFTINGORDERS_SHOW_CRAFTER")
+MOCK.fire("CRAFTINGORDERS_HIDE_CRAFTER")
+print("ordini salvati:", C.db.orders and C.db.orders[171] and #C.db.orders[171].list)
+Dump("craft")
 -- liquidita': seconda scansione un giorno dopo, con meno pezzi in vendita
 do
     local db = C.Prices:DB()

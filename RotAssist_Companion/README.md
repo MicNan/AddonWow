@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.11.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.12.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -14,7 +14,7 @@ confermate in gioco (vedi "Da verificare in gioco").
 | **Oggi** | **Riepilogo** (cosa fare adesso per ogni obiettivo, eventi e festività, world quest in scadenza con la ricompensa, Traveler's Log e reset) e attività consigliate per **obiettivo** (equipaggiamento, Great Vault, reputazione, oro): world quest confrontate con il tuo equipaggiamento e con la priorità delle statistiche, slot della Vault, fazioni più vicine al prossimo Renown | `C_TaskQuest`, ricompense delle missioni, `C_Calendar`, `C_AreaPoiInfo.GetEventsForMap`, `C_Item.GetItemStats`, `C_WeeklyRewards`, `C_PerksActivities`, `C_MajorFactions`, `C_ClassTalents` |
 | **Delve** | Restored Coffer Key, Coffer Key Shards della settimana, livello del compagno; tabella delle delve attive su tutte le mappe, con le **abbondanti** in cima (filtro in cima: tutte o solo abbondanti) | `C_AreaPoiInfo.GetDelvesForMap`, `C_CurrencyInfo`, `C_DelvesUI`, `C_GossipInfo` |
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, tabelle della zona attuale e delle zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
-| **Professioni** | per ogni tua professione: Concentrazione e punti conoscenza da spendere, la fase della guida in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa creare per l'oro (guadagno a creazione e liquidità, anche delle ricette da imparare), cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
+| **Professioni** | per ogni tua professione: Concentrazione e punti conoscenza da spendere, la fase della guida in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa creare per l'oro (guadagno a creazione e liquidità, anche delle ricette da imparare), ordini di lavoro con il guadagno netto, cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
 | **Oro** | tre sezioni con il **profilo** di gioco (occasionale, medio, assiduo) in cima: **Strategie** per le tue professioni, **Borse e prezzi** (cosa mettere all'asta e cosa vendere al vendor), **Da farmare** (materiali di Midnight per il tuo profilo e sessione di farm con oro all'ora reale) | `GetProfessions`, `C_AuctionHouse.ReplicateItems`, `C_Container`, `C_Item` |
 | **Pet** | pet da cacciatore rari e notevoli di Midnight per zona e spirit beast di tutte le espansioni, con anteprima 3D, requisiti (esotico, Florafaun), istruzioni per domarli, percorso con i portali e avviso quando uno compare sulla minimappa; consigli su quale famiglia usare | elenco curato (`Data/PetsData.lua`), `PlayerModel:SetCreature`, `C_StableInfo`, `C_VignetteInfo` |
 
@@ -315,6 +315,20 @@ Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno 
   Auctionator, TSM). Multicraft, Resourcefulness e Concentrazione non sono nel calcolo: possono
   solo alzare il guadagno.
 
+**Ordini** (professioni di creazione)
+- Il gioco manda gli ordini di lavoro solo al **tavolo degli ordini**: quando lo apri e sfogli
+  le schede, l'addon legge gli ordini che la finestra di Blizzard ha già caricato (senza
+  richieste proprie al server) e li salva.
+- Per ogni ordine il **guadagno netto**: commissione meno la quota del Consorzio, meno i
+  materiali che metti tu ai prezzi d'asta (quelli forniti dal cliente non contano), più le
+  ricompense dei Patron vendibili all'asta.
+- Lo **stato**: puoi farlo, ricetta da imparare, qualità richiesta più alta del rango che
+  otterresti. In cima l'ordine migliore che puoi fare.
+- Il tooltip mostra commissione, materiali con il costo, ricompense (anche valute e punti
+  conoscenza), qualità minima, scadenza e cliente. Gli ordini scaduti spariscono.
+- Gli ordini pubblici di altri giocatori sono rari: di solito si vedono soprattutto quelli dei
+  Patron.
+
 **Specializzazioni**
 - Il **consiglio per il tuo personaggio**, in base a classe (tipo di armatura) e specializzazione:
 
@@ -529,7 +543,9 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
     quantità prodotta (`quantityMin`, `quantityMax` dello schema). Ricette non imparate in
     `GetAllRecipeIDs` e testo della fonte (`C_TradeSkillUI.GetRecipeSourceText`). Liquidità:
     fonti TSM `dbregionsoldperday` e `dbregionsalerate`, stima dalle scansioni da confrontare
-    con le vendite reali.
+    con le vendite reali. Ordini: eventi `CRAFTINGORDERS_SHOW_CRAFTER` e
+    `CRAFTINGORDERS_HIDE_CRAFTER`, campi di `C_CraftingOrders.GetCrafterOrders` (materiali del
+    cliente, `npcOrderRewards`, `consortiumCut`).
 14. **Cucina e Pesca:** ID delle professioni di Midnight (Cucina 2908, Pesca 2911), livello
     massimo della Pesca (300) e lettura delle ricette di Cucina con la finestra aperta.
 

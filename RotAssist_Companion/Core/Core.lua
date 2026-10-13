@@ -36,6 +36,10 @@ end
 -- conosciute per la guida (scheda Professioni)
 ns:On("TRADE_SKILL_SHOW", function() ns.Gold:OnTradeSkillShow(); ns.Craft:RequestScan(); ns.Panel:RequestRefresh() end)
 ns:On("TRADE_SKILL_LIST_UPDATE", function() ns.Craft:RequestScan() end)
+-- tavolo degli ordini di lavoro: si leggono gli ordini caricati dalla finestra
+ns:On("CRAFTINGORDERS_SHOW_CRAFTER", function() ns.Orders:OnShow() end)
+ns:On("CRAFTINGORDERS_HIDE_CRAFTER", function() ns.Orders:OnHide() end)
+ns:On("TRADE_SKILL_CLOSE", function() if ns.Orders.open then ns.Orders:OnHide() end end)
 
 -- casa d'aste: pulsante di scansione e dati della scansione completa
 ns:On("AUCTION_HOUSE_SHOW", function() ns.Prices:OnAuctionHouseShow() end)

@@ -365,6 +365,22 @@ MOCK.recipes = {
 }
 C_TradeSkillUI.GetCraftingOperationInfo = function(id) return { craftingQuality = 2 } end
 C_TradeSkillUI.GetRecipeSourceText = function(id) return MOCK.recipes[id] and MOCK.recipes[id].source end
+-- ordini di lavoro (tavolo degli ordini): Patron con ricompensa, pubblico con materiali forniti,
+-- uno per una ricetta da imparare e uno scaduto
+MOCK.orders = {
+    { spellID = 7001, orderType = 3, tipAmount = 300000, consortiumCut = 0, minQuality = 0,
+      expirationTime = 9e9, reagents = {},
+      npcOrderRewards = { { itemLink = "|cffffffff|Hitem:1002::|h[Voidsteel Ore]|h|r", count = 10 },
+                          { currencyType = 3200, count = 2 } } },
+    { spellID = 7003, orderType = 0, tipAmount = 1500000, consortiumCut = 150000, minQuality = 1,
+      expirationTime = 9e9, customerName = "Aerith",
+      reagents = { { reagentInfo = { reagent = { itemID = 1001 }, quantity = 5 }, source = 1 } } },
+    { spellID = 7005, orderType = 0, tipAmount = 2000000, consortiumCut = 200000, minQuality = 0,
+      expirationTime = 9e9, reagents = {} },
+    { spellID = 7002, orderType = 2, tipAmount = 100000, consortiumCut = 10000, minQuality = 0,
+      expirationTime = 1, reagents = {} },
+}
+C_CraftingOrders = { GetCrafterOrders = function() return MOCK.orders end }
 C_TradeSkillUI.GetAllRecipeIDs = function()
     local t = {}
     for id in pairs(MOCK.recipes) do t[#t + 1] = id end

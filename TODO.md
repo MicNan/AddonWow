@@ -64,6 +64,8 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
 - [x] **Ricette da imparare e liquidità** (0.11.0): guadagno delle ricette non ancora imparate
       con la fonte del gioco per impararle; liquidità alta/media/bassa da TSM o dalle
       scansioni, anche nel tooltip. Da verificare in gioco.
+- [x] **Ordini di lavoro** (0.12.0): ordini letti al tavolo degli ordini (soprattutto Patron),
+      con guadagno netto, ricompense e stato. Da verificare in gioco.
 
 ## 4. RotAssist per altre classi
 
