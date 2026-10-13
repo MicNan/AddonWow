@@ -61,6 +61,9 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
 - [x] **Cosa creare per l'oro** (Professioni > Per l'oro, 0.10.0): guadagno a creazione per ogni
       ricetta che conosci, dai prezzi della scansione d'asta (o Auctionator, TSM), con il rango di
       qualità atteso e l'avviso per i mercati piccoli. Da verificare in gioco.
+- [x] **Ricette da imparare e liquidità** (0.11.0): guadagno delle ricette non ancora imparate
+      con la fonte del gioco per impararle; liquidità alta/media/bassa da TSM o dalle
+      scansioni, anche nel tooltip. Da verificare in gioco.
 
 ## 4. RotAssist per altre classi
 

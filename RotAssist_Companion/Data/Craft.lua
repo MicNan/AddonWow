@@ -54,8 +54,26 @@ local function ExpectedRank(recipeID)
     return (q and q >= 1) and math.floor(q) or 1
 end
 
--- Ricetta imparata: punti per salire, prima creazione e cosa produce
--- (le grigie servono solo al calcolo dei guadagni).
+-- Come si impara una ricetta: il testo del gioco (istruttore, venditore,
+-- drop, specializzazione...) senza colori; le icone delle monete diventano g/s/c.
+local function SourceLines(recipeID)
+    local T = C_TradeSkillUI
+    local text = T.GetRecipeSourceText and A.Call(T.GetRecipeSourceText, recipeID)
+    if type(text) ~= "string" or text == "" then return nil end
+    text = text:gsub("|T[^|]*GoldIcon[^|]*|t", "g"):gsub("|T[^|]*SilverIcon[^|]*|t", "s")
+               :gsub("|T[^|]*CopperIcon[^|]*|t", "c"):gsub("|T.-|t", ""):gsub("|A.-|a", "")
+               :gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+    local lines = {}
+    for line in (text .. "|n"):gmatch("(.-)|n") do
+        line = line:gsub("^%s+", ""):gsub("%s+$", "")
+        if line ~= "" then lines[#lines + 1] = line end
+    end
+    return #lines > 0 and lines or nil
+end
+
+-- Ricetta: punti per salire, prima creazione e cosa produce (le grigie
+-- servono solo al calcolo dei guadagni). Le non imparate tornano con
+-- locked = true e la fonte, per mostrare quanto renderebbero.
 function C:ReadRecipe(recipeID, childID)
     local T = C_TradeSkillUI
     if T.IsRecipeInSkillLine then
@@ -64,7 +82,7 @@ function C:ReadRecipe(recipeID, childID)
         if A.Call(T.GetTradeSkillLineForRecipe, recipeID) ~= childID then return nil end
     end
     local info = A.Call(T.GetRecipeInfo, recipeID)
-    if type(info) ~= "table" or not info.learned then return nil end
+    if type(info) ~= "table" then return nil end
     if info.isRecraft or info.isSalvageRecipe or info.isGatheringRecipe or info.isDummyRecipe then return nil end
     local diff = tonumber(info.relativeDifficulty) or TRIVIAL
     local r = {
@@ -72,9 +90,12 @@ function C:ReadRecipe(recipeID, childID)
         diff = diff, ups = math.max(1, tonumber(info.numSkillUps) or 1),
         first = info.firstCraft and true or false, reagents = {},
     }
+    if not info.learned then
+        r.locked, r.source = true, SourceLines(recipeID)
+    end
     -- oggetti prodotti per rango di qualita' (se la ricetta ha i ranghi)
     if info.supportsQualities and type(info.qualityItemIDs) == "table" and #info.qualityItemIDs > 1 then
-        r.outs, r.rank = {}, ExpectedRank(recipeID)
+        r.outs, r.rank = {}, r.locked and 1 or ExpectedRank(recipeID)
         for _, id in ipairs(info.qualityItemIDs) do r.outs[#r.outs + 1] = A.Plain(id) end
     end
     local sch = A.Call(T.GetRecipeSchematic, recipeID, false)
@@ -119,19 +140,23 @@ function C:Scan()
     self.otherExpansion = nil
     local ids = A.Call(T.GetAllRecipeIDs)
     if type(ids) ~= "table" then return end
-    local recipes = {}
+    local recipes, locked = {}, {}
     for _, id in ipairs(ids) do
         local ok, r = pcall(self.ReadRecipe, self, id, childID)
-        if ok and r then recipes[#recipes + 1] = r end
+        if ok and r then
+            -- delle non imparate servono solo quelle che producono qualcosa
+            if not r.locked then recipes[#recipes + 1] = r
+            elseif r.out or r.outs then locked[#locked + 1] = r end
+        end
     end
     ns.db.craft = ns.db.craft or {}
     ns.db.craft[baseID] = {
         child = childID, name = child.professionName,
         level = tonumber(child.skillLevel), max = tonumber(child.maxSkillLevel),
-        time = time(), recipes = recipes,
+        time = time(), recipes = recipes, locked = locked,
     }
-    ns:Log(("[prof] %s %s/%s: %d ricette imparate"):format(tostring(child.professionName),
-        tostring(child.skillLevel), tostring(child.maxSkillLevel), #recipes))
+    ns:Log(("[prof] %s %s/%s: %d ricette imparate, %d da imparare"):format(tostring(child.professionName),
+        tostring(child.skillLevel), tostring(child.maxSkillLevel), #recipes, #locked))
     if ns.Panel then ns.Panel:RequestRefresh() end
 end
 
@@ -231,11 +256,9 @@ end
 -- oggetto con prezzo d'asta, il guadagno a creazione = prezzo (al netto della
 -- commissione) x pezzi prodotti - materiali ai prezzi d'asta.
 -- Gli oggetti vincolati non sono all'asta e restano fuori da soli.
-function C:Profits(baseID)
-    local scan = ns.db.craft and ns.db.craft[baseID]
-    if not scan then return nil end
-    local cache, list, noPrice = {}, {}, 0
-    for _, r in ipairs(scan.recipes) do
+local function ProfitList(recipes, cache)
+    local list, noPrice = {}, 0
+    for _, r in ipairs(recipes or {}) do
         local out = (r.outs and r.outs[math.min(r.rank or 1, #r.outs)]) or r.out
         if out and #r.reagents > 0 then
             local price, _, _, listed = ns.Prices:Get(out)
@@ -248,14 +271,28 @@ function C:Profits(baseID)
                 end
                 local income = price * AH_CUT * (r.qty or 1)
                 list[#list + 1] = { recipe = r, item = out, price = price, listed = listed, cost = cost,
-                                    partial = partial, income = income, profit = income - cost }
+                                    partial = partial, income = income, profit = income - cost,
+                                    liq = ns.Prices:Liquidity(out) }
             else
                 noPrice = noPrice + 1
             end
         end
     end
     table.sort(list, function(a, b) return a.profit > b.profit end)
-    return { scan = scan, list = list, noPrice = noPrice }
+    return list, noPrice
+end
+
+function C:Profits(baseID)
+    local scan = ns.db.craft and ns.db.craft[baseID]
+    if not scan then return nil end
+    local cache = {}
+    local list, noPrice = ProfitList(scan.recipes, cache)
+    -- ricette da imparare: solo quelle che renderebbero
+    local locked = {}
+    for _, e in ipairs((ProfitList(scan.locked, cache))) do
+        if e.profit > 0 then locked[#locked + 1] = e end
+    end
+    return { scan = scan, list = list, noPrice = noPrice, locked = locked }
 end
 
 ---------------------------------------------------------------------------
@@ -469,10 +506,18 @@ function C:SellRows(rows, p)
     end
     local list = res.list
     local best = list[1]
+    for _, e in ipairs(list) do
+        if e.profit <= 0 then break end
+        if not (e.liq and e.liq.level == "low") then best = e break end
+    end
     if best and best.profit > 0 then
         rows[#rows + 1] = { kind = "callout", style = "tip", title = L.CRAFT_SELL_TOP_TITLE,
                             text = L.CRAFT_SELL_TOP:format(ItemName(best.item), A.Money(best.profit) .. (best.partial and "*" or ""), best.listed or 0) }
-        if best.listed and best.listed < THIN_MARKET then
+        if best.liq and best.liq.level == "low" then
+            rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_SELL_SLOW }
+        elseif best.liq and best.liq.level == "high" and best.listed and best.listed < THIN_MARKET then
+            rows[#rows + 1] = { kind = "callout", style = "tip", text = L.CRAFT_SELL_GAP }
+        elseif not best.liq and best.listed and best.listed < THIN_MARKET then
             rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_SELL_THIN }
         end
     elseif #list > 0 then
@@ -482,9 +527,9 @@ function C:SellRows(rows, p)
     end
 
     if #list > 0 then
-        local widths, align = { 0.44, 0.2, 0.18, 0.18 }, { "LEFT", "RIGHT", "RIGHT", "RIGHT" }
+        local widths, align = { 0.38, 0.16, 0.14, 0.12, 0.2 }, { "LEFT", "RIGHT", "RIGHT", "RIGHT", "RIGHT" }
         rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
-                            cols = { L.MKT_COL_ITEM, L.CRAFT_COL_PROFIT, L.MKT_COL_PRICE, L.MKT_COL_LISTED } }
+                            cols = { L.MKT_COL_ITEM, L.CRAFT_COL_PROFIT, L.MKT_COL_PRICE, L.MKT_COL_LISTED, L.CRAFT_COL_LIQ } }
         local cache = {}
         for i = 1, math.min(MAX_SELL, #list) do
             local e = list[i]
@@ -494,19 +539,55 @@ function C:SellRows(rows, p)
             if r.outs then tip[#tip + 1] = L.CRAFT_SELL_TIP_RANK:format(math.min(r.rank or 1, #r.outs), #r.outs) end
             for _, l in ipairs(ReagentLines(r, cache)) do tip[#tip + 1] = l end
             tip[#tip + 1] = L.CRAFT_COST:format(A.Money(e.cost)) .. (e.partial and (" " .. L.CRAFT_SELL_PARTIAL) or "")
+            tip[#tip + 1] = L.TT_LIQUIDITY .. ": " .. ns.Prices:LiquidityText(e.liq)
             local profit = (e.profit < 0 and "-" or "") .. A.Money(math.abs(e.profit)) .. (e.partial and "*" or "")
             rows[#rows + 1] = {
                 kind = "tr", icon = r.icon, widths = widths, align = align,
-                cols = { name, profit, A.Money(e.price), tostring(e.listed or "-") },
+                cols = { name, profit, A.Money(e.price), tostring(e.listed or "-"),
+                         e.liq and L["LIQ_" .. e.liq.level] or "?" },
                 colors = { nil, e.profit > 0 and (e.partial and { 1, 0.82, 0 } or { 0.4, 1, 0.4 }) or { 1, 0.4, 0.3 }, nil,
-                           (e.listed and e.listed < THIN_MARKET) and { 1, 0.6, 0.2 } or nil },
+                           (e.listed and e.listed < THIN_MARKET) and { 1, 0.6, 0.2 } or nil,
+                           e.liq and ns.Prices.LIQ_COLORS[e.liq.level] or { 0.6, 0.6, 0.6 } },
                 tooltip = tip, link = { item = e.item }, linkTitle = name,
             }
         end
         if #list > MAX_SELL then rows[#rows + 1] = { kind = "note", text = L.CRAFT_MORE:format(#list - MAX_SELL) } end
     end
     if res.noPrice > 0 then rows[#rows + 1] = { kind = "note", text = L.CRAFT_SELL_NOPRICE:format(res.noPrice) } end
+
+    -- ricette non ancora imparate che renderebbero, con come impararle
+    rows[#rows + 1] = { kind = "sub", text = L.CRAFT_LOCKED:format(#res.locked) }
+    if #res.locked == 0 then
+        rows[#rows + 1] = { kind = "note", text = res.scan.locked and L.CRAFT_LOCKED_NONE or L.CRAFT_LOCKED_REOPEN }
+    else
+        local widths, align = { 0.36, 0.16, 0.48 }, { "LEFT", "RIGHT", "LEFT" }
+        rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
+                            cols = { L.MKT_COL_ITEM, L.CRAFT_COL_PROFIT, L.CRAFT_COL_UNLOCK } }
+        local cache = {}
+        for i = 1, math.min(MAX_SELL, #res.locked) do
+            local e = res.locked[i]
+            local r = e.recipe
+            local name = ItemName(e.item)
+            local how = (r.source and r.source[1]) or L.CRAFT_UNLOCK_UNKNOWN
+            local tip = { name, L.CRAFT_SELL_TIP_PRICE:format(A.Money(e.price), r.qty or 1, A.Money(e.income)) }
+            tip[#tip + 1] = L.CRAFT_LOCKED_LISTED:format(e.listed or 0)
+            tip[#tip + 1] = L.TT_LIQUIDITY .. ": " .. ns.Prices:LiquidityText(e.liq)
+            for _, l in ipairs(ReagentLines(r, cache)) do tip[#tip + 1] = l end
+            tip[#tip + 1] = L.CRAFT_COST:format(A.Money(e.cost)) .. (e.partial and (" " .. L.CRAFT_SELL_PARTIAL) or "")
+            tip[#tip + 1] = L.CRAFT_COL_UNLOCK .. ":"
+            for _, l in ipairs(r.source or { L.CRAFT_UNLOCK_UNKNOWN }) do tip[#tip + 1] = "  " .. l end
+            rows[#rows + 1] = {
+                kind = "tr", icon = r.icon, widths = widths, align = align,
+                cols = { name, A.Money(e.profit) .. (e.partial and "*" or ""), how },
+                colors = { { 0.75, 0.75, 0.75 }, e.partial and { 1, 0.82, 0 } or { 0.4, 1, 0.4 }, { 0.35, 0.65, 1 } },
+                tooltip = tip, link = { item = e.item }, linkTitle = name,
+            }
+        end
+        if #res.locked > MAX_SELL then rows[#rows + 1] = { kind = "note", text = L.CRAFT_MORE:format(#res.locked - MAX_SELL) } end
+        rows[#rows + 1] = { kind = "note", text = L.CRAFT_LOCKED_HOW }
+    end
     rows[#rows + 1] = { kind = "note", text = L.CRAFT_SELL_HOW }
+    rows[#rows + 1] = { kind = "note", text = L.CRAFT_LIQ_HOW }
     rows[#rows + 1] = { kind = "note", text = L.CRAFT_SCAN_AGE:format(A.TimeText(math.max(60, time() - (res.scan.time or time())))) }
 end
 

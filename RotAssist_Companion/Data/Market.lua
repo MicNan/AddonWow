@@ -402,6 +402,11 @@ function M:HookTooltips()
             if info and info.sellPrice > 0 then
                 tooltip:AddDoubleLine(L.TT_VENDOR, A.Money(info.sellPrice), 0.4, 0.8, 1, 1, 1, 1)
             end
+            local liq = price and ns.Prices:Liquidity(itemID)
+            if liq then
+                local c = ns.Prices.LIQ_COLORS[liq.level]
+                tooltip:AddDoubleLine(L.TT_LIQUIDITY, ns.Prices:LiquidityText(liq), 0.4, 0.8, 1, c[1], c[2], c[3])
+            end
             if price and info then
                 -- confronto per singolo pezzo; il consiglio sulle pile intere e'
                 -- nella scheda Asta (sotto 1 oro di guadagno conviene il vendor)

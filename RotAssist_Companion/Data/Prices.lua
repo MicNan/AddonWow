@@ -9,6 +9,14 @@
 --   4. scansione propria anche se vecchia.
 -- I prezzi sono salvati per reame in RotAssistCompanionPrices (SavedVariables
 -- dell'account): valgono per tutti i personaggi e restano dopo il logout.
+--
+-- Liquidita' (quanto si vende un oggetto): il gioco non da' agli addon lo
+-- storico delle vendite. Fonti:
+--   1. TSM, se installato: venduti al giorno e tasso di vendita della regione
+--      (dbregionsoldperday, dbregionsalerate);
+--   2. le scansioni proprie: la quantita' in vendita che sparisce tra una
+--      scansione e la successiva, al giorno (media mobile). E' una stima:
+--      anche le aste scadute o annullate spariscono.
 -- L'addon legge soltanto: comprare e vendere restano clic del giocatore.
 
 local _, ns = ...
@@ -23,6 +31,9 @@ local CHUNK = 4000               -- aste elaborate per frame
 local SCAN_SLOW = 30             -- dopo quanti secondi avvisare che i dati tardano
 local SCAN_TIMEOUT = 180         -- dopo quanti secondi rinunciare
 local LATE_ACCEPT = 600          -- dati arrivati in ritardo accettati fino a 10 minuti
+local FLOW_MIN, FLOW_MAX = 15 * 60, 3 * 86400   -- distanza utile tra due scansioni per la stima
+local FLOW_KEEP = 0.6            -- peso della stima precedente nella media mobile
+local LIQ_HIGH, LIQ_MEDIUM = 1, 4  -- giorni di scorta: fino a 1 alta, fino a 4 media
 
 local function RealmKey()
     return A.Call(GetNormalizedRealmName) or A.Call(GetRealmName) or "realm"
@@ -102,6 +113,62 @@ function PR:Get(itemID)
     local tp, tsrc = FromTSM(itemID)
     if tp then return tp, tsrc, nil, qty end
     return p, src, age, qty
+end
+
+-- Liquidita' di un oggetto: { perDay, rate, source, days, level }
+-- level: "high", "medium", "low" (giorni di scorta = in vendita / venduti al giorno)
+local function TSMValue(source, itemID)
+    if not (TSM_API and TSM_API.GetCustomPriceValue) then return nil end
+    local v = A.Call(TSM_API.GetCustomPriceValue, source .. "*1000", "i:" .. itemID)
+    return (type(v) == "number" and v > 0) and v / 1000 or nil
+end
+
+function PR:Liquidity(itemID)
+    if not itemID then return nil end
+    local out = {}
+    out.perDay = TSMValue("dbregionsoldperday", itemID)
+    if out.perDay then
+        out.source, out.rate = "TSM", TSMValue("dbregionsalerate", itemID)
+    else
+        local db = self:DB()
+        local f = db.flow and db.flow[itemID]
+        if f then
+            out.perDay, out.source, out.samples = f.r, "scan", f.n
+        elseif (db.flowScans or 0) > 0 and db.items[itemID] then
+            -- confrontato tra due scansioni e nulla e' sparito: nessuna vendita vista
+            out.perDay, out.source, out.samples = 0, "scan", 0
+        else
+            return nil
+        end
+    end
+    local _, _, _, listed = self:Get(itemID)
+    if out.perDay <= 0 then
+        out.level = "low"
+    elseif listed and listed > 0 then
+        out.days = listed / out.perDay
+        out.level = out.days <= LIQ_HIGH and "high" or (out.days <= LIQ_MEDIUM and "medium" or "low")
+    else
+        out.level = "high"           -- si vende e oggi non ce n'e' in vendita
+    end
+    return out
+end
+
+PR.LIQ_COLORS = { high = { 0.4, 1, 0.4 }, medium = { 1, 0.82, 0 }, low = { 1, 0.5, 0.3 } }
+
+-- Riga di tooltip che descrive la liquidita'
+function PR:LiquidityText(liq)
+    local L = ns.L
+    if not liq then return L.LIQ_UNKNOWN end
+    local parts = { L["LIQ_" .. liq.level] }
+    if liq.perDay <= 0 then
+        parts[#parts + 1] = L.LIQ_NONE_SEEN
+    else
+        parts[#parts + 1] = L.LIQ_PER_DAY:format(liq.perDay >= 10 and ("%d"):format(liq.perDay) or ("%.1f"):format(liq.perDay))
+    end
+    if liq.days then parts[#parts + 1] = L.LIQ_DAYS:format(liq.days >= 10 and ("%d"):format(liq.days) or ("%.1f"):format(liq.days)) end
+    if liq.rate then parts[#parts + 1] = L.LIQ_RATE:format(math.floor(liq.rate * 100 + 0.5)) end
+    parts[#parts + 1] = liq.source == "TSM" and L.LIQ_SRC_TSM or L.LIQ_SRC_SCAN
+    return table.concat(parts, ", ")
 end
 
 -- Descrizione della fonte prezzi per l'intestazione della scheda
@@ -216,10 +283,31 @@ function PR:OnReplicateReady()
     end)
 end
 
+-- Quanto e' sparito dalla vendita rispetto alla scansione precedente, al giorno
+local function UpdateFlow(db, acc, now)
+    local prev, prevTime = db.items, db.time
+    if not (prev and prevTime) then return end
+    local elapsed = now - prevTime
+    if elapsed < FLOW_MIN or elapsed > FLOW_MAX then return end
+    local days = elapsed / 86400
+    db.flow = db.flow or {}
+    db.flowScans = (db.flowScans or 0) + 1
+    for id, e in pairs(prev) do
+        local gone = math.max(0, (e.q or 0) - ((acc[id] and acc[id].q) or 0))
+        local f = db.flow[id]
+        if f then
+            f.r, f.n = f.r * FLOW_KEEP + gone / days * (1 - FLOW_KEEP), f.n + 1
+        elseif gone > 0 then
+            db.flow[id] = { r = gone / days, n = 1 }
+        end
+    end
+end
+
 function PR:FinishScan(acc, total)
     local db = self:DB()
     local n = 0
     for _ in pairs(acc) do n = n + 1 end
+    pcall(UpdateFlow, db, acc, time())
     db.items, db.time, db.auctions = acc, time(), total
     db.farmIndex = ns.BuildFarmIndex and ns.BuildFarmIndex(acc) or {}
     RotAssistCompanionPrices._lastScan = time()

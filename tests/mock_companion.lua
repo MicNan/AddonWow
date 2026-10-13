@@ -241,6 +241,7 @@ MOCK.items = {
     [1013] = { "Mycobloom (gold)", 2, 400, 7, 9, 0, 11, true },
     [1014] = { "Sunfire Flask (rank 1)", 1, 100, 0, 3, 0, 11, false },
     [1015] = { "Sunfire Flask (rank 2)", 1, 100, 0, 3, 0, 11, false },
+    [1016] = { "Elixir of the Coiled Isle", 1, 100, 0, 2, 0, 11, false },
     -- equipaggiamento (9 = tipo di slot)
     [2001] = { "Sunfire Bracers", 3, 1000, 4, 3, 1, 11, false, "INVTYPE_WRIST" },
     [2002] = { "Old Ring", 2, 500, 4, 0, 1, 11, false, "INVTYPE_FINGER" },
@@ -273,6 +274,7 @@ MOCK.auctions = {
     { 1009, 100000, 100000 * 500.0 },
     { 1012, 3, 3 * 1200000.0 },                                         -- pozione: mercato piccolo
     { 1014, 50, 50 * 200000.0 }, { 1015, 30, 30 * 600000.0 },          -- flask per rango
+    { 1016, 12, 12 * 900000.0 },                                         -- elisir di una ricetta da imparare
 }
 C_AuctionHouse = {
     ReplicateItems = function() MOCK.fire("REPLICATE_ITEM_LIST_UPDATE") end,
@@ -350,7 +352,11 @@ MOCK.recipes = {
                reagents = { { { 1001 }, 5 }, { { 1002 }, 2 } } },
     [7004] = { info = { name = "Old Potion", learned = true, relativeDifficulty = 3, numSkillUps = 1 },
                reagents = { { { 1001 }, 1 } } },                                   -- grigia: esclusa
-    [7005] = { info = { name = "Unlearned Elixir", learned = false, relativeDifficulty = 0 } },   -- non imparata
+    [7005] = { info = { name = "Unlearned Elixir", learned = false, relativeDifficulty = 0 },     -- non imparata, renderebbe
+               reagents = { { { 1003 }, 4 } }, out = 1016,
+               source = "|cffffd200Vendor:|r Jan'sari the Watchful|n|cffffd200Zone:|r Coiled Isle|n|cffffd200Cost:|r 50|TInterface\\MoneyFrame\\UI-GoldIcon:0:0:2:0|t" },
+    [7009] = { info = { name = "Locked Tonic", learned = false, relativeDifficulty = 0 },           -- non renderebbe
+               reagents = { { { 1001 }, 10 } }, out = 1012 },
     [7006] = { info = { name = "Dragon Isles Potion", learned = true, relativeDifficulty = 0 }, other = true },
     [7007] = { info = { name = "Recycle Potions", learned = true, relativeDifficulty = 0, isSalvageRecipe = true } },
     [7008] = { info = { name = "Sunfire Flask", learned = true, relativeDifficulty = 3, numSkillUps = 1,
@@ -358,6 +364,7 @@ MOCK.recipes = {
                reagents = { { { 1002 }, 2 } }, out = 1014 },                -- grigia ma vendibile (rango 2 atteso)
 }
 C_TradeSkillUI.GetCraftingOperationInfo = function(id) return { craftingQuality = 2 } end
+C_TradeSkillUI.GetRecipeSourceText = function(id) return MOCK.recipes[id] and MOCK.recipes[id].source end
 C_TradeSkillUI.GetAllRecipeIDs = function()
     local t = {}
     for id in pairs(MOCK.recipes) do t[#t + 1] = id end

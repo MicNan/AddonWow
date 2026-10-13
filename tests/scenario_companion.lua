@@ -279,6 +279,32 @@ do
         print("   guadagno", e.recipe.name, "oggetto", e.item, "prezzo", e.price, "costo", e.cost, "guadagno", e.profit, "parziale", e.partial)
     end
     print("   senza prezzo d'asta:", res.noPrice)
+    for _, e in ipairs(res.locked) do
+        print("   da imparare", e.recipe.name, "guadagno", e.profit, "fonte", table.concat(e.recipe.source or {}, " / "))
+    end
+    print("   ricette da imparare lette:", #C.db.craft[171].locked)
+end
+-- liquidita': seconda scansione un giorno dopo, con meno pezzi in vendita
+do
+    local db = C.Prices:DB()
+    local acc = {}
+    for id, e in pairs(db.items) do acc[id] = { p = e.p, q = e.q } end
+    acc[1012].q = 1                                   -- pozione: 2 vendute in un giorno, 1 in vendita -> alta
+    acc[1015].q = 28                                  -- flask rango 2: 2 al giorno, 28 in vendita -> bassa
+    db.time = time() - 86400
+    C.Prices:FinishScan(acc, 10)
+    for _, id in ipairs({ 1012, 1015, 1014 }) do
+        print("   liquidita'", id, C.Prices:LiquidityText(C.Prices:Liquidity(id)))
+    end
+    -- con TSM: dati di vendita della regione
+    TSM_API = { GetCustomPriceValue = function(src, item)
+        if item == "i:1014" and src == "dbregionsoldperday*1000" then return 5000 end
+        if item == "i:1014" and src == "dbregionsalerate*1000" then return 300 end
+    end }
+    print("   liquidita' TSM 1014", C.Prices:LiquidityText(C.Prices:Liquidity(1014)))
+    TSM_API = nil
+    ClickPill(C.L.CRAFT_SEC_sell)
+    Dump("craft")
 end
 ClickPill(C.L.CRAFT_SEC_specs)
 ClickPill("Transmutes")                               -- un'altra build dal selettore
