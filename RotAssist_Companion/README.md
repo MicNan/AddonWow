@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.13.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.14.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -275,9 +275,15 @@ Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno 
 **Cosa creare** (solo professioni di creazione)
 - Quando apri la finestra della professione, l'addon legge le ricette di Midnight che conosci:
   colore (arancione, gialla, verde), punti per creazione, prime creazioni e materiali.
-- In cima, **cosa fare adesso**: quale ricetta creare e quante volte per i prossimi 10 punti.
-- Una tabella delle ricette per salire, dalla più economica (**costo a punto** con i prezzi della
-  scansione d'asta, di Auctionator o di TSM; per le gialle e le verdi i punti sono una stima).
+- In cima, **cosa fare adesso**: quale ricetta creare e quante volte per i prossimi 10 punti, con
+  il costo dei materiali a creazione e in totale. Se una ricetta che non conosci costerebbe meno
+  della metà a punto, un riquadro consiglia di impararla e dice dove.
+- Una tabella delle ricette per salire, dalla più economica, con il **costo a creazione** e il
+  **costo a punto** (prezzi della scansione d'asta, di Auctionator o di TSM; per le gialle e le
+  verdi i punti sono una stima).
+- Le **ricette da imparare per salire**: quelle che non conosci ma che al tuo livello darebbero
+  punti, con il costo e **come impararle** (istruttore, venditore, drop, specializzazione). Se
+  nessuna ricetta che conosci dà più punti, in cima compare la migliore da imparare.
 - Le **prime creazioni** ancora da fare (1 punto conoscenza ciascuna).
 - La **lista della spesa**: quanto comprare, quanto hai già (borse, banca, banca dei reagenti,
   banca della brigata) e il costo. Per i materiali con più qualità conta tutte quelle che hai e
@@ -549,7 +555,8 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
 13. **Guadagno per ricetta:** campi `supportsQualities` e `qualityItemIDs` di `GetRecipeInfo`,
     rango atteso da `C_TradeSkillUI.GetCraftingOperationInfo` (senza materiali scelti) e
     quantità prodotta (`quantityMin`, `quantityMax` dello schema). Ricette non imparate in
-    `GetAllRecipeIDs` e testo della fonte (`C_TradeSkillUI.GetRecipeSourceText`). Liquidità:
+    `GetAllRecipeIDs` (con `relativeDifficulty` anche per le non imparate) e testo della fonte
+    (`C_TradeSkillUI.GetRecipeSourceText`). Liquidità:
     fonti TSM `dbregionsoldperday` e `dbregionsalerate`, stima dalle scansioni da confrontare
     con le vendite reali. Ordini: eventi `CRAFTINGORDERS_SHOW_CRAFTER` e
     `CRAFTINGORDERS_HIDE_CRAFTER`, campi di `C_CraftingOrders.GetCrafterOrders` (materiali del

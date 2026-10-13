@@ -68,6 +68,9 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
       con guadagno netto, ricompense e stato. Da verificare in gioco.
 - [x] **Prezzo alto o basso** (0.13.0): prezzo attuale rispetto alla media (TSM o media mobile
       delle scansioni) nel tooltip e nella lista della spesa. Da verificare in gioco.
+- [x] **Cosa creare: costo totale e ricette da imparare** (0.14.0): costo a creazione e totale,
+      ricette non imparate che darebbero punti con la fonte, consiglio quando impararne una
+      conviene. Da verificare in gioco.
 
 ## 4. RotAssist per altre classi
 

@@ -29,6 +29,7 @@ local MAX_BEST, MAX_FIRST = 5, 8       -- righe mostrate
 local MAX_SELL = 10                    -- righe della sezione "per l'oro"
 local AH_CUT = 0.95                    -- commissione della casa d'aste: 5%
 local THIN_MARKET = 5                  -- meno pezzi in vendita: mercato piccolo
+local LEARN_RATIO = 0.5                -- ricetta da imparare consigliata se costa meno della meta' a punto
 
 ---------------------------------------------------------------------------
 -- Lettura delle ricette (finestra della professione aperta)
@@ -145,9 +146,7 @@ function C:Scan()
     for _, id in ipairs(ids) do
         local ok, r = pcall(self.ReadRecipe, self, id, childID)
         if ok and r then
-            -- delle non imparate servono solo quelle che producono qualcosa
-            if not r.locked then recipes[#recipes + 1] = r
-            elseif r.out or r.outs then locked[#locked + 1] = r end
+            if r.locked then locked[#locked + 1] = r else recipes[#recipes + 1] = r end
         end
     end
     ns.db.craft = ns.db.craft or {}
@@ -219,6 +218,17 @@ function C:Plan(baseID)
         return a.recipe.name < b.recipe.name
     end)
     table.sort(firsts, function(a, b) return (a.cost or math.huge) < (b.cost or math.huge) end)
+    -- ricette non ancora imparate che darebbero punti al tuo livello
+    local toLearn = {}
+    for _, r in ipairs(scan.locked or {}) do
+        local e = self:Evaluate(r, cache)
+        if e.points > 0 then toLearn[#toLearn + 1] = e end
+    end
+    table.sort(toLearn, function(a, b)
+        if (a.perPoint ~= nil) ~= (b.perPoint ~= nil) then return a.perPoint ~= nil end
+        if a.perPoint and b.perPoint and a.perPoint ~= b.perPoint then return a.perPoint < b.perPoint end
+        return a.recipe.diff < b.recipe.diff
+    end)
 
     -- lista della spesa: una volta ogni prima creazione + la ricetta migliore
     -- per i prossimi punti
@@ -250,7 +260,7 @@ function C:Plan(baseID)
     end
     table.sort(shopping, function(a, b) return (a.cost or 0) > (b.cost or 0) end)
     return { scan = scan, firsts = firsts, best = best, top = top, topCrafts = topCrafts,
-             shopping = shopping, total = total, unknown = unknown }
+             shopping = shopping, total = total, unknown = unknown, toLearn = toLearn }
 end
 
 -- Cosa conviene creare per venderlo: per ogni ricetta imparata che produce un
@@ -419,8 +429,24 @@ function C:MakeRows(rows, p)
 
     -- l'azione da fare subito
     if plan.top then
-        rows[#rows + 1] = { kind = "callout", style = "tip", title = L.CRAFT_TOP_TITLE,
-                            text = L.CRAFT_TOP:format(plan.top.recipe.name, plan.topCrafts) }
+        local text = L.CRAFT_TOP:format(plan.top.recipe.name, plan.topCrafts)
+        if plan.top.cost then
+            text = text .. " " .. L.CRAFT_TOP_COST:format(A.Money(plan.top.cost), A.Money(plan.top.cost * plan.topCrafts))
+        end
+        rows[#rows + 1] = { kind = "callout", style = "tip", title = L.CRAFT_TOP_TITLE, text = text }
+        -- una ricetta da imparare costa molto meno a punto: conviene impararla
+        local learn = plan.toLearn[1]
+        if learn and learn.perPoint and plan.top.perPoint and learn.perPoint < plan.top.perPoint * LEARN_RATIO then
+            rows[#rows + 1] = { kind = "callout", style = "info", title = L.CRAFT_LEARN_CHEAPER_TITLE,
+                                text = L.CRAFT_LEARN_CHEAPER:format(learn.recipe.name,
+                                    (learn.recipe.source and learn.recipe.source[1]) or L.CRAFT_UNLOCK_UNKNOWN,
+                                    A.Money(learn.perPoint), A.Money(plan.top.perPoint)) }
+        end
+    elseif plan.toLearn[1] then
+        local e = plan.toLearn[1]
+        local how = (e.recipe.source and e.recipe.source[1]) or L.CRAFT_UNLOCK_UNKNOWN
+        rows[#rows + 1] = { kind = "callout", style = "warn", title = L.CRAFT_TOP_TITLE,
+                            text = L.CRAFT_LEARN_FIRST:format(e.recipe.name, how) }
     else
         rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_NO_SKILLUPS }
     end
@@ -428,8 +454,8 @@ function C:MakeRows(rows, p)
     -- ricette per salire
     if #plan.best > 0 then
         rows[#rows + 1] = { kind = "sub", text = L.CRAFT_BEST }
-        local widths, align = { 0.56, 0.16, 0.28 }, { "LEFT", "RIGHT", "RIGHT" }
-        rows[#rows + 1] = { kind = "thead", cols = { L.CRAFT_COL_RECIPE, L.CRAFT_COL_POINTS, L.CRAFT_COL_PER_POINT },
+        local widths, align = { 0.44, 0.12, 0.22, 0.22 }, { "LEFT", "RIGHT", "RIGHT", "RIGHT" }
+        rows[#rows + 1] = { kind = "thead", cols = { L.CRAFT_COL_RECIPE, L.CRAFT_COL_POINTS, L.CRAFT_COL_CRAFT_COST, L.CRAFT_COL_PER_POINT },
                             widths = widths, align = align }
         for i = 1, math.min(MAX_BEST, #plan.best) do
             local e = plan.best[i]
@@ -439,7 +465,8 @@ function C:MakeRows(rows, p)
             if e.canCraft > 0 then tip[#tip + 1] = L.CRAFT_CAN:format(e.canCraft) end
             rows[#rows + 1] = {
                 kind = "tr", icon = e.recipe.icon, widths = widths, align = align,
-                cols = { e.recipe.name, ("%.2g"):format(e.points), e.perPoint and A.Money(e.perPoint) or L.CRAFT_NO_PRICE },
+                cols = { e.recipe.name, ("%.2g"):format(e.points), e.cost and A.Money(e.cost) or L.CRAFT_NO_PRICE,
+                         e.perPoint and A.Money(e.perPoint) or L.CRAFT_NO_PRICE },
                 colors = { DIFF_COLOR[e.recipe.diff] },
                 tooltip = tip, link = { spell = e.recipe.id }, linkTitle = e.recipe.name,
             }
@@ -466,6 +493,35 @@ function C:MakeRows(rows, p)
         if #plan.firsts > MAX_FIRST then
             rows[#rows + 1] = { kind = "note", text = L.CRAFT_MORE:format(#plan.firsts - MAX_FIRST) }
         end
+    end
+
+    -- ricette da imparare che darebbero punti, con come impararle
+    if #plan.toLearn > 0 then
+        rows[#rows + 1] = { kind = "sub", text = L.CRAFT_TO_LEARN:format(#plan.toLearn) }
+        local widths, align = { 0.34, 0.1, 0.18, 0.38 }, { "LEFT", "RIGHT", "RIGHT", "LEFT" }
+        rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
+                            cols = { L.CRAFT_COL_RECIPE, L.CRAFT_COL_POINTS, L.CRAFT_COL_CRAFT_COST, L.CRAFT_COL_UNLOCK } }
+        for i = 1, math.min(MAX_BEST, #plan.toLearn) do
+            local e = plan.toLearn[i]
+            local r = e.recipe
+            local tip = { r.name, L["CRAFT_DIFF_" .. r.diff]:format(e.points) }
+            for _, l in ipairs(ReagentLines(r, cache)) do tip[#tip + 1] = l end
+            if e.cost then tip[#tip + 1] = L.CRAFT_COST:format(A.Money(e.cost)) end
+            if e.perPoint then tip[#tip + 1] = L.CRAFT_COL_PER_POINT .. ": " .. A.Money(e.perPoint) end
+            tip[#tip + 1] = L.CRAFT_COL_UNLOCK .. ":"
+            for _, l in ipairs(r.source or { L.CRAFT_UNLOCK_UNKNOWN }) do tip[#tip + 1] = "  " .. l end
+            rows[#rows + 1] = {
+                kind = "tr", icon = r.icon, widths = widths, align = align,
+                cols = { r.name, ("%.2g"):format(e.points), e.cost and A.Money(e.cost) or L.CRAFT_NO_PRICE,
+                         (r.source and r.source[1]) or L.CRAFT_UNLOCK_UNKNOWN },
+                colors = { DIFF_COLOR[r.diff], nil, nil, { 0.35, 0.65, 1 } },
+                tooltip = tip, link = { spell = r.id }, linkTitle = r.name,
+            }
+        end
+        if #plan.toLearn > MAX_BEST then rows[#rows + 1] = { kind = "note", text = L.CRAFT_MORE:format(#plan.toLearn - MAX_BEST) } end
+        rows[#rows + 1] = { kind = "note", text = L.CRAFT_TO_LEARN_HOW }
+    elseif not plan.scan.locked then
+        rows[#rows + 1] = { kind = "note", text = L.CRAFT_LOCKED_REOPEN }
     end
 
     -- lista della spesa

@@ -355,6 +355,9 @@ MOCK.recipes = {
     [7005] = { info = { name = "Unlearned Elixir", learned = false, relativeDifficulty = 0 },     -- non imparata, renderebbe
                reagents = { { { 1003 }, 4 } }, out = 1016,
                source = "|cffffd200Vendor:|r Jan'sari the Watchful|n|cffffd200Zone:|r Coiled Isle|n|cffffd200Cost:|r 50|TInterface\\MoneyFrame\\UI-GoldIcon:0:0:2:0|t" },
+    [7010] = { info = { name = "Trainer Draught", learned = false, relativeDifficulty = 0, numSkillUps = 1 },  -- da imparare per salire
+               reagents = { { { 1003 }, 2 } },
+               source = "|cffffd200Trainer:|r Camberon|n|cffffd200Zone:|r Silvermoon City" },
     [7009] = { info = { name = "Locked Tonic", learned = false, relativeDifficulty = 0 },           -- non renderebbe
                reagents = { { { 1001 }, 10 } }, out = 1012 },
     [7006] = { info = { name = "Dragon Isles Potion", learned = true, relativeDifficulty = 0 }, other = true },
