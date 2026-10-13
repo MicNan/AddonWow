@@ -476,17 +476,26 @@ function C:MakeRows(rows, p)
         local widths, align = { 0.12, 0.52, 0.14, 0.22 }, { "RIGHT", "LEFT", "RIGHT", "RIGHT" }
         rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
                             cols = { L.CRAFT_COL_QTY, L.CRAFT_COL_ITEM, L.CRAFT_COL_HAVE, L.CRAFT_COL_COST } }
+        local marked = false
         for _, s in ipairs(plan.shopping) do
             local name = ItemName(s.itemID)
+            local tip = { name, L.CRAFT_BUY_TIP:format(s.need, s.have, s.missing) }
+            local pl = s.cost and ns.Prices:PriceLevel(s.itemID)
+            if pl then
+                tip[#tip + 1] = L.TT_PRICE_LEVEL .. ": " .. ns.Prices:PriceLevelText(pl)
+                if pl.level ~= "normal" then marked = true end
+            end
             rows[#rows + 1] = {
                 kind = "tr", widths = widths, align = align,
                 cols = { tostring(s.missing), name, tostring(s.have),
                          s.cost and A.Money(s.cost) or (hasPrices and L.CRAFT_VENDOR or L.CRAFT_NO_PRICE) },
-                tooltip = { name, L.CRAFT_BUY_TIP:format(s.need, s.have, s.missing) },
+                colors = { nil, nil, nil, pl and pl.level ~= "normal" and ns.Prices.PRICE_COLORS[pl.level] or nil },
+                tooltip = tip,
                 link = { item = s.itemID }, linkTitle = name,
             }
         end
         if plan.unknown > 0 and hasPrices then rows[#rows + 1] = { kind = "note", text = L.CRAFT_SHOP_UNKNOWN } end
+        if marked then rows[#rows + 1] = { kind = "note", text = L.CRAFT_SHOP_PRICE } end
     end
     rows[#rows + 1] = { kind = "note", text = L.CRAFT_SCAN_AGE:format(A.TimeText(math.max(60, age))) }
 end

@@ -313,6 +313,30 @@ do
     ClickPill(C.L.CRAFT_SEC_sell)
     Dump("craft")
 end
+-- prezzo alto o basso rispetto alla media
+do
+    local db = C.Prices:DB()
+    print("   medie salvate dopo le scansioni:", db.avg and db.avg[1001] and "si" or "no")
+    db.avg[1001] = { a = 200000, s = time() - 3 * 86400, t = time() }   -- media 20g, ora 25g: alto
+    db.avg[1002] = { a = 200000, s = time() - 3 * 86400, t = time() }   -- media 20g, ora 15g: basso
+    db.avg[1009] = { a = 500, s = time() - 3600, t = time() }           -- meno di un giorno: non nota
+    for _, id in ipairs({ 1001, 1002, 1009 }) do
+        print("   prezzo", id, C.Prices:PriceLevelText(C.Prices:PriceLevel(id)))
+    end
+    TSM_API = { GetCustomPriceValue = function(src, item)
+        if item == "i:1003" and src == "dbmarket*1000" then return 40000 * 1000 end
+    end }
+    print("   prezzo TSM 1003", C.Prices:PriceLevelText(C.Prices:PriceLevel(1003)))
+    TSM_API = nil
+    -- tooltip e lista della spesa
+    local lines = {}
+    local tip = { AddDoubleLine = function(_, a, b) lines[#lines + 1] = a .. " = " .. b end,
+                  AddLine = function(_, a) lines[#lines + 1] = a end }
+    for _, fn in ipairs(MOCK.tooltipHooks) do fn(tip, { id = 1002 }) end
+    for _, l in ipairs(lines) do print("   tooltip " .. l) end
+    ClickPill(C.L.CRAFT_SEC_make)
+    Dump("craft")
+end
 ClickPill(C.L.CRAFT_SEC_specs)
 ClickPill("Transmutes")                               -- un'altra build dal selettore
 print("build scelta per Alchemy:", C.db.craftBuild.alchemy)

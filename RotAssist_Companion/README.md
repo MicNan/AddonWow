@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.12.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.13.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -449,7 +449,15 @@ del 5%, con il prezzo del vendor:
 - **Al vendor:** oggetti vincolati, grigi, oggetti senza prezzo d'asta, oppure quando l'asta
   renderebbe poco di più.
 
-Il tooltip di ogni oggetto mostra prezzo d'asta, prezzo del vendor e guadagno a pezzo.
+Il tooltip di ogni oggetto mostra prezzo d'asta, prezzo del vendor e guadagno a pezzo, più due
+indicatori:
+- **Prezzo basso / nella media / alto:** il prezzo attuale confrontato con un prezzo di
+  riferimento (oltre ±15% è basso o alto). Il riferimento è il valore di mercato di **TSM** (14
+  giorni) se installato, altrimenti una **media mobile delle tue scansioni** (circa 7 giorni),
+  disponibile quando hai scansioni in giorni diversi. Il tooltip compare anche passando il
+  mouse sugli oggetti della casa d'aste, quindi lo vedi mentre compri. Nella lista della spesa
+  della scheda Professioni il costo è verde quando il prezzo è basso e arancione quando è alto.
+- **Liquidità:** quanto si vende l'oggetto (vedi la scheda Professioni, sezione Per l'oro).
 
 **Da farmare.** Dopo la scansione, l'addon individua da solo i **materiali dell'espansione
 attuale** in vendita: erbe, minerali, pelli, stoffe, carne e pesce, elementali, materiali

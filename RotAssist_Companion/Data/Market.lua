@@ -402,6 +402,11 @@ function M:HookTooltips()
             if info and info.sellPrice > 0 then
                 tooltip:AddDoubleLine(L.TT_VENDOR, A.Money(info.sellPrice), 0.4, 0.8, 1, 1, 1, 1)
             end
+            local pl = price and ns.Prices:PriceLevel(itemID, price)
+            if pl then
+                local c = ns.Prices.PRICE_COLORS[pl.level]
+                tooltip:AddDoubleLine(L.TT_PRICE_LEVEL, ns.Prices:PriceLevelText(pl), 0.4, 0.8, 1, c[1], c[2], c[3])
+            end
             local liq = price and ns.Prices:Liquidity(itemID)
             if liq then
                 local c = ns.Prices.LIQ_COLORS[liq.level]

@@ -66,6 +66,8 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
       scansioni, anche nel tooltip. Da verificare in gioco.
 - [x] **Ordini di lavoro** (0.12.0): ordini letti al tavolo degli ordini (soprattutto Patron),
       con guadagno netto, ricompense e stato. Da verificare in gioco.
+- [x] **Prezzo alto o basso** (0.13.0): prezzo attuale rispetto alla media (TSM o media mobile
+      delle scansioni) nel tooltip e nella lista della spesa. Da verificare in gioco.
 
 ## 4. RotAssist per altre classi
 

@@ -17,6 +17,11 @@
 --   2. le scansioni proprie: la quantita' in vendita che sparisce tra una
 --      scansione e la successiva, al giorno (media mobile). E' una stima:
 --      anche le aste scadute o annullate spariscono.
+--
+-- Prezzo alto o basso: il prezzo attuale confrontato con un prezzo di
+-- riferimento. Con TSM il valore di mercato del reame (dbmarket, media di 14
+-- giorni); senza, una media mobile esponenziale delle tue scansioni (circa 7
+-- giorni), salvata come 3 numeri per oggetto.
 -- L'addon legge soltanto: comprare e vendere restano clic del giocatore.
 
 local _, ns = ...
@@ -34,6 +39,9 @@ local LATE_ACCEPT = 600          -- dati arrivati in ritardo accettati fino a 10
 local FLOW_MIN, FLOW_MAX = 15 * 60, 3 * 86400   -- distanza utile tra due scansioni per la stima
 local FLOW_KEEP = 0.6            -- peso della stima precedente nella media mobile
 local LIQ_HIGH, LIQ_MEDIUM = 1, 4  -- giorni di scorta: fino a 1 alta, fino a 4 media
+local AVG_TAU = 7 * 86400        -- memoria della media mobile dei prezzi
+local AVG_MIN_SPAN = 86400       -- la media vale dopo scansioni su almeno un giorno
+local PRICE_BAND = 0.15          -- oltre +-15% dalla media: prezzo alto o basso
 
 local function RealmKey()
     return A.Call(GetNormalizedRealmName) or A.Call(GetRealmName) or "realm"
@@ -154,6 +162,37 @@ function PR:Liquidity(itemID)
 end
 
 PR.LIQ_COLORS = { high = { 0.4, 1, 0.4 }, medium = { 1, 0.82, 0 }, low = { 1, 0.5, 0.3 } }
+
+-- Prezzo attuale rispetto al riferimento: { level = "low"|"normal"|"high",
+-- diff (frazione), avg, price, source }. nil se il riferimento non c'e'.
+function PR:PriceLevel(itemID, price)
+    if not itemID then return nil end
+    price = price or self:Get(itemID)
+    if not price or price <= 0 then return nil end
+    -- dbmarket e' gia' in rame: TSMValue lo divide per 1000 dopo averlo moltiplicato
+    local avg, source = TSMValue("dbmarket", itemID), "TSM"
+    if not avg then
+        local h = self:DB().avg and self:DB().avg[itemID]
+        if not (h and h.t - h.s >= AVG_MIN_SPAN) then return nil end
+        avg, source = h.a, "scan"
+    end
+    if not avg or avg <= 0 then return nil end
+    local diff = (price - avg) / avg
+    local level = diff <= -PRICE_BAND and "low" or (diff >= PRICE_BAND and "high" or "normal")
+    return { level = level, diff = diff, avg = avg, price = price, source = source }
+end
+
+-- Per chi compra: basso = verde, alto = arancione
+PR.PRICE_COLORS = { low = { 0.4, 1, 0.4 }, normal = { 0.85, 0.85, 0.85 }, high = { 1, 0.5, 0.3 } }
+
+function PR:PriceLevelText(pl)
+    local L = ns.L
+    if not pl then return L.PL_UNKNOWN end
+    local pct = math.floor(math.abs(pl.diff) * 100 + 0.5)
+    local sign = pl.diff < 0 and "-" or "+"
+    return L.PL_TEXT:format(L["PL_" .. pl.level], sign .. pct, A.Money(pl.avg),
+        pl.source == "TSM" and L.PL_SRC_TSM or L.PL_SRC_SCAN)
+end
 
 -- Riga di tooltip che descrive la liquidita'
 function PR:LiquidityText(liq)
@@ -303,11 +342,27 @@ local function UpdateFlow(db, acc, now)
     end
 end
 
+-- Media mobile esponenziale del prezzo di ogni oggetto: il peso di una
+-- scansione cresce con il tempo passato dalla precedente.
+local function UpdateAverage(db, acc, now)
+    db.avg = db.avg or {}
+    for id, e in pairs(acc) do
+        local h = db.avg[id]
+        if not h then
+            db.avg[id] = { a = e.p, s = now, t = now }
+        else
+            local w = 1 - math.exp(-math.max(0, now - h.t) / AVG_TAU)
+            h.a, h.t = h.a + w * (e.p - h.a), now
+        end
+    end
+end
+
 function PR:FinishScan(acc, total)
     local db = self:DB()
     local n = 0
     for _ in pairs(acc) do n = n + 1 end
     pcall(UpdateFlow, db, acc, time())
+    pcall(UpdateAverage, db, acc, time())
     db.items, db.time, db.auctions = acc, time(), total
     db.farmIndex = ns.BuildFarmIndex and ns.BuildFarmIndex(acc) or {}
     RotAssistCompanionPrices._lastScan = time()
