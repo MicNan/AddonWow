@@ -363,6 +363,17 @@ function PR:FinishScan(acc, total)
     for _ in pairs(acc) do n = n + 1 end
     pcall(UpdateFlow, db, acc, time())
     pcall(UpdateAverage, db, acc, time())
+    -- attrezzi e accessori delle professioni in vendita (classe oggetto 19)
+    pcall(function()
+        local tools = {}
+        for id in pairs(acc) do
+            local _, _, _, equipLoc, _, classID, subclassID = A.Call(C_Item.GetItemInfoInstant, id)
+            if classID == 19 and (equipLoc == "INVTYPE_PROFESSION_TOOL" or equipLoc == "INVTYPE_PROFESSION_GEAR") then
+                tools[id] = { s = subclassID, l = equipLoc }
+            end
+        end
+        db.tools = tools
+    end)
     db.items, db.time, db.auctions = acc, time(), total
     db.farmIndex = ns.BuildFarmIndex and ns.BuildFarmIndex(acc) or {}
     RotAssistCompanionPrices._lastScan = time()

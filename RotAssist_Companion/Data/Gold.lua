@@ -20,7 +20,8 @@ G.CONCENTRATION_PER_DAY = 240   -- Midnight: +240 al giorno, massimo 1000 (usato
 G.PROFILES = { "casual", "medium", "hardcore" }
 G.SECTIONS = { "strategies", "bags", "farm" }
 
--- Professioni conosciute: { name, icon, rank, max, skillLine, key }
+-- Professioni conosciute: { name, icon, rank, max, skillLine, key, pos }
+-- pos = posizione in GetProfessions (1-2 principali, 4 pesca, 5 cucina)
 function G:Professions()
     local out = {}
     if not (GetProfessions and GetProfessionInfo) then return out end
@@ -32,7 +33,7 @@ function G:Professions()
             if name and skillLine and skillLine ~= 794 then   -- 794 = Archeologia (esclusa)
                 out[#out + 1] = {
                     name = name, icon = icon, rank = rank or 0, max = maxRank or 0,
-                    skillLine = skillLine, key = ns.GoldStrategies.PROFESSIONS[skillLine],
+                    skillLine = skillLine, key = ns.GoldStrategies.PROFESSIONS[skillLine], pos = i,
                 }
             end
         end
@@ -52,9 +53,10 @@ function G:OnTradeSkillShow()
     ns.db.professions = ns.db.professions or {}
     local saved = ns.db.professions[baseID]
     if saved and saved.child and saved.child > childID then return end
+    local conc = A.Call(C_TradeSkillUI.GetConcentrationCurrencyID, childID)
     ns.db.professions[baseID] = {
         child = childID,
-        concentration = A.Call(C_TradeSkillUI.GetConcentrationCurrencyID, childID),
+        concentration = (type(conc) == "number" and conc > 0) and conc or nil,
     }
 end
 

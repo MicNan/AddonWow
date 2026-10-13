@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.14.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.15.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -271,6 +271,10 @@ Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno 
 - La **fase attuale** in evidenza (per esempio Leatherworking 60-91: "crea una delle ricette di
   livello medio, circa 35 creazioni") e la fase successiva.
 - Il trainer di Silvermoon e l'elenco di **tutte le fasi**, con quella attuale evidenziata.
+- **I tuoi attrezzi:** l'attrezzo e gli accessori che indossi per quella professione (con il
+  livello) e gli attrezzi della stessa professione in vendita all'asta nell'ultima scansione,
+  in verde quelli di livello più alto del tuo. Le versioni epiche sono vincolate: si ottengono
+  con un ordine di lavoro.
 
 **Cosa creare** (solo professioni di creazione)
 - Quando apri la finestra della professione, l'addon legge le ricette di Midnight che conosci:
@@ -281,6 +285,11 @@ Concentrazione e conoscenza compaiono dopo che hai aperto la professione almeno 
 - Una tabella delle ricette per salire, dalla più economica, con il **costo a creazione** e il
   **costo a punto** (prezzi della scansione d'asta, di Auctionator o di TSM; per le gialle e le
   verdi i punti sono una stima).
+- **Costo e valore delle tue ricette** (sempre, anche al livello massimo): per ogni ricetta il
+  costo comprando tutti i materiali, il costo **con i tuoi materiali** (solo quelli che mancano),
+  il valore di vendita (prezzo d'asta meno il 5%, per i pezzi prodotti) e il margine. Al livello
+  massimo le tabelle per salire spariscono e resta questa.
+- In fondo, quante ricette il gioco ha passato all'addon (conosciute e da imparare).
 - Le **ricette da imparare per salire**: quelle che non conosci ma che al tuo livello darebbero
   punti, con il costo e **come impararle** (istruttore, venditore, drop, specializzazione). Se
   nessuna ricetta che conosci dà più punti, in cima compare la migliore da imparare.
@@ -460,7 +469,8 @@ indicatori:
 - **Prezzo basso / nella media / alto:** il prezzo attuale confrontato con un prezzo di
   riferimento (oltre ±15% è basso o alto). Il riferimento è il valore di mercato di **TSM** (14
   giorni) se installato, altrimenti una **media mobile delle tue scansioni** (circa 7 giorni),
-  disponibile quando hai scansioni in giorni diversi. Il tooltip compare anche passando il
+  disponibile quando hai scansioni in giorni diversi (fino ad allora la riga dice "media non
+  ancora nota"). Il tooltip compare anche passando il
   mouse sugli oggetti della casa d'aste, quindi lo vedi mentre compri. Nella lista della spesa
   della scheda Professioni il costo è verde quando il prezzo è basso e arancione quando è alto.
 - **Liquidità:** quanto si vende l'oggetto (vedi la scheda Professioni, sezione Per l'oro).

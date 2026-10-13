@@ -27,6 +27,7 @@ local CHANCE = { [0] = 1, [1] = 0.5, [2] = 0.15 }   -- probabilita' stimata di u
 local PLAN_POINTS = 10                 -- la lista della spesa copre i prossimi 10 punti
 local MAX_BEST, MAX_FIRST = 5, 8       -- righe mostrate
 local MAX_SELL = 10                    -- righe della sezione "per l'oro"
+local MAX_VALUE = 10                   -- righe della tabella costo e valore
 local AH_CUT = 0.95                    -- commissione della casa d'aste: 5%
 local THIN_MARKET = 5                  -- meno pezzi in vendita: mercato piccolo
 local LEARN_RATIO = 0.5                -- ricetta da imparare consigliata se costa meno della meta' a punto
@@ -140,6 +141,8 @@ function C:Scan()
         return
     end
     self.otherExpansion = nil
+    -- Concentrazione e conoscenza: all'apertura i dati possono non essere pronti
+    pcall(ns.Gold.OnTradeSkillShow, ns.Gold)
     local ids = A.Call(T.GetAllRecipeIDs)
     if type(ids) ~= "table" then return end
     local recipes, locked = {}, {}
@@ -263,6 +266,40 @@ function C:Plan(baseID)
              shopping = shopping, total = total, unknown = unknown, toLearn = toLearn }
 end
 
+-- Costo e valore di ogni ricetta conosciuta: costo con tutti i materiali
+-- comprati, costo con i tuoi materiali (solo quelli che mancano), valore di
+-- vendita (prezzo d'asta meno la commissione, per i pezzi prodotti).
+function C:Values(baseID)
+    local scan = ns.db.craft and ns.db.craft[baseID]
+    if not scan then return nil end
+    local cache, list = {}, {}
+    for _, r in ipairs(scan.recipes) do
+        if #r.reagents > 0 then
+            local full, own, partial = 0, 0, false
+            for _, slot in ipairs(r.reagents) do
+                local have, p = SlotInfo(slot, cache)
+                if p then
+                    full = full + p * slot.qty
+                    own = own + p * math.max(0, slot.qty - have)
+                else
+                    partial = true
+                end
+            end
+            local out = (r.outs and r.outs[math.min(r.rank or 1, #r.outs)]) or r.out
+            local price = out and ns.Prices:Get(out)
+            local sale = price and price * AH_CUT * (r.qty or 1)
+            list[#list + 1] = { recipe = r, item = out, full = full, own = own, partial = partial,
+                                sale = sale, margin = sale and (sale - full) }
+        end
+    end
+    table.sort(list, function(a, b)
+        if (a.margin ~= nil) ~= (b.margin ~= nil) then return a.margin ~= nil end
+        if a.margin and b.margin and a.margin ~= b.margin then return a.margin > b.margin end
+        return a.full < b.full
+    end)
+    return list
+end
+
 -- Cosa conviene creare per venderlo: per ogni ricetta imparata che produce un
 -- oggetto con prezzo d'asta, il guadagno a creazione = prezzo (al netto della
 -- commissione) x pezzi prodotti - materiali ai prezzi d'asta.
@@ -363,6 +400,93 @@ function C:Selected(profs)
 end
 
 ---------------------------------------------------------------------------
+-- Attrezzi della professione: quelli che indossi e quelli in vendita
+---------------------------------------------------------------------------
+-- Slot degli attrezzi per posizione in GetProfessions: attrezzo, accessori
+local TOOL_SLOTS = { [1] = { 20, 21, 22 }, [2] = { 23, 24, 25 }, [5] = { 26, 27 }, [4] = { 28, 29, 30 } }
+-- SkillLine -> Enum.ItemProfessionSubclass (classe oggetto 19 = Professione)
+local TOOL_SUBCLASS = { [164] = 0, [165] = 1, [171] = 2, [182] = 3, [185] = 4, [186] = 5, [197] = 6,
+                        [202] = 7, [333] = 8, [356] = 9, [393] = 10, [755] = 11, [773] = 12 }
+
+local function LinkInfo(link)
+    if type(link) ~= "string" then return nil end
+    local id = tonumber(link:match("item:(%d+)"))
+    local info = id and ns.Prices:ItemInfo(id)
+    local lvl = C_Item and C_Item.GetDetailedItemLevelInfo and A.Call(C_Item.GetDetailedItemLevelInfo, link)
+    return { id = id, name = (info and info.name) or link:match("%[(.-)%]") or ("item:" .. tostring(id)),
+             quality = info and info.quality, level = tonumber(lvl) or 0 }
+end
+
+local QUALITY_COLOR = { [1] = { 1, 1, 1 }, [2] = { 0.12, 1, 0 }, [3] = { 0, 0.44, 0.87 }, [4] = { 0.64, 0.21, 0.93 } }
+
+function C:ToolRows(rows, p)
+    local L = ns.L
+    local slots = p.pos and TOOL_SLOTS[p.pos]
+    if not slots then return end
+    rows[#rows + 1] = { kind = "sub", text = L.CRAFT_TOOLS }
+    local widths, align = { 0.24, 0.56, 0.2 }, { "LEFT", "LEFT", "RIGHT" }
+    rows[#rows + 1] = { kind = "thead", widths = widths, align = align, cols = { L.CRAFT_COL_SLOT, L.CRAFT_COL_EQUIPPED, L.CRAFT_COL_LEVEL } }
+    local bestTool, bestGear = 0, 0
+    for i, slot in ipairs(slots) do
+        local e = LinkInfo(A.Call(GetInventoryItemLink, "player", slot))
+        if e then
+            if i == 1 then bestTool = e.level else bestGear = math.max(bestGear, e.level) end
+        end
+        rows[#rows + 1] = {
+            kind = "tr", widths = widths, align = align,
+            cols = { i == 1 and L.CRAFT_SLOT_TOOL or L.CRAFT_SLOT_GEAR, e and e.name or L.CRAFT_SLOT_EMPTY,
+                     e and e.level > 0 and tostring(e.level) or "-" },
+            colors = { { 0.75, 0.75, 0.75 }, e and QUALITY_COLOR[e.quality or 1] or { 1, 0.5, 0.3 } },
+        }
+    end
+    -- in vendita all'asta (indice costruito alla scansione)
+    local db = ns.Prices:DB()
+    local sub = TOOL_SUBCLASS[p.skillLine]
+    if not db.tools then
+        rows[#rows + 1] = { kind = "note", text = L.CRAFT_TOOLS_SCAN }
+    else
+        local exp = ns.Prices:CurrentExpansion()
+        local list = {}
+        for id, t in pairs(db.tools) do
+            if t.s == sub then
+                local info = ns.Prices:ItemInfo(id)
+                local price = ns.Prices:Get(id)
+                if info and price and (not exp or not info.expansionID or info.expansionID >= exp) then
+                    local lvl = C_Item and C_Item.GetDetailedItemLevelInfo and A.Call(C_Item.GetDetailedItemLevelInfo, id)
+                    list[#list + 1] = { id = id, name = info.name, quality = info.quality, tool = t.l == "INVTYPE_PROFESSION_TOOL",
+                                        level = tonumber(lvl) or 0, price = price }
+                end
+            end
+        end
+        table.sort(list, function(a, b)
+            if a.tool ~= b.tool then return a.tool end
+            if a.level ~= b.level then return a.level > b.level end
+            return a.price < b.price
+        end)
+        if #list == 0 then
+            rows[#rows + 1] = { kind = "note", text = L.CRAFT_TOOLS_NONE }
+        else
+            rows[#rows + 1] = { kind = "sub", text = L.CRAFT_TOOLS_AH }
+            local w2, a2 = { 0.44, 0.2, 0.14, 0.22 }, { "LEFT", "LEFT", "RIGHT", "RIGHT" }
+            rows[#rows + 1] = { kind = "thead", widths = w2, align = a2,
+                                cols = { L.MKT_COL_ITEM, L.CRAFT_COL_SLOT, L.CRAFT_COL_LEVEL, L.MKT_COL_PRICE } }
+            for i = 1, math.min(6, #list) do
+                local t = list[i]
+                local better = t.level > (t.tool and bestTool or bestGear)
+                rows[#rows + 1] = {
+                    kind = "tr", widths = w2, align = a2,
+                    cols = { t.name, t.tool and L.CRAFT_SLOT_TOOL or L.CRAFT_SLOT_GEAR,
+                             t.level > 0 and tostring(t.level) or "-", A.Money(t.price) },
+                    colors = { QUALITY_COLOR[t.quality or 1], nil, better and { 0.4, 1, 0.4 } or nil },
+                    link = { item = t.id }, linkTitle = t.name,
+                }
+            end
+        end
+    end
+    rows[#rows + 1] = { kind = "note", text = L.CRAFT_TOOLS_HOW }
+end
+
+---------------------------------------------------------------------------
 -- Sezione: livellamento
 ---------------------------------------------------------------------------
 function C:LevelRows(rows, p, guide, level, max)
@@ -405,6 +529,7 @@ function C:LevelRows(rows, p, guide, level, max)
         rows[#rows + 1] = { kind = "step", badge = ("%d-%d"):format(ph[1], ph[2]), text = ph[3],
                             badgeColor = (level >= ph[1] - 1 and level < ph[2]) and { 0.35, 0.65, 1 } or { 0.6, 0.6, 0.6 } }
     end
+    self:ToolRows(rows, p)
 end
 
 ---------------------------------------------------------------------------
@@ -428,7 +553,10 @@ function C:MakeRows(rows, p)
     local age = time() - (plan.scan.time or time())
 
     -- l'azione da fare subito
-    if plan.top then
+    local maxed = plan.scan.max and plan.scan.max > 0 and (plan.scan.level or 0) >= plan.scan.max
+    if maxed then
+        rows[#rows + 1] = { kind = "callout", style = "tip", title = L.CRAFT_MAXED_TITLE, text = L.CRAFT_MAXED_MAKE }
+    elseif plan.top then
         local text = L.CRAFT_TOP:format(plan.top.recipe.name, plan.topCrafts)
         if plan.top.cost then
             text = text .. " " .. L.CRAFT_TOP_COST:format(A.Money(plan.top.cost), A.Money(plan.top.cost * plan.topCrafts))
@@ -451,8 +579,8 @@ function C:MakeRows(rows, p)
         rows[#rows + 1] = { kind = "callout", style = "warn", text = L.CRAFT_NO_SKILLUPS }
     end
 
-    -- ricette per salire
-    if #plan.best > 0 then
+    -- ricette per salire (non al livello massimo)
+    if #plan.best > 0 and not maxed then
         rows[#rows + 1] = { kind = "sub", text = L.CRAFT_BEST }
         local widths, align = { 0.44, 0.12, 0.22, 0.22 }, { "LEFT", "RIGHT", "RIGHT", "RIGHT" }
         rows[#rows + 1] = { kind = "thead", cols = { L.CRAFT_COL_RECIPE, L.CRAFT_COL_POINTS, L.CRAFT_COL_CRAFT_COST, L.CRAFT_COL_PER_POINT },
@@ -471,6 +599,40 @@ function C:MakeRows(rows, p)
                 tooltip = tip, link = { spell = e.recipe.id }, linkTitle = e.recipe.name,
             }
         end
+    end
+
+    -- costo e valore di ogni ricetta che conosci
+    local values = self:Values(p.skillLine) or {}
+    if #values > 0 then
+        rows[#rows + 1] = { kind = "sub", text = L.CRAFT_VALUE }
+        local widths, align = { 0.34, 0.16, 0.16, 0.16, 0.18 }, { "LEFT", "RIGHT", "RIGHT", "RIGHT", "RIGHT" }
+        rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
+                            cols = { L.CRAFT_COL_RECIPE, L.CRAFT_COL_FULL, L.CRAFT_COL_OWN, L.CRAFT_COL_SALE, L.CRAFT_COL_MARGIN } }
+        for i = 1, math.min(MAX_VALUE, #values) do
+            local v = values[i]
+            local r = v.recipe
+            local star = v.partial and "*" or ""
+            local tip = { r.name }
+            for _, l in ipairs(ReagentLines(r, cache)) do tip[#tip + 1] = l end
+            tip[#tip + 1] = L.CRAFT_VALUE_TIP_FULL:format(A.Money(v.full) .. star)
+            tip[#tip + 1] = L.CRAFT_VALUE_TIP_OWN:format(A.Money(v.own) .. star)
+            if v.sale then
+                tip[#tip + 1] = L.CRAFT_VALUE_TIP_SALE:format(ItemName(v.item), A.Money(v.sale))
+            else
+                tip[#tip + 1] = L.CRAFT_VALUE_TIP_NOSALE
+            end
+            local margin = v.margin and ((v.margin < 0 and "-" or "") .. A.Money(math.abs(v.margin)) .. star) or "-"
+            rows[#rows + 1] = {
+                kind = "tr", icon = r.icon, widths = widths, align = align,
+                cols = { r.name, A.Money(v.full) .. star, v.own > 0 and (A.Money(v.own) .. star) or L.CRAFT_OWN_ALL,
+                         v.sale and A.Money(v.sale) or "-", margin },
+                colors = { DIFF_COLOR[r.diff], nil, v.own < v.full and { 0.4, 1, 0.4 } or nil, nil,
+                           v.margin and (v.margin > 0 and { 0.4, 1, 0.4 } or { 1, 0.4, 0.3 }) or nil },
+                tooltip = tip, link = { spell = r.id }, linkTitle = r.name,
+            }
+        end
+        if #values > MAX_VALUE then rows[#rows + 1] = { kind = "note", text = L.CRAFT_MORE:format(#values - MAX_VALUE) } end
+        rows[#rows + 1] = { kind = "note", text = L.CRAFT_VALUE_HOW }
     end
 
     -- prime creazioni
@@ -496,7 +658,9 @@ function C:MakeRows(rows, p)
     end
 
     -- ricette da imparare che darebbero punti, con come impararle
-    if #plan.toLearn > 0 then
+    if maxed then
+        -- al livello massimo non servono
+    elseif #plan.toLearn > 0 then
         rows[#rows + 1] = { kind = "sub", text = L.CRAFT_TO_LEARN:format(#plan.toLearn) }
         local widths, align = { 0.34, 0.1, 0.18, 0.38 }, { "LEFT", "RIGHT", "RIGHT", "LEFT" }
         rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
@@ -553,6 +717,7 @@ function C:MakeRows(rows, p)
         if plan.unknown > 0 and hasPrices then rows[#rows + 1] = { kind = "note", text = L.CRAFT_SHOP_UNKNOWN } end
         if marked then rows[#rows + 1] = { kind = "note", text = L.CRAFT_SHOP_PRICE } end
     end
+    rows[#rows + 1] = { kind = "note", text = L.CRAFT_READ_COUNT:format(#plan.scan.recipes, #(plan.scan.locked or {})) }
     rows[#rows + 1] = { kind = "note", text = L.CRAFT_SCAN_AGE:format(A.TimeText(math.max(60, age))) }
 end
 

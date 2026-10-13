@@ -406,6 +406,8 @@ function M:HookTooltips()
             if pl then
                 local c = ns.Prices.PRICE_COLORS[pl.level]
                 tooltip:AddDoubleLine(L.TT_PRICE_LEVEL, ns.Prices:PriceLevelText(pl), 0.4, 0.8, 1, c[1], c[2], c[3])
+            elseif price then
+                tooltip:AddDoubleLine(L.TT_PRICE_LEVEL, L.PL_UNKNOWN, 0.4, 0.8, 1, 0.6, 0.6, 0.6)
             end
             local liq = price and ns.Prices:Liquidity(itemID)
             if liq then

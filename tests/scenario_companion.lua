@@ -337,6 +337,21 @@ do
     ClickPill(C.L.CRAFT_SEC_make)
     Dump("craft")
 end
+-- attrezzi (nel livellamento) e professione al livello massimo
+do
+    local acc = {}
+    for id, e in pairs(C.Prices:DB().items) do acc[id] = { p = e.p, q = e.q } end
+    acc[4001] = { p = 15000000, q = 2 }; acc[4003] = { p = 1000000, q = 5 }
+    C.Prices:FinishScan(acc, 12)
+    ClickPill(C.L.CRAFT_SEC_level)
+    Dump("craft")
+    MOCK.tsLevel = 100
+    MOCK.fire("TRADE_SKILL_SHOW")
+    ClickPill(C.L.CRAFT_SEC_make)
+    Dump("craft")
+    MOCK.tsLevel = nil
+    MOCK.fire("TRADE_SKILL_SHOW")
+end
 ClickPill(C.L.CRAFT_SEC_specs)
 ClickPill("Transmutes")                               -- un'altra build dal selettore
 print("build scelta per Alchemy:", C.db.craftBuild.alchemy)

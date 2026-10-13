@@ -204,7 +204,7 @@ C_TradeSkillUI = {
     GetBaseProfessionInfo = function() return { professionID = 171 } end,
     GetChildProfessionInfo = function()
         return { professionID = MOCK.tsChild or 2906, professionName = MOCK.tsChild and "Dragon Isles Alchemy" or "Midnight Alchemy",
-                 skillLevel = 37, maxSkillLevel = 100 }
+                 skillLevel = MOCK.tsLevel or 37, maxSkillLevel = 100 }
     end,
     GetConcentrationCurrencyID = function(id) return 3200 end,
 }
@@ -242,6 +242,10 @@ MOCK.items = {
     [1014] = { "Sunfire Flask (rank 1)", 1, 100, 0, 3, 0, 11, false },
     [1015] = { "Sunfire Flask (rank 2)", 1, 100, 0, 3, 0, 11, false },
     [1016] = { "Elixir of the Coiled Isle", 1, 100, 0, 2, 0, 11, false },
+    -- attrezzi di Alchemy (classe 19, sottoclasse 2)
+    [4001] = { "Sin'dorei Alembic", 3, 1000, 19, 2, 0, 11, false, "INVTYPE_PROFESSION_TOOL" },
+    [4002] = { "Old Alembic", 2, 500, 19, 2, 1, 11, false, "INVTYPE_PROFESSION_TOOL" },
+    [4003] = { "Dragon Isles Alembic", 3, 500, 19, 2, 0, 9, false, "INVTYPE_PROFESSION_TOOL" },
     -- equipaggiamento (9 = tipo di slot)
     [2001] = { "Sunfire Bracers", 3, 1000, 4, 3, 1, 11, false, "INVTYPE_WRIST" },
     [2002] = { "Old Ring", 2, 500, 4, 0, 1, 11, false, "INVTYPE_FINGER" },
@@ -275,6 +279,7 @@ MOCK.auctions = {
     { 1012, 3, 3 * 1200000.0 },                                         -- pozione: mercato piccolo
     { 1014, 50, 50 * 200000.0 }, { 1015, 30, 30 * 600000.0 },          -- flask per rango
     { 1016, 12, 12 * 900000.0 },                                         -- elisir di una ricetta da imparare
+    { 4001, 2, 2 * 15000000.0 }, { 4003, 5, 5 * 1000000.0 },          -- attrezzi: attuale e vecchia espansione
 }
 C_AuctionHouse = {
     ReplicateItems = function() MOCK.fire("REPLICATE_ITEM_LIST_UPDATE") end,
@@ -303,8 +308,8 @@ MOCK.wq = {
     [9002] = { money = 0, items = { { "Old Ring", 3, 1, 2, true, 2002, 270 }, { "Voidtouched Cloak", 4, 1, 3, true, 2003, 300 } },
                reps = { { factionID = 2601, rewardAmount = 75 }, { factionID = 2602, rewardAmount = 75 } } },
 }
-MOCK.equip = { [9] = "item:3009", [11] = "item:3011", [12] = "item:3012", [15] = "item:3015" }
-MOCK.linkLevel = { ["item:3009"] = 290, ["item:3011"] = 300, ["item:3012"] = 295, ["item:3015"] = 296,
+MOCK.equip = { [9] = "item:3009", [11] = "item:3011", [12] = "item:3012", [15] = "item:3015", [20] = "item:4002" }
+MOCK.linkLevel = { ["item:4002"] = 250, [4001] = 280, [4003] = 240, ["item:3009"] = 290, ["item:3011"] = 300, ["item:3012"] = 295, ["item:3015"] = 296,
                    ["item:2001"] = 305, ["item:2002"] = 270, ["item:2003"] = 300 }
 MOCK.linkStats = {
     ["item:2001"] = { ITEM_MOD_MASTERY_RATING_SHORT = 50, ITEM_MOD_HASTE_RATING_SHORT = 30, ITEM_MOD_AGILITY_SHORT = 80 },

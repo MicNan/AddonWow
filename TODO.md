@@ -71,6 +71,10 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
 - [x] **Cosa creare: costo totale e ricette da imparare** (0.14.0): costo a creazione e totale,
       ricette non imparate che darebbero punti con la fonte, consiglio quando impararne una
       conviene. Da verificare in gioco.
+- [x] **Dopo le prime prove in gioco** (0.15.0): costo e valore di ogni ricetta (anche con i
+      tuoi materiali), professione al massimo senza avvisi fuorvianti, conteggio delle ricette
+      lette, riga "media non ancora nota" nel tooltip, Concentrazione letta a finestra pronta,
+      riquadro "I tuoi attrezzi".
 
 ## 4. RotAssist per altre classi
 
