@@ -108,12 +108,13 @@ MOCK.pois = {
     [101] = { areaPoiID = 101, name = "Shadowguard Point", atlasName = "delves-bountiful", position = { x = 0.4, y = 0.5 } },
     [102] = { areaPoiID = 102, name = "Sunkiller Sanctum", atlasName = "delves-regular",   position = { x = 0.6, y = 0.2 } },
     [103] = { areaPoiID = 103, name = "Earthcrawl Mines",  atlasName = "delves-regular",   position = { x = 0.3, y = 0.3 } },
+    [104] = { areaPoiID = 104, name = "Labyrinth of Kindo'jan", atlasName = "delves-bountiful", position = { x = 0.63, y = 0.722 } },
     [201] = { areaPoiID = 201, name = "Harvest Festival",  atlasName = "event", position = { x = 0.5, y = 0.5 },
               description = "Evento di prova", isCurrentEvent = true },
 }
 C_AreaPoiInfo = {
     GetDelvesForMap = function(id)
-        if id == 2395 then return { 101, 102 } end
+        if id == 2395 then return { 101, 102, 104 } end
         if id == 2437 then return { 101 } end       -- duplicato su un'altra mappa
         if id == 2214 then return { 103 } end
         return {}
@@ -339,9 +340,10 @@ MOCK.factions = {
     [2600] = { name = "Silvermoon Court", renownLevel = 12, renownReputationEarned = 2000, renownLevelThreshold = 2500, isUnlocked = true },
     [2601] = { name = "Amani Tribe", renownLevel = 8, renownReputationEarned = 500, renownLevelThreshold = 2500, isUnlocked = true },
     [2602] = { name = "Hara'ti", renownLevel = 20, renownReputationEarned = 0, renownLevelThreshold = 2500, isUnlocked = true },
+    [2700] = { name = "Labyrinth Journey", renownLevel = 2, renownReputationEarned = 1200, renownLevelThreshold = 3000, isUnlocked = true },
 }
 C_MajorFactions = {
-    GetMajorFactionIDs = function() return { 2600, 2601, 2602 } end,
+    GetMajorFactionIDs = function() return MOCK.factionIDs or { 2600, 2601, 2602 } end,
     GetMajorFactionData = function(id) return MOCK.factions[id] end,
     HasMaximumRenown = function(id) return id == 2602 end,
 }

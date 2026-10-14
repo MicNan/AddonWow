@@ -48,7 +48,8 @@ Le sue sei schede coprono:
   Log e reset) e le attività consigliate per obiettivo (equipaggiamento, Great Vault,
   reputazione, oro), con le ricompense delle world quest confrontate con il tuo equipaggiamento
   e con la priorità delle statistiche della tua specializzazione (tutte le 40).
-- **Delve:** delve attive con le abbondanti in evidenza, chiavi, compagno.
+- **Delve:** delve attive con le abbondanti in evidenza, chiavi, compagno e il Labirinto di
+  Kindo'jan (Journey, ingresso, come funziona, ricompense).
 - **Levelling:** XP/ora e zone adatte al tuo livello.
 - **Professioni:** Concentrazione e punti conoscenza, guida al livellamento secondo il tuo
   livello, cosa creare adesso al costo più basso, cosa comprare in base a quello che hai già,

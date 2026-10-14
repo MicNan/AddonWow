@@ -14,7 +14,10 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
 
 ## 0. Verifica in gioco
 
-- [ ] Controlli dopo la patch 12.1.5 del 13 ottobre (API, ID delle mappe e delle valute, portali).
+- [x] Note della patch 12.1.5 lette (14 ottobre): Hunter e Shaman senza modifiche alla rotazione
+      di RotAssist (rimosso Unload di Marksmanship, che RotAssist non usava; correzioni di bug).
+      Companion 0.16.0: Labirinto di Kindo'jan nella scheda Delve, novità settimanali in Oggi.
+- [ ] Controlli in gioco dopo la 12.1.5 (API, ID delle mappe e delle valute, portali, Labirinto).
 - [ ] Larghezze, altezze delle righe, tabelle e colori delle sei schede (oggi provati solo in
       simulazione), anche con il client in italiano.
 - [ ] Scansione d'asta corretta (una sola elaborazione per scansione).

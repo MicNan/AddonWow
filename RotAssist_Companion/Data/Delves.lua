@@ -5,6 +5,12 @@
 --
 -- Una delve e' considerata abbondante se l'atlas della sua icona contiene
 -- "bountiful" (come in The War Within). VERIFICARE in gioco con la scheda.
+--
+-- Labirinto di Kindo'jan (patch 12.1.5): una "mega-delve" di 9 stanze con un
+-- suo Journey (rinomanza). Ha un riquadro dedicato: ingresso con percorso,
+-- come sbloccarlo, come funziona, ricompense e ranghi del Journey. Il Journey
+-- si cerca tra le fazioni maggiori per nome; se il gioco lo elenca tra le
+-- delve, la riga del labirinto esce dalla tabella delle delve.
 
 local _, ns = ...
 local A = ns.API
@@ -14,6 +20,70 @@ ns.Delves = D
 
 local CURRENCY_KEYS   = 3028  -- Restored Coffer Key (verificato su Wowhead, ancora in uso in Midnight)
 local CURRENCY_SHARDS = 3310  -- Coffer Key Shards
+
+-- Ingresso del Labirinto: Eversong Woods (2395), a nord dell'Amani Pass
+local LABYRINTH = { map = 2395, x = 0.630, y = 0.722 }
+local LABYRINTH_RANKS = 9
+
+local function IsLabyrinth(name)
+    return type(name) == "string" and name:lower():find("kindo", 1, true) ~= nil
+end
+D.IsLabyrinth = IsLabyrinth
+
+-- Journey del Labirinto: fazione maggiore con "Labyrinth", "Labirinto" o
+-- "Kindo" nel nome. { name, level, earned, threshold } o nil.
+function D:LabyrinthJourney()
+    local MF = C_MajorFactions
+    if not (MF and MF.GetMajorFactionIDs and MF.GetMajorFactionData) then return nil end
+    local exp = A.Call(GetServerExpansionLevel) or A.Call(GetExpansionLevel)
+    local ids = A.Call(MF.GetMajorFactionIDs, exp)
+    for _, id in ipairs(type(ids) == "table" and ids or {}) do
+        local d = A.Call(MF.GetMajorFactionData, id)
+        local name = type(d) == "table" and type(d.name) == "string" and d.name:lower() or ""
+        if name:find("labyrinth", 1, true) or name:find("labirint", 1, true) or name:find("kindo", 1, true) then
+            return { id = id, name = d.name, level = d.renownLevel or 0, earned = d.renownReputationEarned or 0,
+                     threshold = tonumber(d.renownLevelThreshold) or 0, unlocked = d.isUnlocked ~= false }
+        end
+    end
+    return nil
+end
+
+-- Riquadro del Labirinto di Kindo'jan
+function D:LabyrinthRows(rows)
+    local L = ns.L
+    rows[#rows + 1] = { header = L.HDR_LABYRINTH }
+    local j = self:LabyrinthJourney()
+    if j and j.unlocked then
+        local maxed = j.level >= LABYRINTH_RANKS
+        rows[#rows + 1] = { kind = "bar", min = 0, max = LABYRINTH_RANKS, value = math.min(j.level, LABYRINTH_RANKS),
+                            color = { 0.55, 0.45, 0.95 }, label = L.LAB_JOURNEY:format(j.level, LABYRINTH_RANKS),
+                            right = (not maxed and j.threshold > 0) and L.LAB_JOURNEY_NEXT:format(j.earned, j.threshold) or nil }
+    else
+        rows[#rows + 1] = { kind = "callout", style = "info", title = L.LAB_UNLOCK_TITLE, text = L.LAB_UNLOCK }
+    end
+    rows[#rows + 1] = { text = L.LAB_ENTRANCE, icon = "Interface\\Icons\\INV_Misc_Map_01",
+                        waypoint = { LABYRINTH.map, LABYRINTH.x, LABYRINTH.y, L.LAB_NAME },
+                        link = { search = L.LAB_NAME }, linkTitle = L.LAB_NAME }
+    rows[#rows + 1] = { kind = "callout", style = "warn", text = L.LAB_NO_SAVE }
+    rows[#rows + 1] = { kind = "sub", text = L.LAB_HOW_TITLE }
+    for i, line in ipairs(L.LAB_HOW) do
+        rows[#rows + 1] = { kind = "step", badge = tostring(i), badgeColor = { 0.55, 0.45, 0.95 }, text = line }
+    end
+    rows[#rows + 1] = { kind = "sub", text = L.LAB_REWARDS_TITLE }
+    local widths = { 0.4, 0.6 }
+    for _, r in ipairs(L.LAB_REWARDS) do
+        rows[#rows + 1] = { kind = "tr", widths = widths, cols = { r[1], r[2] }, colors = { { 1, 0.82, 0 }, { 0.85, 0.85, 0.85 } } }
+    end
+    rows[#rows + 1] = { kind = "sub", text = L.LAB_RANKS_TITLE }
+    local level = j and j.level or 0
+    for i, line in ipairs(L.LAB_RANKS) do
+        local done = i <= level
+        rows[#rows + 1] = { kind = "step", badge = tostring(i), text = line,
+                            badgeColor = done and { 0.4, 1, 0.4 } or (i == level + 1 and { 0.55, 0.45, 0.95 } or { 0.6, 0.6, 0.6 }),
+                            color = done and { 0.6, 0.6, 0.6 } or nil }
+    end
+    rows[#rows + 1] = { kind = "note", text = L.LAB_SOURCE }
+end
 
 local function IsBountiful(info)
     local atlas = info.atlasName and tostring(info.atlasName):lower() or ""
@@ -118,11 +188,13 @@ function D:Rows()
         end
     end
 
+    self:LabyrinthRows(rows)
+
     rows[#rows + 1] = { header = L.HDR_DELVES }
     local n = 0
     local widths, align = { 0.46, 0.34, 0.2 }, { "LEFT", "LEFT", "RIGHT" }
     for _, d in ipairs(self:List()) do
-        if d.bountiful or not only then
+        if (d.bountiful or not only) and not IsLabyrinth(d.name) then
             if n == 0 then
                 rows[#rows + 1] = { kind = "thead", widths = widths, align = align,
                                     cols = { L.DELVE_COL_NAME, L.DELVE_COL_ZONE, L.DELVE_COL_STATE } }
@@ -148,7 +220,7 @@ end
 function D:Summary()
     local names = {}
     for _, d in ipairs(self:List()) do
-        if d.bountiful then names[#names + 1] = d.name end
+        if d.bountiful and not IsLabyrinth(d.name) then names[#names + 1] = d.name end
     end
     local keys = self:Keys()
     return names, keys and keys.quantity

@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.15.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.16.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -12,7 +12,7 @@ confermate in gioco (vedi "Da verificare in gioco").
 | Scheda | Contenuto | Fonte (API di Blizzard) |
 |---|---|---|
 | **Oggi** | **Riepilogo** (cosa fare adesso per ogni obiettivo, eventi e festività, world quest in scadenza con la ricompensa, Traveler's Log e reset) e attività consigliate per **obiettivo** (equipaggiamento, Great Vault, reputazione, oro): world quest confrontate con il tuo equipaggiamento e con la priorità delle statistiche, slot della Vault, fazioni più vicine al prossimo Renown | `C_TaskQuest`, ricompense delle missioni, `C_Calendar`, `C_AreaPoiInfo.GetEventsForMap`, `C_Item.GetItemStats`, `C_WeeklyRewards`, `C_PerksActivities`, `C_MajorFactions`, `C_ClassTalents` |
-| **Delve** | Restored Coffer Key, Coffer Key Shards della settimana, livello del compagno; tabella delle delve attive su tutte le mappe, con le **abbondanti** in cima (filtro in cima: tutte o solo abbondanti) | `C_AreaPoiInfo.GetDelvesForMap`, `C_CurrencyInfo`, `C_DelvesUI`, `C_GossipInfo` |
+| **Delve** | Restored Coffer Key, Coffer Key Shards della settimana, livello del compagno; **Labirinto di Kindo'jan** (Journey, ingresso con percorso, come sbloccarlo, come funziona, ricompense); tabella delle delve attive su tutte le mappe, con le **abbondanti** in cima (filtro in cima: tutte o solo abbondanti) | `C_AreaPoiInfo.GetDelvesForMap`, `C_CurrencyInfo`, `C_DelvesUI`, `C_GossipInfo`, `C_MajorFactions` |
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, tabelle della zona attuale e delle zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
 | **Professioni** | per ogni tua professione: Concentrazione e punti conoscenza da spendere, la fase della guida in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa creare per l'oro (guadagno a creazione e liquidità, anche delle ricette da imparare), ordini di lavoro con il guadagno netto, cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
 | **Oro** | tre sezioni con il **profilo** di gioco (occasionale, medio, assiduo) in cima: **Strategie** per le tue professioni, **Borse e prezzi** (cosa mettere all'asta e cosa vendere al vendor), **Da farmare** (materiali di Midnight per il tuo profilo e sessione di farm con oro all'ora reale) | `GetProfessions`, `C_AuctionHouse.ReplicateItems`, `C_Container`, `C_Item` |
@@ -95,6 +95,31 @@ della patch 12.0.1) e per gli Earthshrine, la pagina dell'oggetto su Wowhead per
   teletrasporto.
 - Le coordinate vanno aggiornate se Blizzard sposta i portali; la tabella è in
   `Data/Travel.lua`.
+
+## Labirinto di Kindo'jan (12.1.5)
+
+La patch 12.1.5 ha aggiunto il primo **Labirinto**, una "mega-delve" di 9 stanze con Valeera
+come compagna. La scheda **Delve** ha un riquadro dedicato:
+- **Journey del Labirinto:** barra del rango (1-9) con i punti al prossimo; il Journey si
+  riconosce tra le fazioni maggiori dal nome. Se non c'è ancora, il riquadro spiega come
+  sbloccarlo: missione The Labyrinth da Kul'amara the Fierce a Tokka's Landing (o dalla Guida
+  alle avventure o davanti all'ingresso).
+- **Ingresso:** Eversong Woods 63.0, 72.2, a nord dell'Amani Pass; clic per il percorso.
+- **Come funziona:** stanze che cambiano a ogni ingresso; ogni 3 stanze 2 Heavy Trunk, un
+  Bountiful Coffer e una delve nella Great Vault; 3 stanze per sbloccare la difficoltà
+  successiva (1-11); il boss Kindo'jan dopo le 9 stanze in un solo giro a livello 8+; Wah'du
+  ogni settimana. Uscire non salva i progressi.
+- **Ricompense:** Heroic Soul Fragment (3 = un pezzo Hero 2/6), Blessed Loa Armament (Hero 1/5
+  a scelta), Mythical Soul Fragment da Wah'du (3 = un pezzo Myth 1/6 a scelta), il forziere di
+  Kindo'jan, la cavalcatura da solo a livello 11.
+- **Ranghi del Journey** con cosa sblocca ciascuno, in verde quelli già raggiunti.
+
+Il Labirinto esce dalla tabella delle delve e dal riepilogo delle delve abbondanti (lo è
+sempre). Nella scheda **Oggi** le attività settimanali comprendono Labirinto, Wah'du, Invasioni
+Aqir, il Nebulous Voidcore in più da Orin, le Ascendant Venomstones (dal 20 ottobre) e il raid
+The Unbinding of Kith'ix.
+
+**Fonti.** Note della patch 12.1.5 e guide pubbliche sul Labirinto, riassunte con parole nostre.
 
 ## Pet da cacciatore
 
@@ -573,6 +598,8 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
     cliente, `npcOrderRewards`, `consortiumCut`).
 14. **Cucina e Pesca:** ID delle professioni di Midnight (Cucina 2908, Pesca 2911), livello
     massimo della Pesca (300) e lettura delle ricette di Cucina con la finestra aperta.
+15. **Labirinto:** nome del Journey tra le fazioni maggiori (in italiano potrebbe non contenere
+    "Labirinto"), coordinate dell'ingresso e se il gioco elenca il Labirinto tra le delve.
 
 ## Installazione
 

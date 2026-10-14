@@ -93,6 +93,12 @@ for _, row in ipairs(C.Panel.rows) do
 end
 print("TomTom:", tostring(MOCK.tomtom))
 
+-- Labirinto: con il Journey sbloccato (rango 2)
+MOCK.factionIDs = { 2600, 2601, 2602, 2700 }
+Dump("delves")
+print("Journey del labirinto:", C.Delves:LabyrinthJourney() and C.Delves:LabyrinthJourney().level)
+MOCK.factionIDs = nil
+
 -- filtro solo abbondanti
 C:Set("onlyBountiful", true)
 local n = 0
