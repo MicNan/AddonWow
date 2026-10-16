@@ -449,6 +449,39 @@ Dump("craft")
 MOCK.profs[4], MOCK.profs[5] = nil, nil
 C.db.craftProf, C.db.craftSection = nil, "level"
 
+-- ===================== Settimana =====================
+print("--- settimana")
+SlashCmdList.ROTASSISTCOMPANION("settimana")
+Dump("week")
+ClickPill(C.L.WEEK_MARK_DONE)                         -- Apex Cache fatta a mano
+ClickPill(C.L.WEEK_ADD_ONE)                           -- una caccia Prey
+ClickPill(C.L.WEEK_ADD_ONE)
+MOCK.savedWorldBoss = "Nymrissa Wavecaller"           -- boss del mondo: blocco settimanale
+Dump("week")
+local st = C.WeekTasks:State()
+print("settimana: apex", st.done.apex, "| prey", st.prey, "| boss", C.WeekTasks:WorldBossDone())
+-- avviso Prey entrando a Zul'Aman senza caccia attiva, poi con una caccia nel registro
+MOCK.playerMap = 2437
+MOCK.fire("ZONE_CHANGED_NEW_AREA")
+MOCK.fire("ZONE_CHANGED_NEW_AREA")                    -- una volta sola per zona
+MOCK.questLog = { "Prey: Ral'kala the Venomous" }
+MOCK.playerMap = 2395
+MOCK.fire("ZONE_CHANGED_NEW_AREA")
+print("caccia attiva:", C.WeekTasks:PreyActive())
+MOCK.questLog, MOCK.savedWorldBoss = nil, nil
+-- missioni consegnate e ID noti
+MOCK.fire("QUEST_TURNED_IN", 93001, 0, 0)
+SlashCmdList.ROTASSISTCOMPANION("missioni")
+C.WeekTasks.WEEKLY_QUESTS.abundance = { 93001 }
+MOCK.completed = { [93001] = true }
+print("abbondanza fatta (ID noto):", C.WeekTasks:Done("abundance"))
+MOCK.completed = nil
+C.WeekTasks.WEEKLY_QUESTS.abundance = {}
+-- reset settimanale: tutto azzerato
+C.db.week.key = 1
+print("dopo il reset: prey", C.WeekTasks:State().prey, "| apex", C.WeekTasks:State().done.apex)
+MOCK.playerMap = nil
+
 -- ===================== Attivita' =====================
 print("--- attivita'")
 SlashCmdList.ROTASSISTCOMPANION("oggi")

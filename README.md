@@ -43,11 +43,14 @@ RotAssist parte dal suggerimento nativo di **Assisted Combat**
 ## RotAssist Companion
 
 Secondo addon del repository, indipendente da RotAssist e attivo solo fuori dal combattimento.
-Le sue sei schede coprono:
+Le sue sette schede coprono:
 - **Oggi:** un riepilogo (cosa fare adesso, eventi e festività, world quest in scadenza, Traveler's
   Log e reset) e le attività consigliate per obiettivo (equipaggiamento, Great Vault,
   reputazione, oro), con le ricompense delle world quest confrontate con il tuo equipaggiamento
   e con la priorità delle statistiche della tua specializzazione (tutte le 40).
+- **Settimana:** le attività settimanali consigliate (Apex Cache, cacce Prey, delve abbondanti,
+  boss del mondo, Abbondanza) con stato, dove andare e link a una guida; avviso entrando in
+  Midnight senza una caccia Prey attiva.
 - **Delve:** delve attive con le abbondanti in evidenza, chiavi, compagno e il Labirinto di
   Kindo'jan (Journey, ingresso, come funziona, ricompense).
 - **Levelling:** XP/ora e zone adatte al tuo livello.

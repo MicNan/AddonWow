@@ -18,6 +18,7 @@ ns.defaults = {
     onlyBountiful = false,       -- scheda Delve: solo le abbondanti
     playerType    = "medium",    -- strategie sull'oro: casual | medium | hardcore
     tooltipPrices = true,        -- prezzi d'asta e vendor nei tooltip degli oggetti
+    preyWarning   = true,        -- avviso entrando in Midnight senza una caccia Prey attiva
     petAlerts     = true,        -- avviso quando un pet raro compare sulla minimappa
     ownedPets     = {},          -- creatureID dei pet nella stalla
     petSeen       = {},          -- ultima posizione vista dei pet rari

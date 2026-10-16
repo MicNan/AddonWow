@@ -18,7 +18,7 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
       di RotAssist (rimosso Unload di Marksmanship, che RotAssist non usava; correzioni di bug).
       Companion 0.16.0: Labirinto di Kindo'jan nella scheda Delve, novità settimanali in Oggi.
 - [ ] Controlli in gioco dopo la 12.1.5 (API, ID delle mappe e delle valute, portali, Labirinto).
-- [ ] Larghezze, altezze delle righe, tabelle e colori delle sei schede (oggi provati solo in
+- [ ] Larghezze, altezze delle righe, tabelle e colori delle sette schede (oggi provati solo in
       simulazione), anche con il client in italiano.
 - [ ] Scansione d'asta corretta (una sola elaborazione per scansione).
 - [ ] RotAssist in una delve (AoE) e le nuove specializzazioni con `/rotassist verify`.
@@ -78,6 +78,12 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
       tuoi materiali), professione al massimo senza avvisi fuorvianti, conteggio delle ricette
       lette, riga "media non ancora nota" nel tooltip, Concentrazione letta a finestra pronta,
       riquadro "I tuoi attrezzi".
+
+## Scheda Settimana (0.17.0)
+
+- [x] Attività settimanali con stato, dove andare e guida; avviso Prey entrando in Midnight.
+- [ ] ID delle missioni settimanali (Apex Cache, Abbondanza) e delle cacce Prey da `/rac missioni`,
+      per lo stato automatico.
 
 ## 4. RotAssist per altre classi
 

@@ -35,6 +35,7 @@ local AUTO_REFRESH = 30
 
 local TABS = {
     { key = "today",    label = "TAB_TODAY",    source = function() return ns.Activities end },
+    { key = "week",     label = "TAB_WEEK",     source = function() return ns.WeekTasks end },
     { key = "delves",   label = "TAB_DELVES",   source = function() return ns.Delves end },
     { key = "leveling", label = "TAB_LEVELING", source = function() return ns.Leveling end },
     { key = "craft",    label = "TAB_CRAFT",    source = function() return ns.Craft end },
@@ -44,7 +45,7 @@ local TABS = {
 
 -- Schede delle versioni precedenti: dove sono finite (scheda, vista)
 local OLD_TABS = {
-    events = { "today", "summary" }, weekly = { "today", "vault" }, activities = { "today" },
+    events = { "today", "summary" }, weekly = { "week" }, activities = { "today" },
     market = { "gold", "bags" },
 }
 P.OLD_TABS = OLD_TABS

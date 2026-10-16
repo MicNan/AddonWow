@@ -136,7 +136,15 @@ C_QuestLog = {
     IsWorldQuest = function() return true end,
     GetQuestTagInfo = function(id) return { tagName = "World Quest", isElite = id == 9002 } end,
     GetNumQuestLogEntries = function() return 30, 28 end,
+    GetInfo = function(i) local t = MOCK.questLog and MOCK.questLog[i]; if t then return { title = t, isHeader = false } end end,
+    IsQuestFlaggedCompleted = function(id) return MOCK.completed and MOCK.completed[id] or false end,
+    GetTitleForQuestID = function(id) return "Quest " .. id end,
 }
+-- boss del mondo bloccati e messaggi a schermo
+GetNumSavedWorldBosses = function() return MOCK.savedWorldBoss and 1 or 0 end
+GetSavedWorldBossInfo = function() return MOCK.savedWorldBoss, 1, 3600 end
+GetNumSavedInstances = function() return 0 end
+UIErrorsFrame = { AddMessage = function(_, msg) print("SCHERMO: " .. msg) end }
 C_CurrencyInfo = {
     GetCurrencyInfo = function(id)
         if id == 3028 then return { name = "Restored Coffer Key", quantity = 2, iconFileID = 1 } end

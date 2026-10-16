@@ -27,6 +27,10 @@ ns:On("PLAYER_ENTERING_WORLD", function(_, isInitialLogin, isReloadingUi)
     end
 end)
 
+-- scheda Settimana: avviso Prey entrando in una zona di Midnight, missioni consegnate
+ns:On("ZONE_CHANGED_NEW_AREA", function() ns:After(2, function() ns.WeekTasks:OnZoneChanged() end) end)
+ns:On("QUEST_TURNED_IN", function(_, questID) ns.WeekTasks:OnQuestTurnedIn(questID); ns.Panel:RequestRefresh() end)
+
 -- navigatore: passa al passo successivo quando cambia la zona
 for _, ev in ipairs({ "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED", "PLAYER_ENTERING_WORLD" }) do
     ns:On(ev, function() ns.Travel:Advance() end)

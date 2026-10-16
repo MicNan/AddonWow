@@ -187,8 +187,9 @@ local function UrlEncode(s)
     return (tostring(s):gsub("[^%w%-_%.~ ]", function(c) return ("%%%02X"):format(c:byte()) end):gsub(" ", "+"))
 end
 
--- link = { quest = id } | { spell = id } | { npc = id } | { search = "testo" }
+-- link = { quest = id } | { spell = id } | { npc = id } | { search = "testo" } | { url = "guida" }
 function ns:WowheadURL(link)
+    if link.url then return link.url end
     local loc = (GetLocale and WOWHEAD_LOCALE[GetLocale()]) or ""
     if link.quest then return ("https://www.wowhead.com/%squest=%d"):format(loc, link.quest) end
     if link.spell then return ("https://www.wowhead.com/%sspell=%d"):format(loc, link.spell) end
@@ -213,7 +214,7 @@ function ns:ShowLink(title, link)
             EditBoxOnEscapePressed = function(eb) eb:GetParent():Hide() end,
             timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
         }
-        StaticPopupDialogs.ROTASSIST_COMPANION_URL.text = self.L.WOWHEAD_POPUP
+        StaticPopupDialogs.ROTASSIST_COMPANION_URL.text = link.url and self.L.GUIDE_POPUP or self.L.WOWHEAD_POPUP
         if pcall(StaticPopup_Show, "ROTASSIST_COMPANION_URL", title or "", nil, url) then return end
     end
     self:Print("%s: %s", title or "", url)

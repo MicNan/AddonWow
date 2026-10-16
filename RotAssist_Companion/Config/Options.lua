@@ -54,6 +54,7 @@ function ns:RegisterSettings()
     Checkbox("notifyLogin", L.OPT_NOTIFY)
     Checkbox("onlyBountiful", L.OPT_ONLY_BOUNTIFUL)
     Checkbox("tooltipPrices", L.OPT_TOOLTIP_PRICES)
+    Checkbox("preyWarning", L.OPT_PREY_WARNING)
     Checkbox("petAlerts", L.OPT_PET_ALERTS)
     local profile = Register("playerType", VT.String or "string", L.OPT_PROFILE)
     local function ProfileOptions()
@@ -107,7 +108,7 @@ local TAB_ALIASES = {
     oggi = "today", today = "today",
     delve = "delves", delves = "delves",
     eventi = "events", events = "events", event = "events",
-    settimanale = "weekly", weekly = "weekly",
+    settimana = "week", settimanale = "week", weekly = "week", week = "week",
     levelling = "leveling", leveling = "leveling", level = "leveling",
     oro = "gold", gold = "gold", soldi = "gold",
     professioni = "craft", professione = "craft", prof = "craft", professions = "craft", craft = "craft",
@@ -138,6 +139,8 @@ local function Handler(msg)
     elseif cmd == "log" then
         if arg == "clear" then ns.db.log = {} end
         ns:Print("log: %d", #(ns.db.log or {}))
+    elseif cmd == "missioni" or cmd == "quests" then
+        ns.WeekTasks:PrintTurnedIn()
     elseif cmd == "farm" then
         ns.Market:ToggleSession()
     elseif cmd == "stop" then

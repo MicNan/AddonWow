@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.16.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.17.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -12,6 +12,7 @@ confermate in gioco (vedi "Da verificare in gioco").
 | Scheda | Contenuto | Fonte (API di Blizzard) |
 |---|---|---|
 | **Oggi** | **Riepilogo** (cosa fare adesso per ogni obiettivo, eventi e festività, world quest in scadenza con la ricompensa, Traveler's Log e reset) e attività consigliate per **obiettivo** (equipaggiamento, Great Vault, reputazione, oro): world quest confrontate con il tuo equipaggiamento e con la priorità delle statistiche, slot della Vault, fazioni più vicine al prossimo Renown | `C_TaskQuest`, ricompense delle missioni, `C_Calendar`, `C_AreaPoiInfo.GetEventsForMap`, `C_Item.GetItemStats`, `C_WeeklyRewards`, `C_PerksActivities`, `C_MajorFactions`, `C_ClassTalents` |
+| **Settimana** | le attività settimanali consigliate (Apex Cache di Lady Liadrin, cacce Prey, delve abbondanti con chiavi e frammenti, boss del mondo, Abbondanza) con stato, dove andare e il link a una guida; avviso a schermo entrando in una zona di Midnight senza una caccia Prey attiva | `C_QuestLog`, `GetSavedWorldBossInfo`, `GetSavedInstanceInfo`, `C_CurrencyInfo`, `C_DateAndTime` |
 | **Delve** | Restored Coffer Key, Coffer Key Shards della settimana, livello del compagno; **Labirinto di Kindo'jan** (Journey, ingresso con percorso, come sbloccarlo, come funziona, ricompense); tabella delle delve attive su tutte le mappe, con le **abbondanti** in cima (filtro in cima: tutte o solo abbondanti) | `C_AreaPoiInfo.GetDelvesForMap`, `C_CurrencyInfo`, `C_DelvesUI`, `C_GossipInfo`, `C_MajorFactions` |
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, tabelle della zona attuale e delle zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
 | **Professioni** | per ogni tua professione: Concentrazione e punti conoscenza da spendere, la fase della guida in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa creare per l'oro (guadagno a creazione e liquidità, anche delle ricette da imparare), ordini di lavoro con il guadagno netto, cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
@@ -95,6 +96,45 @@ della patch 12.0.1) e per gli Earthshrine, la pagina dell'oggetto su Wowhead per
   teletrasporto.
 - Le coordinate vanno aggiornate se Blizzard sposta i portali; la tabella è in
   `Data/Travel.lua`.
+
+## Settimana: attività da fare
+
+La scheda **Settimana** raccoglie le attività settimanali consigliate. In cima una barra con
+quante sono fatte e il tempo al reset; tutto si azzera da solo al reset settimanale (lo stato è
+per personaggio).
+
+| Attività | Cosa fare | Stato |
+|---|---|---|
+| **Apex Cache** | missione settimanale *Unity Against the Void* di Lady Liadrin (Silvermoon): una delle sue missioni a settimana, ricompensa Apex Cache | a mano (automatico quando ne conosco l'ID) |
+| **Cacce Prey** | le prime 4 cacce della settimana danno il grosso del Journey; contratti da Magister Astalor Bloodsworn (Murder Row, Silvermoon) | contatore 0/4 |
+| **Delve abbondanti** | 4 delve abbondanti con chiave (livello 8+ per Hero nella Vault), con chiavi e frammenti posseduti | contatore 0/4 |
+| **Boss del mondo** | Nymrissa Wavecaller nel Lair Tidebound Grotto (sud di Coiled Isle) | automatico dal blocco settimanale, oppure a mano |
+| **Abbondanza** | missione settimanale da 20.000 punti negli eventi Abbondanza (grotte in tutte le zone di Midnight; Loaknit Den a Zul'Aman) | a mano (automatico quando ne conosco l'ID) |
+
+Per ogni attività: cosa fare, **dove** (clic per il percorso quando la posizione è nota) e il
+**link a una guida** (clic destro, da copiare). Le guide sono pagine pubbliche (warcraft.wiki.gg,
+method.gg).
+
+**Avviso Prey.** Entrando in una zona di Midnight (Eversong Woods, Zul'Aman, Harandar,
+Voidstorm, Coiled Isle), se le cacce della settimana sono meno di 4 e nel registro delle missioni
+non c'è una caccia attiva, compare un avviso a schermo e in chat, una volta per zona. Si
+disattiva dalle opzioni.
+
+**Missioni settimanali.** Il gioco non dice a un addon "hai fatto la settimanale" se non conosce
+l'ID della missione. Dopo averle consegnate, `/rac missioni` elenca le ultime missioni
+consegnate con il loro ID: con quegli ID lo stato diventa automatico.
+
+**Verifica dell'elenco di partenza** (ottobre 2026):
+- *Apex Cache di Lady Liadrin:* corretto; la missione è *Unity Against the Void* (una a scelta
+  tra quattro), da lei si prende anche la Spark settimanale.
+- *Prey 0/4:* le cacce non sono limitate a 4, ma le prime 4 della settimana danno quasi tutto il
+  Journey. Astalor Bloodsworn è a Murder Row, nel suo santuario.
+- *Delve abbondanti 0/4:* 4 non è un limite del gioco; è un obiettivo utile per la Great Vault.
+- *Boss del mondo:* nella Season 2 è un Lair (Nymrissa Wavecaller); il blocco settimanale si
+  legge dal gioco.
+- *Abbondanza:* non è solo a Zul'Aman (le grotte sono in tutte e quattro le zone, la missione
+  settimanale dà reputazione con l'Amani Tribe) e non ho trovato un motivo per cui sia
+  prioritaria per il cacciatore.
 
 ## Labirinto di Kindo'jan (12.1.5)
 
@@ -527,8 +567,9 @@ conta cosa entra nelle borse e ne mostra il valore e l'oro all'ora. Se la sessio
 | Comando | Effetto |
 |---|---|
 | `/rac` | apre o chiude il pannello |
-| `/rac oggi` · `delve` · `levelling` · `professioni` · `oro` · `pet` | apre la scheda (anche in inglese: `today`, `delves`, `leveling`, `professions`, `gold`, `pets`) |
-| `/rac eventi` · `settimanale` · `attivita` · `asta` | nomi delle vecchie schede, ancora validi: aprono Oggi (Riepilogo o Great Vault) oppure Oro (Borse e prezzi) |
+| `/rac oggi` · `settimana` · `delve` · `levelling` · `professioni` · `oro` · `pet` | apre la scheda (anche in inglese: `today`, `week`, `delves`, `leveling`, `professions`, `gold`, `pets`) |
+| `/rac missioni` | missioni consegnate di recente con il loro ID (anche `quests`) |
+| `/rac eventi` · `settimanale` · `attivita` · `asta` | nomi delle vecchie schede, ancora validi: aprono Oggi, Settimana oppure Oro (Borse e prezzi) |
 | `/rac profilo occasionale|medio|assiduo` | profilo per l'oro e i materiali da farmare (senza argomento passa al successivo) |
 | `/rac stop` | annulla il percorso in corso |
 | `/rac scan` | scansione dei prezzi (con la casa d'aste aperta) |
@@ -600,6 +641,9 @@ clic destro le opzioni. Il tooltip mostra il riepilogo.
     massimo della Pesca (300) e lettura delle ricette di Cucina con la finestra aperta.
 15. **Labirinto:** nome del Journey tra le fazioni maggiori (in italiano potrebbe non contenere
     "Labirinto"), coordinate dell'ingresso e se il gioco elenca il Labirinto tra le delve.
+16. **Settimana:** blocco del boss del mondo (`GetSavedWorldBossInfo` o istanza del Lair),
+    titolo delle cacce Prey nel registro delle missioni (in italiano potrebbe non contenere "Preda"),
+    ID delle missioni settimanali (da `/rac missioni`), posizione della grotta di Zul'Aman.
 
 ## Installazione
 
