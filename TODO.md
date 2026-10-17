@@ -66,6 +66,9 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
       scansioni, anche nel tooltip. Da verificare in gioco.
 - [x] **Ordini di lavoro** (0.12.0): ordini letti al tavolo degli ordini (soprattutto Patron),
       con guadagno netto, ricompense e stato. Da verificare in gioco.
+- [x] **Guida alla Caccia (Prey)** (0.13.0): obiettivo "Caccia" nella scheda Oggi con sblocco,
+      difficoltà e affissi, limiti settimanali, Preyhunter's Journey e catch-up, Ral'kala, gear
+      in solo e routine settimanale. Guida statica, da verificare in gioco.
 
 ## 4. RotAssist per altre classi
 

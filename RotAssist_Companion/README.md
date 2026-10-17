@@ -4,14 +4,14 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.12.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.13.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
 
 | Scheda | Contenuto | Fonte (API di Blizzard) |
 |---|---|---|
-| **Oggi** | **Riepilogo** (cosa fare adesso per ogni obiettivo, eventi e festività, world quest in scadenza con la ricompensa, Traveler's Log e reset) e attività consigliate per **obiettivo** (equipaggiamento, Great Vault, reputazione, oro): world quest confrontate con il tuo equipaggiamento e con la priorità delle statistiche, slot della Vault, fazioni più vicine al prossimo Renown | `C_TaskQuest`, ricompense delle missioni, `C_Calendar`, `C_AreaPoiInfo.GetEventsForMap`, `C_Item.GetItemStats`, `C_WeeklyRewards`, `C_PerksActivities`, `C_MajorFactions`, `C_ClassTalents` |
+| **Oggi** | **Riepilogo** (cosa fare adesso per ogni obiettivo, eventi e festività, world quest in scadenza con la ricompensa, Traveler's Log e reset) e attività consigliate per **obiettivo** (equipaggiamento, Great Vault, Caccia, reputazione, oro): world quest confrontate con il tuo equipaggiamento e con la priorità delle statistiche, slot della Vault, guida alla Caccia (Prey) e al gear in solo, fazioni più vicine al prossimo Renown | `C_TaskQuest`, ricompense delle missioni, `C_Calendar`, `C_AreaPoiInfo.GetEventsForMap`, `C_Item.GetItemStats`, `C_WeeklyRewards`, `C_PerksActivities`, `C_MajorFactions`, `C_ClassTalents` |
 | **Delve** | Restored Coffer Key, Coffer Key Shards della settimana, livello del compagno; tabella delle delve attive su tutte le mappe, con le **abbondanti** in cima (filtro in cima: tutte o solo abbondanti) | `C_AreaPoiInfo.GetDelvesForMap`, `C_CurrencyInfo`, `C_DelvesUI`, `C_GossipInfo` |
 | **Levelling** | livello, XP, riposo, XP/ora della sessione con tempo stimato al livello successivo, tabelle della zona attuale e delle zone del continente adatte al tuo livello, missioni nel diario | `UnitXP`, `C_Map.GetMapLevels`, `C_QuestLog` |
 | **Professioni** | per ogni tua professione: Concentrazione e punti conoscenza da spendere, la fase della guida in cui ti trovi, cosa creare adesso spendendo meno (dalle ricette che conosci), cosa creare per l'oro (guadagno a creazione e liquidità, anche delle ricette da imparare), ordini di lavoro con il guadagno netto, cosa comprare togliendo quello che hai già, la specializzazione consigliata per il tuo equipaggiamento e dove prendere i punti conoscenza | `C_TradeSkillUI`, `C_Item.GetItemCount`, `C_ProfSpecs` |
@@ -238,6 +238,23 @@ ti trovi, con le loro ricompense; il clic su una riga calcola il percorso.
   più vicina a un nuovo slot.
 - Quanti slot servono per il bonus roll (Nebulous Voidcore) e la tabella dei livelli oggetto della
   Vault per chiave, livello di delve, Prey e raid.
+
+**Caccia** (guida alla Prey della Season 2 e al gear in solo, `Data/PreyGuide.lua`)
+- Cosa sono le cacce e dove si scelgono: Astalor's Sanctum a Silvermoon City (clic: percorso).
+- **Sblocco** per l'account (catena di Astalor e "Hunt: A Creeping Threat") e una caccia passo
+  per passo; clic destro sulle missioni: Wowhead.
+- **Difficoltà** (Normal, Hard, Nightmare) con gear e crest, gli **affissi** della Season 2 e i
+  **limiti settimanali** (15 cacce, solo le prime 4 danno progresso).
+- **Preyhunter's Journey**: i 10 gradi con quelli importanti per il gear (4 e 9: Afflicted e
+  Tormented Souls), il **catch-up** della 12.1.5 e Ral'kala, il boss della Coiled Isle.
+- **Gear in solo**: le fasce da Adventurer a Myth con le fonti e le crest, tre cose da non perdere
+  (crafting, Cracked Keystone, Nemesis) e le altre fonti (LFR, dungeon in coda, Renown...).
+- **Routine settimanale**: prime settimane e poi con tutto Veteran, consigli per Hard e
+  Nightmare (per i cacciatori anche Misdirection, Exhilaration e Survival of the Fittest) e le
+  attività settimanali della Caccia.
+
+Testi riassunti da Method, Playnews, Zygor, Icy Veins e Warcraft Wiki (patch 12.1.5); alcuni
+valori venivano dal PTR, in caso di dubbio fa fede il gioco.
 
 **Reputazione**
 - Il Renown di ogni fazione con quanto manca al livello successivo.

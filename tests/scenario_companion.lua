@@ -413,7 +413,7 @@ ClickPill(C.L.ACT_GOAL_gear)
 Dump("today")                                         -- equipaggiamento, Beast Mastery (Mitiche+)
 ClickPill(C.L.ACT_CONTENT_raid)
 print("priorita' raid:", table.concat(C.StatPriority:Current().order, " > "))
-for _, g in ipairs({ "vault", "rep", "gold" }) do
+for _, g in ipairs({ "vault", "prey", "rep", "gold" }) do
     ClickPill(C.L["ACT_GOAL_" .. g])
     Dump("activities")
 end
