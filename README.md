@@ -46,8 +46,9 @@ Secondo addon del repository, indipendente da RotAssist e attivo solo fuori dal 
 Le sue sette schede coprono:
 - **Oggi:** un riepilogo (cosa fare adesso, eventi e festività, world quest in scadenza, Traveler's
   Log e reset) e le attività consigliate per obiettivo (equipaggiamento, Great Vault,
-  reputazione, oro), con le ricompense delle world quest confrontate con il tuo equipaggiamento
-  e con la priorità delle statistiche della tua specializzazione (tutte le 40).
+  Caccia, reputazione, oro), con le ricompense delle world quest confrontate con il tuo
+  equipaggiamento e con la priorità delle statistiche della tua specializzazione (tutte le 40);
+  guida alla Caccia (Prey) della Season 2 e al gear in solo.
 - **Settimana:** le attività settimanali consigliate (Apex Cache, cacce Prey, delve abbondanti,
   boss del mondo, Abbondanza) con stato, dove andare e link a una guida; avviso entrando in
   Midnight senza una caccia Prey attiva.

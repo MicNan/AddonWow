@@ -78,6 +78,10 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
       tuoi materiali), professione al massimo senza avvisi fuorvianti, conteggio delle ricette
       lette, riga "media non ancora nota" nel tooltip, Concentrazione letta a finestra pronta,
       riquadro "I tuoi attrezzi".
+- [x] **Guida alla Caccia (Prey)** (fatta da remoto come 0.13.0, unita nella 0.18.0): obiettivo
+      "Caccia" nella scheda Oggi con sblocco, difficoltà e affissi, limiti settimanali,
+      Preyhunter's Journey e catch-up, Ral'kala, gear in solo e routine settimanale. Guida
+      statica, da verificare in gioco.
 
 ## Scheda Settimana (0.17.0)
 

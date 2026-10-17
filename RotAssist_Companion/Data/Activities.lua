@@ -2,7 +2,7 @@
 -- Scheda "Oggi": cosa fare oggi e questa settimana. Il selettore in cima
 -- sceglie la vista: riepilogo (il meglio di ogni obiettivo, eventi,
 -- festivita', world quest in scadenza, Traveler's Log e reset) oppure un
--- obiettivo (equipaggiamento, Great Vault, reputazione, oro).
+-- obiettivo (equipaggiamento, Great Vault, Caccia, reputazione, oro).
 -- Unica lettura delle world quest dell'addon: le altre schede non le leggono.
 --
 -- Dati letti dal gioco (sempre aggiornati):
@@ -15,7 +15,8 @@
 --    festivita' (Events.lua);
 --  * Renown delle fazioni maggiori.
 -- In piu' un elenco curato di attivita' settimanali ricorrenti della 12.1 e i
--- livelli oggetto della Season 2, riassunti da guide pubbliche.
+-- livelli oggetto della Season 2, riassunti da guide pubbliche; la guida alla
+-- Caccia (Prey) e al gear in solo e' in PreyGuide.lua.
 
 local _, ns = ...
 local A = ns.API
@@ -23,7 +24,7 @@ local A = ns.API
 local AC = { pending = 0 }
 ns.Activities = AC
 
-local GOALS = { "summary", "gear", "vault", "rep", "gold" }
+local GOALS = { "summary", "gear", "vault", "prey", "rep", "gold" }
 AC.GOALS = GOALS
 local ROOT = 2537            -- Quel'Thalas: tutte le zone di Midnight
 local SCAN_TTL = 20
@@ -524,6 +525,110 @@ function AC:GoldRows(rows)
 end
 
 ---------------------------------------------------------------------------
+-- Obiettivo: Caccia (Prey) e gear in solo (guida statica, PreyGuide.lua)
+---------------------------------------------------------------------------
+function AC:PreyRows(rows)
+    local G = ns.PreyGuide
+    local T = function(k) return G:Text(k) end
+    local _, class = A.Call(UnitClass, "player")
+    local hunter = class == "HUNTER"
+    local blue, gold = { 0.35, 0.65, 1 }, { 1, 0.82, 0 }
+    local function steps(list, color)
+        for i, text in ipairs(list) do
+            rows[#rows + 1] = { kind = "step", badge = tostring(i), badgeColor = color, text = text }
+        end
+    end
+    local function lines(list)
+        for _, text in ipairs(list) do rows[#rows + 1] = { text = "- " .. text, wrap = true } end
+    end
+
+    -- cosa sono
+    rows[#rows + 1] = { header = T("H_WHAT") }
+    rows[#rows + 1] = { kind = "callout", style = "info", text = T("intro") }
+    rows[#rows + 1] = { text = T("sanctum"), color = gold, tooltip = T("sanctumTip"),
+                        dest = { mapID = G.SANCTUM_MAP, name = "Astalor's Sanctum" },
+                        link = { search = "Astalor Bloodsworn" }, linkTitle = "Astalor Bloodsworn" }
+    lines(T("facts"))
+
+    -- sblocco e caccia passo per passo
+    rows[#rows + 1] = { header = T("H_HOW") }
+    rows[#rows + 1] = { kind = "sub", text = T("S_UNLOCK") }
+    for i, q in ipairs(T("unlock")) do
+        rows[#rows + 1] = { kind = "step", badge = tostring(i), badgeColor = gold,
+                            text = q[2] and (q[1] .. " (" .. q[2] .. ")") or q[1],
+                            link = { search = q[1] }, linkTitle = q[1] }
+    end
+    rows[#rows + 1] = { kind = "sub", text = T("S_HUNT") }
+    steps(T("hunt"), blue)
+    rows[#rows + 1] = { kind = "note", text = T("huntNote") }
+
+    -- difficolta', affissi, limiti
+    rows[#rows + 1] = { header = T("H_DIFF") }
+    rows[#rows + 1] = { kind = "note", text = T("diffIntro") }
+    local widths = { 0.24, 0.42, 0.34 }
+    rows[#rows + 1] = { kind = "thead", widths = widths, cols = { T("COL_DIFF"), T("COL_GEAR"), T("COL_CREST") } }
+    for i, d in ipairs(T("difficulty")) do
+        local c = G.TIER_COLORS[i]
+        rows[#rows + 1] = { kind = "tr", widths = widths, cols = { d[1], d[2], d[3] }, colors = { nil, c, c } }
+    end
+    rows[#rows + 1] = { kind = "callout", style = "warn", text = T("noHero") }
+    rows[#rows + 1] = { kind = "sub", text = T("S_AFFIX") }
+    for _, a in ipairs(T("affixes")) do
+        rows[#rows + 1] = { kind = "step", badge = a[1], badgeColor = a[1] == "Normal" and G.TIER_COLORS[1] or G.TIER_COLORS[4],
+                            text = a[2] }
+    end
+    rows[#rows + 1] = { kind = "sub", text = T("S_LIMITS") }
+    lines(T("limits"))
+    rows[#rows + 1] = { kind = "callout", style = "tip", text = T("root") }
+
+    -- Preyhunter's Journey, Ral'kala
+    rows[#rows + 1] = { header = T("H_JOURNEY") }
+    rows[#rows + 1] = { kind = "note", text = T("journeyIntro") }
+    rows[#rows + 1] = { kind = "callout", style = "tip", title = T("catchupTitle"), text = T("catchup") }
+    for _, r in ipairs(T("ranks")) do
+        local key = G.KEY_RANKS[r[1]]
+        rows[#rows + 1] = { kind = "step", badge = tostring(r[1]), badgeColor = key and gold or { 0.6, 0.6, 0.6 },
+                            text = r[2], color = key and { 1, 1, 1 } or { 0.75, 0.75, 0.75 } }
+    end
+    rows[#rows + 1] = { kind = "callout", style = "warn", text = T("souls") }
+    rows[#rows + 1] = { kind = "sub", text = T("S_RALKALA") }
+    lines(T("ralkala"))
+    rows[#rows + 1] = { text = T("corrosive"), wrap = true, dim = true,
+                        link = { search = "Corrosive Souls" }, linkTitle = "Corrosive Souls" }
+
+    -- fasce di equipaggiamento in solo
+    rows[#rows + 1] = { header = T("H_GEAR") }
+    rows[#rows + 1] = { kind = "note", text = T("gearIntro") }
+    rows[#rows + 1] = { kind = "callout", style = "tip", text = T("gearTip") }
+    for i, t in ipairs(T("tiers")) do
+        rows[#rows + 1] = { kind = "step", badge = t[1], badgeColor = G.TIER_COLORS[i], text = t[2] .. " " .. t[3] }
+    end
+    rows[#rows + 1] = { kind = "sub", text = T("S_MUSTDO") }
+    steps(T("mustDo"), gold)
+
+    -- altre fonti
+    rows[#rows + 1] = { header = T("H_OTHER") }
+    rows[#rows + 1] = { kind = "note", text = T("otherIntro") }
+    lines(T("other"))
+
+    -- routine settimanale
+    rows[#rows + 1] = { header = T("H_ROUTINE") }
+    rows[#rows + 1] = { kind = "note", text = T("routineIntro") }
+    if hunter then rows[#rows + 1] = { kind = "callout", style = "info", text = T("routineHunter") } end
+    rows[#rows + 1] = { kind = "phase", text = T("P_START") }
+    steps(T("routineStart"), G.TIER_COLORS[2])
+    rows[#rows + 1] = { kind = "phase", text = T("P_VETERAN") }
+    steps(T("routineVeteran"), G.TIER_COLORS[3])
+    rows[#rows + 1] = { kind = "sub", text = T("S_TIPS") }
+    local tips = {}
+    for _, t in ipairs(T("tips")) do tips[#tips + 1] = t end
+    if hunter then for _, t in ipairs(T("hunterTips")) do tips[#tips + 1] = t end end
+    for _, t in ipairs(tips) do rows[#rows + 1] = { kind = "step", badge = "!", badgeColor = { 1, 0.6, 0.2 }, text = t } end
+    self:ChecklistRows(rows, "prey")
+    rows[#rows + 1] = { kind = "note", text = T("note") }
+end
+
+---------------------------------------------------------------------------
 -- Riepilogo: il meglio di ogni obiettivo, eventi, world quest, settimana
 ---------------------------------------------------------------------------
 -- Ricompensa principale di una world quest, in breve
@@ -648,6 +753,7 @@ function AC:Rows()
     rows[#rows + 1] = { kind = "note", text = L["ACT_GOAL_DESC_" .. goal] }
     if goal == "summary" then self:SummaryRows(rows)
     elseif goal == "vault" then self:VaultRows(rows)
+    elseif goal == "prey" then self:PreyRows(rows)
     elseif goal == "rep" then self:RepRows(rows)
     elseif goal == "gold" then self:GoldRows(rows)
     else self:GearRows(rows) end
