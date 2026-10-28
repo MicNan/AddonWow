@@ -6,7 +6,7 @@
     "test": "npm run syntax && npm run rotassist && npm run companion",
     "syntax": "node check.js ../RotAssist ../RotAssist_Companion",
     "rotassist": "node run.js ../RotAssist scenario.lua && node run.js ../RotAssist scenario_specs.lua",
-    "companion": "node run.js ../RotAssist_Companion scenario_companion.lua mock_companion.lua"
+    "companion": "node run.js ../RotAssist_Companion scenario_companion.lua mock_companion.lua && node run.js ../RotAssist_Companion scenario_paladin.lua mock_companion.lua"
   },
   "devDependencies": {
     "fengari": "^0.1.4",
