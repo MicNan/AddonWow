@@ -1,6 +1,7 @@
 -- RotAssist - MainFrame
 -- Riquadro principale: icona grande (prossima abilita'), due icone piccole
--- (successive), indicatore di modalita', barra risorsa e barra vita del pet.
+-- (successive), indicatore di modalita', barra risorsa e barra vita del pet;
+-- a sinistra le icone delle difese in base alla vita (bordo rosso).
 -- Le barre ricevono direttamente i valori (anche segreti): i widget nativi
 -- possono mostrarli, l'addon non li legge.
 
@@ -53,6 +54,16 @@ function M:Create()
     f.resource = CreateBar(f, 8, 1, 0.5, 0.25)
     f.resource:SetPoint("TOPLEFT", f.big, "BOTTOMLEFT", 0, -3)
     f.resource:SetPoint("RIGHT", f, "RIGHT")
+
+    -- difese in base alla vita: a sinistra dell'icona grande
+    f.def = {}
+    for i = 1, 2 do
+        local d = UI.CreateIcon(f, SMALL)
+        d:SetPoint("BOTTOMRIGHT", f.big, "BOTTOMLEFT", -GAP - (i - 1) * (SMALL + GAP), 0)
+        UI.AddGlow(d, 1, 0.2, 0.15)
+        d:Hide()
+        f.def[i] = d
+    end
 
     f.pet = CreateBar(f, 6, 0.2, 0.9, 0.2)
     f.pet:SetPoint("TOPLEFT", f.resource, "BOTTOMLEFT", 0, -2)
@@ -146,6 +157,59 @@ function M:UpdateBars(spec)
             self:ColorPetBarByCurve(threshold)
         end
     end
+end
+
+-- Difese: entry = { tier, spell, threshold, visible }. visible = nil vuol
+-- dire vita segreta: l'icona si mostra o si nasconde con una curva nativa.
+function M:UpdateDefensives(list)
+    local f = self.frame
+    if not (f and f.def) then return end
+    for i = 1, 2 do
+        local icon, e = f.def[i], list and list[i]
+        if not e then
+            icon:Hide()
+            icon:SetGlow(false)
+        else
+            icon:Show()
+            icon.tex:SetTexture(A.SpellTexture(e.spell))
+            icon.badge:SetText(e.tier.emergency and L.DEF_BADGE_SAVE or L.DEF_BADGE_HEAL)
+            icon.hotkey:SetText(ns.Keybinds:Get(e.spell) or "")
+            A.ApplyCooldown(icon.cd, e.spell)
+            icon:SetGlow(e.tier.emergency and true or false)
+            if e.visible == true then
+                icon:SetAlpha(1)
+            else
+                self:HealthAlpha(icon, e.threshold)
+            end
+        end
+    end
+end
+
+-- Visibilita' secondo la vita segreta: alpha 1 sotto soglia, 0 sopra,
+-- calcolata dal client con una curva (l'addon non confronta il valore).
+-- Se le API non ci sono o non accettano il valore l'icona resta visibile
+-- a meta' trasparenza: meglio un suggerimento in piu' che uno in meno.
+function M:HealthAlpha(icon, threshold)
+    self.defCurves = self.defCurves or {}
+    local curve = self.defCurves[threshold]
+    if curve == nil and C_CurveUtil and C_CurveUtil.CreateCurve then
+        local ok, c = pcall(C_CurveUtil.CreateCurve)
+        if ok and c and pcall(function()
+            c:AddPoint(0, 1)
+            c:AddPoint(threshold, 1)
+            c:AddPoint(math.min(1, threshold + 0.01), 0)
+            c:AddPoint(1, 0)
+        end) then
+            curve = c
+        else
+            curve = false
+        end
+        self.defCurves[threshold] = curve
+    end
+    if curve and UnitHealthPercent then
+        if pcall(function() icon:SetAlpha(UnitHealthPercent("player", true, curve)) end) then return end
+    end
+    icon:SetAlpha(0.6)
 end
 
 -- Risorsa vicina al massimo (es. Maelstrom di Elemental): se il valore e'

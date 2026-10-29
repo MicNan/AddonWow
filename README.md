@@ -1,7 +1,7 @@
 # RotAssist – supporto alla rotazione per WoW Midnight (12.1)
 
 Addon per World of Warcraft retail (Midnight, patch 12.1) che **mostra** quale abilità
-premere per Hunter e Shaman. **Non lancia mai nulla**: non usa funzioni protette e non
+premere per Hunter, Shaman e Paladin Protection. **Non lancia mai nulla**: non usa funzioni protette e non
 simula input, nel rispetto dei Termini di Servizio di Blizzard.
 
 ## Perché un wrapper sopra Assisted Combat

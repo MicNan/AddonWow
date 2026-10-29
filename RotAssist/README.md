@@ -1,6 +1,6 @@
 # RotAssist (WoW Midnight 12.1)
 
-Supporto alla rotazione per Hunter e Shaman. Mostra cosa premere, **non lancia mai nulla**:
+Supporto alla rotazione per Hunter, Shaman e Paladin Protection. Mostra cosa premere, **non lancia mai nulla**:
 nessuna funzione protetta, nessun input simulato.
 
 ## Spec supportate
@@ -15,9 +15,34 @@ Tutte le priorità vengono dalle guide Icy Veins 12.1.
 | Elemental | Farseer, Stormbringer | ST, CLEAVE (2-3), AoE (4+) | solo simulazione |
 | Enhancement | Stormbringer, Totemic | ST, AoE | solo simulazione |
 | Restoration | Farseer, Totemic | promemoria di cura (niente Assisted Combat) | solo simulazione |
+| Protection (Paladin) | Templar, Lightsmith | ST, AoE, con difese in base alla vita | solo simulazione |
 
 Le altre classi e spec usano la modalità "Generico", che mostra solo il suggerimento di
 Assisted Combat.
+
+## Difese in base alla vita
+
+Le spec che le dichiarano (per ora Paladin Protection) mostrano a sinistra dell'icona grande due
+icone con il bordo rosso, solo in combattimento:
+
+| Icona | Quando compare | Abilità (la prima pronta) |
+|---|---|---|
+| **+** cura | vita sotto il 50% | Word of Glory (con 3 Holy Power o Shining Light) |
+| **!** emergenza | vita sotto il 35% | Ardent Defender, Guardian of Ancient Kings, Divine Shield, Lay on Hands |
+
+Le soglie si cambiano in Opzioni > AddOns > RotAssist; le difese si possono spegnere.
+
+**Come legge la vita.** Nel mondo aperto e nei dungeon normali la vita del giocatore è
+leggibile: decide l'addon. Negli scontri con i boss, nelle Mitiche+ e nel PvP classificato è un
+*secret value*: l'addon sceglie comunque quale abilità mostrare (cooldown e Holy Power tramite
+`IsSpellUsable` sono leggibili), ma la visibilità dell'icona la calcola il client con una curva
+nativa (`UnitHealthPercent` con `C_CurveUtil`). L'addon non confronta mai il valore. Se la curva
+non è disponibile l'icona resta visibile a metà trasparenza.
+
+**Paladin Protection** (Icy Veins 12.1.5): Shield of the Righteous con 3+ Holy Power e scudo in
+scadenza, Consecration se non ci sei dentro (stima dall'ultimo cast), Avenger's Shield con Vanguard
+e Word of Glory gratis con Shining Light (dal glow del pulsante), oltre alla priorità della guida.
+Holy Power è segreto in combattimento: si usa `IsSpellUsable`.
 
 ## Strategia (sintesi della Fase 1)
 
@@ -50,6 +75,7 @@ RotAssist/
   Core/Enemies.lua           conteggio nemici dalle nameplate (euristico)
   Core/Engine.lua            predicati a tre valori, valutazione regole, fusione con Assisted Combat
   Core/Alerts.lua            libreria di tipi di avviso riutilizzabili
+  Core/Defensives.lua        difese in base alla vita (scelta leggibile, visibilità da curva nativa)
   Core/Core.lua              rilevamento spec/hero talent, eventi, ciclo di aggiornamento (10 Hz)
   UI/Glow.lua                icone, bagliore, trascinamento
   UI/Keybinds.lua            tasto assegnato sulle icone (barre Blizzard, ElvUI, Bartender4)
@@ -64,6 +90,7 @@ RotAssist/
   Specs/Shaman_Elemental.lua      dati Ele: Farseer/Stormbringer, ST/CLEAVE/AoE, Flame Shock stimato
   Specs/Shaman_Enhancement.lua    dati Enh: Stormbringer/Totemic, stack di Maelstrom Weapon (whitelist)
   Specs/Shaman_Restoration.lua    promemoria di cura, scudi, incantamento dell'arma
+  Specs/Paladin_Protection.lua    dati Prot: Templar/Lightsmith, Holy Power da IsSpellUsable, difese
   Config/Settings.lua        pannello Opzioni > AddOns > RotAssist (Settings API)
   Config/Slash.lua           /rotassist (alias /rota)
 ```

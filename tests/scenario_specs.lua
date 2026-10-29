@@ -55,6 +55,12 @@ local function Cast(id)
     -- generatori/spender di Maelstrom Weapon (Enhancement)
     if id == 17364 or id == 60103 or id == 187874 or id == 115356 then MOCK.mw = math.min(10, MOCK.mw + 3) end
     if id == 188196 or id == 188443 or id == 454009 or id == 1218047 then MOCK.mw = 0 end
+    -- Holy Power del paladino: generatori +1 (Avenger's Shield e Divine Toll +3), spender -3
+    if MOCK.hp then
+        local gen = { [275779] = 1, [204019] = 1, [53595] = 1, [24275] = 1, [31935] = 3, [375576] = 3 }
+        if gen[id] then MOCK.hp = math.min(5, MOCK.hp + gen[id]) end
+        if id == 53600 or id == 85673 then MOCK.hp = math.max(0, MOCK.hp - 3) end
+    end
     MOCK.fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", id)
     return true
 end
@@ -82,6 +88,12 @@ local function Run(label, seconds)
     print("   " .. table.concat(line, "\n   "))
 end
 
+local baseUsable = C_Spell.IsSpellUsable
+C_Spell.IsSpellUsable = function(id, ...)
+    if MOCK.hp and (id == 53600 or id == 85673) then return MOCK.hp >= 3, MOCK.hp < 3 end
+    return baseUsable(id, ...)
+end
+
 local function Plates(n)
     for k in pairs(MOCK.plates) do MOCK.plates[k] = nil; MOCK.fire("NAME_PLATE_UNIT_REMOVED", k) end
     for i = 1, n do MOCK.plates["nameplate" .. i] = true; MOCK.fire("NAME_PLATE_UNIT_ADDED", "nameplate" .. i) end
@@ -99,13 +111,78 @@ for _, t in ipairs({
     { 254, "HUNTER", "Marksmanship Dark Ranger", {1264902, 1253601, 1253732} },
     { 255, "HUNTER", "Survival Sentinel", {471876} },
     { 255, "HUNTER", "Survival Pack Leader", {1264902, 1253601} },
+    { 66, "PALADIN", "Protection Templar", {432459, 432472} },
+    { 66, "PALADIN", "Protection Lightsmith", {427445, 427453} },
 }) do
     Setup(t[1], t[2], t[4])
+    MOCK.hp = (t[2] == "PALADIN") and 1 or nil
     Plates(1); Run(t[3] .. " - 1 bersaglio", 30)
     Plates(3); Run(t[3] .. " - 3 bersagli", 20)
     Plates(5); Run(t[3] .. " - 5 bersagli", 20)
     MOCK.restricted = false; MOCK.fire("PLAYER_REGEN_ENABLED"); MOCK.now = MOCK.now + 60
 end
+print("ERRORI TOTALI:", #MOCK.errors)
+
+-- Paladin Protection: Word of Glory con Shining Light (glow) e difese in base alla vita
+local pala = Setup(66, "PALADIN", {427445, 427453})
+Plates(1)
+local function Def(label)
+    RA:Tick()
+    local list = RA.Defensives:Collect(pala)
+    local parts = {}
+    for _, e in ipairs(list) do
+        parts[#parts + 1] = ("%s:%s(%s)"):format(e.tier.key, MOCK.names[e.spell] or e.spell,
+            e.visible == nil and "curva" or tostring(e.visible))
+    end
+    local icons = {}
+    for i = 1, 2 do
+        local d = RA.UI.Main.frame.def[i]
+        icons[i] = d:IsShown() and ("mostrata alpha " .. tostring(d._a)) or "nascosta"
+    end
+    print(("difese %-30s -> %s | icone: %s"):format(label, #parts > 0 and table.concat(parts, ", ") or "nessuna",
+        table.concat(icons, " / ")))
+end
+MOCK.fire("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", 85673)
+RA:Tick()
+local wogNext = false
+for _, m in ipairs(RA.lastResult.next) do if m.rule and m.rule.id == "wog_sl" then wogNext = true end end
+local wogTrace
+for _, t in ipairs(RA.lastResult.trace) do if t.rule.id == "wog_sl" then wogTrace = t.status end end
+print("Word of Glory con Shining Light (glow): regola", wogTrace, "| tra le icone piccole:", wogNext)
+MOCK.fire("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE", 85673)
+-- vita segreta (scontro con un boss): decide la curva nativa
+for i = 1, 2 do RA.UI.Main.frame.def[i].SetAlpha = function(self, v) self._a = v end end
+-- curva nativa simulata: restituisce la vita (segreta) come alpha
+C_CurveUtil = C_CurveUtil or {}
+C_CurveUtil.CreateCurve = function() return { AddPoint = function() end } end
+UnitHealthPercent = function(u) return UnitHealth(u) end
+Def("vita segreta")
+-- vita leggibile in combattimento (mondo aperto)
+local realHealth, realMax = UnitHealth, UnitHealthMax
+UnitHealth = function(u) if u == "player" then return MOCK.playerHP end return realHealth(u) end
+UnitHealthMax = function(u) if u == "player" then return 100 end return realMax(u) end
+for _, hp in ipairs({ 80, 45, 30 }) do
+    MOCK.playerHP = hp
+    Def("vita " .. hp .. "%")
+end
+-- Ardent Defender in cooldown: tocca a Guardian of Ancient Kings
+MOCK.cd[31850] = { start = MOCK.now, dur = 90 }
+Def("vita 30%, Ardent Defender in cd")
+-- niente Holy Power: Word of Glory non lanciabile
+local realUsable = C_Spell.IsSpellUsable
+C_Spell.IsSpellUsable = function(id) if id == 85673 then return false, true end return true, false end
+Def("vita 30%, senza Holy Power")
+C_Spell.IsSpellUsable = realUsable
+-- opzione disattivata
+RA.db.showDefensives = false
+Def("vita 30%, opzione spenta")
+RA.db.showDefensives = true
+-- fuori combattimento: niente difese
+MOCK.restricted = false; MOCK.fire("PLAYER_REGEN_ENABLED")
+Def("fuori combattimento")
+UnitHealth, UnitHealthMax = realHealth, realMax
+MOCK.cd[31850] = nil
+MOCK.fire("PLAYER_REGEN_DISABLED")
 print("ERRORI TOTALI:", #MOCK.errors)
 -- Focus esaurito: Raptor Strike non utilizzabile -> deve passare a Kill Command
 Setup(255, "HUNTER", {1264902, 1253601})

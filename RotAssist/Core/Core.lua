@@ -4,7 +4,7 @@
 -- Nessuna funzione protetta, nessun lancio di abilita': solo visualizzazione.
 
 local _, ns = ...
-local A, T, Engine, Enemies, Alerts = ns.API, ns.Tracker, ns.Engine, ns.Enemies, ns.Alerts
+local A, T, Engine, Enemies, Alerts, Defensives = ns.API, ns.Tracker, ns.Engine, ns.Enemies, ns.Alerts, ns.Defensives
 local UI = ns.UI
 local GetTime = GetTime
 
@@ -137,6 +137,7 @@ function ns:Tick()
     if UI.Main.frame:IsShown() then
         UI.Main:Update(result, ctx)
         UI.Main:UpdateBars(spec)
+        UI.Main:UpdateDefensives(Defensives:Collect(spec))
     end
     if UI.Cooldowns.frame:IsShown() then UI.Cooldowns:Update() end
     if UI.AlertFrame.frame:IsShown() then UI.AlertFrame:Update(Alerts:Collect(spec)) end

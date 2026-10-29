@@ -91,6 +91,11 @@ sono fatte; quelle provate solo in simulazione restano da confermare in gioco (f
 
 ## 4. RotAssist per altre classi
 
+- [x] **Paladin Protection** (RotAssist 0.4.0): priorità Icy Veins 12.1.5 (Templar, Lightsmith,
+      ST e AoE) e difese in base alla vita (Word of Glory sotto il 50%, Ardent Defender e le altre
+      sotto il 35%). Da verificare in gioco: `/rotassist verify` per gli spell ID, glow di Shining
+      Light e Vanguard, override di Hammer of Light e Sacred Weapon, curva della vita negli scontri.
+
 - [ ] **RotAssist (rotazione):** oggi solo Hunter (Beast Mastery, Marksmanship, Survival) e
       Shaman (Elemental, Enhancement, Restoration). Aggiungere le altre classi una alla volta,
       con le stesse regole (nessuna automazione, abilità identificate per spellID). Prima classe
