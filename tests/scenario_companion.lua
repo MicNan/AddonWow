@@ -97,6 +97,11 @@ print("TomTom:", tostring(MOCK.tomtom))
 MOCK.factionIDs = { 2600, 2601, 2602, 2700 }
 Dump("delves")
 print("Journey del labirinto:", C.Delves:LabyrinthJourney() and C.Delves:LabyrinthJourney().level)
+ClickPill(C.L.DELVE_SEC_labyrinth)
+Dump("delves")
+ClickPill(C.L.DELVE_SEC_nemesis)
+Dump("delves")
+ClickPill(C.L.DELVE_SEC_list)
 MOCK.factionIDs = nil
 
 -- filtro solo abbondanti

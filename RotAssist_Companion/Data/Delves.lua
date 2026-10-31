@@ -11,6 +11,13 @@
 -- come sbloccarlo, come funziona, ricompense e ranghi del Journey. Il Journey
 -- si cerca tra le fazioni maggiori per nome; se il gioco lo elenca tra le
 -- delve, la riga del labirinto esce dalla tabella delle delve.
+--
+-- Nemesis della Season 2, Azta'rec: scheda con ingresso, sblocco, ordine
+-- delle abilita' (cosa fare con ognuna, Venom Storm compresa), intermezzi,
+-- Valeera, livello difficile e consigli per la tua classe. Dati da guide
+-- pubbliche (ottobre 2026), da confermare in gioco.
+--
+-- Selettore in cima: Delve, Labirinto, Nemesis (ns.db.delveSection).
 
 local _, ns = ...
 local A = ns.API
@@ -24,6 +31,11 @@ local CURRENCY_SHARDS = 3310  -- Coffer Key Shards
 -- Ingresso del Labirinto: Eversong Woods (2395), a nord dell'Amani Pass
 local LABYRINTH = { map = 2395, x = 0.630, y = 0.722 }
 local LABYRINTH_RANKS = 9
+-- Venomfall Deeps (Azta'rec): Coiled Isle (2512)
+local NEMESIS = { map = 2512, x = 0.5123, y = 0.3070 }
+D.SECTIONS = { "list", "labyrinth", "nemesis" }
+-- Consigli per classe: interrupt e movimento
+local NEMESIS_CLASS = { PALADIN = "NEM_CLASS_PALADIN", HUNTER = "NEM_CLASS_HUNTER", SHAMAN = "NEM_CLASS_SHAMAN" }
 
 local function IsLabyrinth(name)
     return type(name) == "string" and name:lower():find("kindo", 1, true) ~= nil
@@ -46,6 +58,49 @@ function D:LabyrinthJourney()
         end
     end
     return nil
+end
+
+-- Scheda della Nemesis: Azta'rec
+function D:NemesisRows(rows)
+    local L = ns.L
+    rows[#rows + 1] = { header = L.HDR_NEMESIS }
+    rows[#rows + 1] = { text = L.NEM_WHERE, icon = "Interface\\Icons\\INV_Misc_Map_01",
+                        waypoint = { NEMESIS.map, NEMESIS.x, NEMESIS.y, "Venomfall Deeps" },
+                        link = { url = "https://www.icy-veins.com/wow/aztarec-delve-guide" }, linkTitle = "Azta'rec" }
+    rows[#rows + 1] = { kind = "callout", style = "info", title = L.NEM_UNLOCK_TITLE, text = L.NEM_UNLOCK }
+
+    rows[#rows + 1] = { kind = "sub", text = L.NEM_ORDER_TITLE }
+    local widths = { 0.3, 0.7 }
+    rows[#rows + 1] = { kind = "thead", widths = widths, cols = { L.NEM_COL_ABILITY, L.NEM_COL_WHAT } }
+    for _, a in ipairs(L.NEM_ABILITIES) do
+        rows[#rows + 1] = { kind = "tr", widths = widths, cols = { a[1], a[2] },
+                            colors = { a[3] and { 1, 0.35, 0.25 } or { 1, 0.82, 0 }, { 0.9, 0.9, 0.9 } } }
+    end
+    rows[#rows + 1] = { kind = "callout", style = "warn", title = L.NEM_KICK_TITLE, text = L.NEM_KICK }
+
+    rows[#rows + 1] = { kind = "sub", text = L.NEM_STORM_TITLE }
+    for i, line in ipairs(L.NEM_STORM) do
+        rows[#rows + 1] = { kind = "step", badge = tostring(i), badgeColor = { 0.4, 0.85, 0.35 }, text = line }
+    end
+
+    rows[#rows + 1] = { kind = "sub", text = L.NEM_SERMON_TITLE }
+    for i, line in ipairs(L.NEM_SERMON) do
+        rows[#rows + 1] = { kind = "step", badge = tostring(i), badgeColor = { 0.55, 0.45, 0.95 }, text = line }
+    end
+
+    rows[#rows + 1] = { kind = "sub", text = L.NEM_VALEERA_TITLE }
+    rows[#rows + 1] = { kind = "step", badge = "-", badgeColor = { 0.35, 0.65, 1 }, text = L.NEM_VALEERA }
+
+    local _, class = A.Call(UnitClass, "player")
+    local key = class and NEMESIS_CLASS[class]
+    if key then rows[#rows + 1] = { kind = "callout", style = "tip", title = L.NEM_CLASS_TITLE, text = L[key] } end
+
+    rows[#rows + 1] = { kind = "sub", text = L.NEM_HARD_TITLE }
+    for i, line in ipairs(L.NEM_HARD) do
+        rows[#rows + 1] = { kind = "step", badge = tostring(i), badgeColor = { 1, 0.45, 0.25 }, text = line }
+    end
+    rows[#rows + 1] = { kind = "note", text = L.NEM_REWARDS }
+    rows[#rows + 1] = { kind = "note", text = L.NEM_SOURCE }
 end
 
 -- Riquadro del Labirinto di Kindo'jan
@@ -154,10 +209,14 @@ end
 function D:Rows()
     local L, rows = ns.L, {}
     local only = ns.db.onlyBountiful and true or false
-    rows[#rows + 1] = { kind = "pills", items = {
-        { label = L.DELVE_FILTER_ALL, selected = not only, onClick = function() ns:Set("onlyBountiful", false) end },
-        { label = L.ONLY_BOUNTIFUL, selected = only, onClick = function() ns:Set("onlyBountiful", true) end },
-    } }
+    -- sezione: delve, labirinto, nemesis
+    local section = ns.db.delveSection or "list"
+    local sItems = {}
+    for _, s in ipairs(self.SECTIONS) do
+        sItems[#sItems + 1] = { label = L["DELVE_SEC_" .. s], selected = s == section,
+                                onClick = function() ns.db.delveSection = s end }
+    end
+    rows[#rows + 1] = { kind = "pills", items = sItems }
     rows[#rows + 1] = { header = L.HDR_DELVE_STATUS }
     local keys, shards = self:Keys()
     if keys then
@@ -188,9 +247,19 @@ function D:Rows()
         end
     end
 
-    self:LabyrinthRows(rows)
+    if section == "labyrinth" then
+        self:LabyrinthRows(rows)
+        return rows
+    elseif section == "nemesis" then
+        self:NemesisRows(rows)
+        return rows
+    end
 
     rows[#rows + 1] = { header = L.HDR_DELVES }
+    rows[#rows + 1] = { kind = "pills", items = {
+        { label = L.DELVE_FILTER_ALL, selected = not only, onClick = function() ns:Set("onlyBountiful", false) end },
+        { label = L.ONLY_BOUNTIFUL, selected = only, onClick = function() ns:Set("onlyBountiful", true) end },
+    } }
     local n = 0
     local widths, align = { 0.46, 0.34, 0.2 }, { "LEFT", "LEFT", "RIGHT" }
     for _, d in ipairs(self:List()) do

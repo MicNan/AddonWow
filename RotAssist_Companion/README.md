@@ -4,7 +4,7 @@ Addon di supporto **fuori dal combattimento**: delve, eventi, world quest, obiet
 settimanali e levelling, con waypoint e link Wowhead. È indipendente da RotAssist: si può
 usare da solo.
 
-**Stato:** versione 0.18.0, provata **solo in simulazione**. Alcune API vanno ancora
+**Stato:** versione 0.19.0, provata **solo in simulazione**. Alcune API vanno ancora
 confermate in gioco (vedi "Da verificare in gioco").
 
 ## Schede
@@ -135,6 +135,22 @@ consegnate con il loro ID: con quegli ID lo stato diventa automatico.
 - *Abbondanza:* non è solo a Zul'Aman (le grotte sono in tutte e quattro le zone, la missione
   settimanale dà reputazione con l'Amani Tribe) e non ho trovato un motivo per cui sia
   prioritaria per il cacciatore.
+
+## Nemesis della Season 2: Azta'rec
+
+La scheda **Delve** ha tre sezioni, scelte con i pulsanti in cima: **Delve** (elenco con il
+filtro delle abbondanti), **Labirinto** e **Nemesis: Azta'rec**. Chiavi, frammenti e compagno
+restano visibili in tutte.
+
+La sezione Nemesis raccoglie: ingresso di Venomfall Deeps (clic per il percorso, clic destro per
+la guida), come sbloccarlo, le abilità **nell'ordine in cui arrivano** con cosa fare per ognuna
+(Soul Extinction da interrompere sempre, Void Toxin da lasciare al dispel di Valeera), come
+gestire **Venom Storm** (buchi tra le onde, pozze di Noxious Bile verso il muro), gli intermezzi
+con la sequenza da ricordare, come impostare Valeera, consigli per la tua classe (interrupt,
+movimento, difensive) e cosa cambia al livello difficile.
+
+Gli addon non possono riconoscere per nome il cast di un boss durante lo scontro: RotAssist
+avvisa per ogni cast interrompibile, e per un avviso per nome servono DBM o BigWigs.
 
 ## Labirinto di Kindo'jan (12.1.5)
 
