@@ -58,6 +58,23 @@ lanciando ma non *cosa*. L'avviso compare per ogni cast interrompibile: quale in
 una tua scelta (per esempio Soul Extinction di Azta'rec sì, Void Toxin si può lasciare al dispel).
 Si spegne in Opzioni > AddOns > RotAssist.
 
+## Quarti di Azta'rec (intermezzi)
+
+Negli intermezzi di Azta'rec (Nemesis delle delve, Season 2) la stanza è divisa in quattro quarti:
+il boss mostra in sequenza quale è pulito e poi ripete la stessa sequenza senza indicatori. Il
+**blocco note dei quarti** ti aiuta a ricordarla:
+
+1. **Annota:** a ogni giro clicca il quarto pulito (o premi il tasto assegnato, da 1 a 4).
+2. **Ripeti:** premi *Ripeti*; il riquadro evidenzia il prossimo quarto e ogni clic o tasto passa
+   al successivo.
+3. Finita la ripetizione, il prossimo quarto che segni apre la sequenza dell'intermezzo successivo.
+
+I quarti hanno i colori dei segnalini mondo 1-4 ( … : quadrato blu, triangolo
+verde, rombo viola, croce rossa), così il riquadro corrisponde ai segni sul pavimento. Si apre da
+solo all'inizio dello scontro con Azta'rec e si chiude alla fine; per provarlo .
+I tasti si assegnano in *Opzioni > Tasti > AddOns > RotAssist*. L'addon **non vede** i quarti
+avvelenati: li segni tu, è un blocco note.
+
 ## Strategia (sintesi della Fase 1)
 
 In combattimento Focus, Maelstrom di Elemental, mana, aure e tempi di cooldown sono
@@ -97,6 +114,7 @@ RotAssist/
   UI/MainFrame.lua           icona grande + 2 piccole, modalità, barra risorsa, barra pet
   UI/CooldownFrame.lua       cooldown maggiori (si illuminano quando pronti)
   UI/AlertFrame.lua          avvisi
+  UI/SermonFrame.lua         blocco note dei quarti di Azta'rec (intermezzi)
   UI/Launcher.lua            icona minimappa (trascinabile) + voce nel menu AddOns della minimappa
   Specs/Generic.lua          ripiego: solo Assisted Combat
   Specs/Hunter_BeastMastery.lua   dati BM: spellID, priorità PL/DR × ST/AoE, avvisi, cooldown

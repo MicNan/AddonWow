@@ -70,6 +70,7 @@ local IT = {
         "/rotassist why - valutazione completa delle regole (ultimo aggiornamento)",
         "/rotassist probe - verifica quali API sono segrete adesso",
         "/rotassist verify - controlla gli spellID di tutti i moduli con i dati del client",
+        "/rotassist sermone - blocco note dei quarti di Azta'rec (anche per provarlo)",
         "/rotassist config - apre il pannello opzioni",
         "/rotassist minimap - mostra/nasconde l'icona sulla minimappa",
         "/rotassist wowhead [spellID] - link Wowhead del suggerimento attuale (o dello spellID)",
@@ -95,6 +96,20 @@ local IT = {
     OPT_SRC_RULES    = "Solo regole RotAssist",
     OPT_COOLDOWNS    = "Mostra riquadro cooldown maggiori",
     OPT_ALERTS       = "Mostra avvisi",
+    SERMON_DRAG      = "Quarti di Azta'rec (trascina)",
+    SERMON_RECORD    = "Annota il quarto pulito (%d)",
+    SERMON_GO        = "Vai su %s  (%d di %d)",
+    SERMON_DONE      = "Sequenza finita: al prossimo intermezzo segna di nuovo",
+    SERMON_EMPTY     = "clic o tasti 1-4 sul quarto pulito",
+    SERMON_REPLAY    = "Ripeti",
+    SERMON_BACK      = "Annota",
+    SERMON_UNDO      = "Togli",
+    SERMON_RESET     = "Azzera",
+    OPT_SERMON       = "Quarti di Azta'rec: apri il blocco note nello scontro",
+    OPT_SERMON_TIP   = "Negli intermezzi di Azta'rec segni il quarto pulito a ogni giro e poi il riquadro ti ripete la sequenza. Si apre anche con /rotassist sermone.",
+    BIND_SERMON      = "Quarti di Azta'rec: quarto %d",
+    BIND_SERMON_REPLAY = "Quarti di Azta'rec: ripeti / annota",
+    BIND_SERMON_RESET = "Quarti di Azta'rec: azzera",
     INTERRUPT_NOW    = "Interrompi: %s",
     OPT_INTERRUPTS   = "Avviso per interrompere",
     OPT_INTERRUPTS_TIP = "Quando il bersaglio lancia un incantesimo interrompibile e il tuo interrupt e' pronto. Negli scontri il nome del cast e' segreto: l'avviso compare per ogni cast.",
@@ -190,6 +205,7 @@ local EN = {
         "/rotassist why - full rule evaluation (last update)",
         "/rotassist probe - check which APIs are secret right now",
         "/rotassist verify - check every module's spellIDs against client data",
+        "/rotassist sermon - notepad for Azta'rec's quarters (also to try it)",
         "/rotassist config - open the options panel",
         "/rotassist minimap - show/hide the minimap icon",
         "/rotassist wowhead [spellID] - Wowhead link of the current suggestion (or spellID)",
@@ -214,6 +230,20 @@ local EN = {
     OPT_SRC_RULES    = "RotAssist rules only",
     OPT_COOLDOWNS    = "Show major cooldowns frame",
     OPT_ALERTS       = "Show alerts",
+    SERMON_DRAG      = "Azta'rec quarters (drag)",
+    SERMON_RECORD    = "Mark the clean quarter (%d)",
+    SERMON_GO        = "Go to %s  (%d of %d)",
+    SERMON_DONE      = "Sequence over: mark again at the next intermission",
+    SERMON_EMPTY     = "click or keys 1-4 on the clean quarter",
+    SERMON_REPLAY    = "Replay",
+    SERMON_BACK      = "Mark",
+    SERMON_UNDO      = "Undo",
+    SERMON_RESET     = "Reset",
+    OPT_SERMON       = "Azta'rec quarters: open the notepad in the fight",
+    OPT_SERMON_TIP   = "In Azta'rec's intermissions you mark the clean quarter each round, then the panel replays the sequence. Also opens with /rotassist sermon.",
+    BIND_SERMON      = "Azta'rec quarters: quarter %d",
+    BIND_SERMON_REPLAY = "Azta'rec quarters: replay / mark",
+    BIND_SERMON_RESET = "Azta'rec quarters: reset",
     INTERRUPT_NOW    = "Interrupt: %s",
     OPT_INTERRUPTS   = "Interrupt alert",
     OPT_INTERRUPTS_TIP = "When your target casts an interruptible spell and your interrupt is ready. In encounters the cast name is secret: the alert shows for every cast.",
@@ -270,6 +300,9 @@ function ns:SetLanguage(setting)
     end
     BINDING_HEADER_ROTASSIST = "RotAssist"
     BINDING_NAME_ROTASSIST_TOGGLEMODE = self.L.BINDING_TOGGLEMODE
+    for i = 1, 4 do _G["BINDING_NAME_ROTASSIST_SERMON" .. i] = self.L.BIND_SERMON:format(i) end
+    BINDING_NAME_ROTASSIST_SERMONREPLAY = self.L.BIND_SERMON_REPLAY
+    BINDING_NAME_ROTASSIST_SERMONRESET = self.L.BIND_SERMON_RESET
 end
 
 ns:SetLanguage("auto")

@@ -217,6 +217,37 @@ C_Spell.IsSpellUsable = function(id) if id == 186270 then return false, true end
 RA:Tick()
 print("SV PL senza Focus -> primario:", MOCK.names[RA.lastResult.primary and RA.lastResult.primary.spell] or "nessuno")
 
+-- blocco note dei quarti di Azta'rec
+local SF = RA.Sermon
+local function St(label)
+    local cur = SF:Current()
+    print(("sermone %-28s fase %-7s sequenza {%s} prossimo %s | finestra %s"):format(label, SF.phase,
+        table.concat(SF.seq, ","), tostring(cur), SF.frame and SF.frame:IsShown() and "aperta" or "chiusa"))
+end
+MOCK.fire("ENCOUNTER_START", 3001, [[Azta'rec]], 8, 1)
+St("inizio scontro")
+SF:Mark(1); SF:Mark(4); SF:Mark(2)
+St("tre giri annotati")
+SF:ToggleReplay()
+St("ripeti")
+RotAssist_SermonMark(3)
+St("primo quarto passato")
+SF:Next(); SF:Next()
+St("sequenza finita")
+SF:Mark(3)
+St("nuovo intermezzo")
+SF:Undo()
+St("tolto l ultimo")
+SF:ToggleReplay()
+St("ripeti senza sequenza")
+MOCK.fire("ENCOUNTER_END", 3001, [[Azta'rec]], 8, 1, 1)
+St("fine scontro")
+MOCK.fire("ENCOUNTER_START", 3002, "Altro boss", 8, 1)
+St("altro boss")
+SlashCmdList.ROTASSIST("sermone")
+St("comando")
+SlashCmdList.ROTASSIST("sermone")
+
 local real = C_Spell.GetSpellName
 C_Spell.GetSpellName = function(id) if id == 466990 then return nil end return MOCK.names[id] end
 SlashCmdList.ROTASSIST("verify")

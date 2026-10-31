@@ -2,4 +2,10 @@
     <Binding name="ROTASSIST_TOGGLEMODE" header="ROTASSIST" category="ADDONS">
         if RotAssist and RotAssist.CycleMode then RotAssist:CycleMode() end
     </Binding>
+    <Binding name="ROTASSIST_SERMON1" category="ADDONS">RotAssist_SermonMark(1)</Binding>
+    <Binding name="ROTASSIST_SERMON2" category="ADDONS">RotAssist_SermonMark(2)</Binding>
+    <Binding name="ROTASSIST_SERMON3" category="ADDONS">RotAssist_SermonMark(3)</Binding>
+    <Binding name="ROTASSIST_SERMON4" category="ADDONS">RotAssist_SermonMark(4)</Binding>
+    <Binding name="ROTASSIST_SERMONREPLAY" category="ADDONS">RotAssist_SermonReplay()</Binding>
+    <Binding name="ROTASSIST_SERMONRESET" category="ADDONS">RotAssist_SermonReset()</Binding>
 </Bindings>

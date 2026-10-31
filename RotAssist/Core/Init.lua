@@ -21,6 +21,7 @@ ns.defaults = {
     showCooldowns   = true,
     showAlerts      = true,
     showResource    = true,
+    sermonAuto      = true,       -- blocco note dei quarti nello scontro con Azta'rec
     showInterrupts  = true,       -- avviso "interrompi" quando il bersaglio lancia
     showDefensives  = true,       -- icone delle difese in base alla vita (spec con difese)
     defHeal         = 0.50,       -- soglia di vita per la cura (es. Word of Glory)
@@ -35,6 +36,7 @@ ns.defaults = {
     pos      = { point = "CENTER", x = 0,   y = -180 },
     cdPos    = { point = "CENTER", x = 0,   y = -250 },
     alertPos = { point = "CENTER", x = 0,   y = -110 },
+    sermonPos = { point = "CENTER", x = 220, y = 60 },
     learned  = {},                -- durate apprese: [spellID] = { cd = n, recharge = n }
     learnedAura = {},             -- durate apprese dei buff tracciati: [chiave] = secondi
 }

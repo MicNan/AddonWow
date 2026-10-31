@@ -208,6 +208,7 @@ local function Handler(msg)
         ns:Print(v and L.MSG_DEBUG_ON or L.MSG_DEBUG_OFF)
     elseif cmd == "why" then ns:PrintWhy()
     elseif cmd == "probe" then ns:Probe()
+    elseif cmd == "sermone" or cmd == "sermon" then ns.Sermon:Show()
     elseif cmd == "verify" then ns:VerifySpells()
     elseif cmd == "config" or cmd == "options" then ns:OpenSettings()
     elseif cmd == "log" then
