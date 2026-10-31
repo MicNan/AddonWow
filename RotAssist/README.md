@@ -69,9 +69,9 @@ il boss mostra in sequenza quale è pulito e poi ripete la stessa sequenza senza
    al successivo.
 3. Finita la ripetizione, il prossimo quarto che segni apre la sequenza dell'intermezzo successivo.
 
-I quarti hanno i colori dei segnalini mondo 1-4 ( … : quadrato blu, triangolo
+I quarti hanno i colori dei segnalini mondo 1-4 (`/wm [@cursor] 1` … `4`: quadrato blu, triangolo
 verde, rombo viola, croce rossa), così il riquadro corrisponde ai segni sul pavimento. Si apre da
-solo all'inizio dello scontro con Azta'rec e si chiude alla fine; per provarlo .
+solo all'inizio dello scontro con Azta'rec e si chiude alla fine; per provarlo `/rotassist sermone`.
 I tasti si assegnano in *Opzioni > Tasti > AddOns > RotAssist*. L'addon **non vede** i quarti
 avvelenati: li segni tu, è un blocco note.
 
