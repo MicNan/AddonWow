@@ -82,6 +82,7 @@ ns:RegisterSpec(264, {
     },
 
     alerts = {
+        { type = "interrupt" },
         { type = "playerAuraMissing", key = "ws", auras = { S.WATER_SHIELD }, spell = S.WATER_SHIELD },
         { type = "playerAuraMissing", key = "es", auras = { S.EARTH_SHIELD, S.EARTH_SHIELD_SELF },
           spell = S.EARTH_SHIELD, icon = S.EARTH_SHIELD, textKey = "ES_SELF_MISSING" },

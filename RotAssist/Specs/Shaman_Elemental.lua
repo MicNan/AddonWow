@@ -153,6 +153,7 @@ ns:RegisterSpec(262, {
     },
 
     alerts = {
+        { type = "interrupt" },
         { type = "timerExpiring", key = "flameShock", spell = FS, within = 5.4,
           needsTarget = true, inCombatOnly = true,
           textMissingKey = "FS_MISSING", textExpiringKey = "FS_EXPIRING" },

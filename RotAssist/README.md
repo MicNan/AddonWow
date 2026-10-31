@@ -44,6 +44,20 @@ scadenza, Consecration se non ci sei dentro (stima dall'ultimo cast), Avenger's 
 e Word of Glory gratis con Shining Light (dal glow del pulsante), oltre alla priorità della guida.
 Holy Power è segreto in combattimento: si usa `IsSpellUsable`.
 
+## Interrupt
+
+Quando il bersaglio lancia un incantesimo interrompibile e il tuo interrupt è pronto compare
+l'avviso **"Interrompi: …"** (con il suono, se attivo nelle opzioni). Vale per tutte le classi,
+anche quelle in modalità Generico, con l'interrupt della classe (Rebuke, Pummel, Kick, Counterspell,
+Wind Shear, Counter Shot o Muzzle, …). Per il Paladin Protection Rebuke diventa anche l'icona
+principale, e se è in ricarica tocca ad Avenger's Shield, che interrompe anche lui.
+
+Negli scontri e nelle Mitiche+ nome e dettagli del cast sono segreti: l'addon usa solo gli
+eventi di inizio e fine del cast e quelli di interrompibilità, quindi sa *che* il bersaglio sta
+lanciando ma non *cosa*. L'avviso compare per ogni cast interrompibile: quale interrompere resta
+una tua scelta (per esempio Soul Extinction di Azta'rec sì, Void Toxin si può lasciare al dispel).
+Si spegne in Opzioni > AddOns > RotAssist.
+
 ## Strategia (sintesi della Fase 1)
 
 In combattimento Focus, Maelstrom di Elemental, mana, aure e tempi di cooldown sono
@@ -76,6 +90,7 @@ RotAssist/
   Core/Engine.lua            predicati a tre valori, valutazione regole, fusione con Assisted Combat
   Core/Alerts.lua            libreria di tipi di avviso riutilizzabili
   Core/Defensives.lua        difese in base alla vita (scelta leggibile, visibilità da curva nativa)
+  Core/Interrupts.lua        quando interrompere: eventi di cast del bersaglio, interrupt per classe
   Core/Core.lua              rilevamento spec/hero talent, eventi, ciclo di aggiornamento (10 Hz)
   UI/Glow.lua                icone, bagliore, trascinamento
   UI/Keybinds.lua            tasto assegnato sulle icone (barre Blizzard, ElvUI, Bartender4)

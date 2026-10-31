@@ -142,6 +142,32 @@ local function Def(label)
     print(("difese %-30s -> %s | icone: %s"):format(label, #parts > 0 and table.concat(parts, ", ") or "nessuna",
         table.concat(icons, " / ")))
 end
+-- interrupt: il bersaglio inizia un cast (eventi; nome e dettagli segreti)
+local function Kick(label)
+    RA:Tick()
+    local p = RA.lastResult.primary
+    local alerts = RA.Alerts:Collect(RA.activeSpec)
+    local al = {}
+    for _, x in ipairs(alerts) do if x.key == "interrupt" then al[#al + 1] = x.text end end
+    print(("interrupt %-32s -> primario %s | avviso %s"):format(label, p and (MOCK.names[p.spell] or p.spell) or "nessuno",
+        #al > 0 and table.concat(al, ", ") or "nessuno"))
+end
+Kick("nessun cast")
+MOCK.fire("UNIT_SPELLCAST_START", "target", "guid", 1)
+Kick("cast interrompibile")
+MOCK.fire("UNIT_SPELLCAST_NOT_INTERRUPTIBLE", "target")
+Kick("cast non interrompibile")
+MOCK.fire("UNIT_SPELLCAST_INTERRUPTIBLE", "target")
+MOCK.cd[96231] = { start = MOCK.now, dur = 15 }
+Kick("Rebuke in ricarica")
+MOCK.cd[96231] = nil
+MOCK.fire("UNIT_SPELLCAST_STOP", "target", "guid", 1)
+Kick("cast finito")
+-- Retribution (modulo generico): avviso con l"interrupt della classe
+MOCK.fire("UNIT_SPELLCAST_START", "target", "guid", 2)
+local gen = RA.Alerts:Collect(RA.genericSpec)
+print("interrupt generico (paladino Retribution):", gen[1] and gen[1].text or "nessuno")
+MOCK.fire("UNIT_SPELLCAST_STOP", "target", "guid", 2)
 MOCK.fire("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", 85673)
 RA:Tick()
 local wogNext = false

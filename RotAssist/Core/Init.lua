@@ -21,6 +21,7 @@ ns.defaults = {
     showCooldowns   = true,
     showAlerts      = true,
     showResource    = true,
+    showInterrupts  = true,       -- avviso "interrompi" quando il bersaglio lancia
     showDefensives  = true,       -- icone delle difese in base alla vita (spec con difese)
     defHeal         = 0.50,       -- soglia di vita per la cura (es. Word of Glory)
     defSave         = 0.35,       -- soglia di vita per le difese d'emergenza

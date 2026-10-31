@@ -46,6 +46,7 @@ local S = {
     BLESSING_OF_SPELLWARDING = 204018,
     BLESSING_OF_PROTECTION = 1022,
     HAND_OF_RECKONING = 62124,
+    REBUKE          = 96231,
 }
 
 local SOTR, WOG, CONS, JUD, AS = S.SHIELD_OF_THE_RIGHTEOUS, S.WORD_OF_GLORY, S.CONSECRATION, S.JUDGMENT, S.AVENGERS_SHIELD
@@ -54,6 +55,13 @@ local DT, HOL, SW, AT = S.DIVINE_TOLL, S.HAMMER_OF_LIGHT, S.SACRED_WEAPON, S.ARC
 
 -- Regole comuni
 local R = {
+    -- interrupt: il bersaglio sta lanciando (Core\Interrupts.lua); Avenger's
+    -- Shield interrompe anche lui, utile se Rebuke e' in ricarica
+    kick    = { id = "kick", spell = S.REBUKE, pin = true, conds = { { "targetCasting" } },
+                note = "Rebuke: il bersaglio sta lanciando" },
+    kick_as = { id = "kick_as", spell = AS, pin = true,
+                conds = { { "targetCasting" }, { "notReady", S.REBUKE } },
+                note = "Avenger's Shield per interrompere (Rebuke in ricarica)" },
     aw      = { id = "aw", spell = AW, notTalent = SENT, note = "Avenging Wrath al cooldown" },
     sent    = { id = "sent", spell = SENT, talent = SENT, note = "Sentinel al cooldown" },
     sw      = { id = "sw", spell = SW, hero = "LS", conds = { { "noTimer", "aw" } },
@@ -82,7 +90,7 @@ local R = {
 }
 
 local function List(aoe)
-    local l = { R.aw, R.sent, R.sw, R.dt, R.hol, R.cons, R.as_van, R.sotr, R.sotr2 }
+    local l = { R.kick, R.kick_as, R.aw, R.sent, R.sw, R.dt, R.hol, R.cons, R.as_van, R.sotr, R.sotr2 }
     if aoe then l[#l + 1] = R.as end
     for _, r in ipairs({ R.how, R.jud, R.bh, R.hotr }) do l[#l + 1] = r end
     if not aoe then l[#l + 1] = R.as end
@@ -107,13 +115,13 @@ ns:RegisterSpec(66, {
     overrideOf = { [HOL] = S.EYE_OF_TYR, [SW] = S.HOLY_ARMAMENTS },
 
     track = {
-        cooldowns = { [AW] = true, [SENT] = true, [DT] = true, [AS] = true, [CONS] = true, [HOW] = true,
+        cooldowns = { [S.REBUKE] = true, [AW] = true, [SENT] = true, [DT] = true, [AS] = true, [CONS] = true, [HOW] = true,
                       [S.ARDENT_DEFENDER] = true, [S.GUARDIAN_OF_ANCIENT_KINGS] = true, [S.DIVINE_SHIELD] = true,
                       [S.LAY_ON_HANDS] = true, [S.EYE_OF_TYR] = true, [AT] = true },
         charges   = { BH, JUD, HOTR },
     },
     base = {
-        [AS] = { cd = 15 }, [CONS] = { cd = 9 }, [DT] = { cd = 60 }, [AW] = { cd = 120 },
+        [S.REBUKE] = { cd = 15 }, [AS] = { cd = 15 }, [CONS] = { cd = 9 }, [DT] = { cd = 60 }, [AW] = { cd = 120 },
         [BH] = { recharge = 6 }, [JUD] = { recharge = 6 }, [HOTR] = { recharge = 6 },
         [S.ARDENT_DEFENDER] = { cd = 90 }, [S.GUARDIAN_OF_ANCIENT_KINGS] = { cd = 180 },
         [S.DIVINE_SHIELD] = { cd = 300 }, [S.LAY_ON_HANDS] = { cd = 600 },
@@ -124,6 +132,10 @@ ns:RegisterSpec(66, {
         [SOTR] = { { type = "timer", key = "sotr", duration = 4.5, pandemic = 3 } },
         [AW]   = { { type = "timer", key = "aw", duration = 20 } },
         [SENT] = { { type = "timer", key = "aw", duration = 20 } },
+    },
+
+    alerts = {
+        { type = "interrupt", spells = { S.REBUKE, AS } },
     },
 
     majorCooldowns = {

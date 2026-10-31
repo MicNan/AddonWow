@@ -119,6 +119,7 @@ ns:RegisterSpec(263, {
     },
 
     alerts = {
+        { type = "interrupt" },
         { type = "weaponImbueMissing", key = "imbue", spell = S.WINDFURY_WEAPON, offSpell = S.FLAMETONGUE_WEAPON,
           mainHand = true, offHand = true },
         { type = "playerAuraMissing", key = "ls", auras = { S.LIGHTNING_SHIELD }, spell = S.LIGHTNING_SHIELD },

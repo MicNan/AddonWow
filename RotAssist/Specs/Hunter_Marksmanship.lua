@@ -121,6 +121,7 @@ ns:RegisterSpec(254, {
     },
 
     alerts = {
+        { type = "interrupt" },
         { type = "targetAuraMissing", key = "hm", auras = { S.HUNTERS_MARK }, icon = S.HUNTERS_MARK,
           castSpell = S.HUNTERS_MARK, textKey = "HUNTERS_MARK_MISSING",
           classifications = { worldboss = true, elite = true, rareelite = true } },

@@ -107,6 +107,7 @@ function ns:RegisterSettings()
     })
     Checkbox("showCooldowns", L.OPT_COOLDOWNS)
     Checkbox("showAlerts", L.OPT_ALERTS)
+    Checkbox("showInterrupts", L.OPT_INTERRUPTS, L.OPT_INTERRUPTS_TIP)
     Checkbox("showDefensives", L.OPT_DEFENSIVES, L.OPT_DEFENSIVES_TIP)
     local function Pct(v) return ("%d%%"):format(math.floor(v * 100 + 0.5)) end
     Slider("defHeal", L.OPT_DEF_HEAL, nil, 0.2, 0.9, 0.05, Pct)

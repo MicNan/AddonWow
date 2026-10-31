@@ -101,6 +101,7 @@ ns:RegisterSpec(255, {
     },
 
     alerts = {
+        { type = "interrupt", spells = { 187707 } },   -- Muzzle
         { type = "petMissing", icon = S.CALL_PET, reviveIcon = S.REVIVE_PET },
         { type = "petNotAttacking", icon = KC, grace = 3 },
         { type = "petHealthLow", threshold = 0.40, icon = S.MEND_PET },
