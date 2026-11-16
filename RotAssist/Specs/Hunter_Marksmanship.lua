@@ -37,6 +37,10 @@ local S = {
     TACTICAL_RELOAD = 1301406,
     TRICK_SHOTS     = 257621,
     ASPECT_OF_THE_HYDRA = 470945,
+    MEND_PET       = 136,
+    EXHILARATION   = 109304,
+    SURVIVAL_OF_THE_FITTEST = 264735,
+    ASPECT_OF_THE_TURTLE = 186265,
 }
 
 local AIMED, ARCANE, MULTI, KS, RF = S.AIMED_SHOT, S.ARCANE_SHOT, S.MULTI_SHOT, S.KILL_SHOT, S.RAPID_FIRE
@@ -118,6 +122,15 @@ ns:RegisterSpec(254, {
     majorCooldowns = {
         { spell = TS },
         { spell = VOLLEY },
+    },
+
+    -- Difese in base alla vita (Core\Defensives.lua): il pet con Mend Pet,
+    -- tu con Exhilaration (cura anche il pet), poi Survival of the Fittest e
+    -- Aspect of the Turtle.
+    defensives = {
+        { key = "pet", unit = "pet", threshold = "defPet", spells = { 136 } },
+        { key = "heal", threshold = "defHeal", spells = { 109304 } },
+        { key = "save", threshold = "defSave", emergency = true, spells = { 264735, 186265 } },
     },
 
     alerts = {

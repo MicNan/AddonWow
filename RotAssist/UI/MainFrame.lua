@@ -57,7 +57,7 @@ function M:Create()
 
     -- difese in base alla vita: a sinistra dell'icona grande
     f.def = {}
-    for i = 1, 2 do
+    for i = 1, 3 do
         local d = UI.CreateIcon(f, SMALL)
         d:SetPoint("BOTTOMRIGHT", f.big, "BOTTOMLEFT", -GAP - (i - 1) * (SMALL + GAP), 0)
         UI.AddGlow(d, 1, 0.2, 0.15)
@@ -164,7 +164,7 @@ end
 function M:UpdateDefensives(list)
     local f = self.frame
     if not (f and f.def) then return end
-    for i = 1, 2 do
+    for i = 1, 3 do
         local icon, e = f.def[i], list and list[i]
         if not e then
             icon:Hide()
@@ -172,14 +172,14 @@ function M:UpdateDefensives(list)
         else
             icon:Show()
             icon.tex:SetTexture(A.SpellTexture(e.spell))
-            icon.badge:SetText(e.tier.emergency and L.DEF_BADGE_SAVE or L.DEF_BADGE_HEAL)
+            icon.badge:SetText(e.unit == "pet" and L.DEF_BADGE_PET or (e.tier.emergency and L.DEF_BADGE_SAVE or L.DEF_BADGE_HEAL))
             icon.hotkey:SetText(ns.Keybinds:Get(e.spell) or "")
             A.ApplyCooldown(icon.cd, e.spell)
             icon:SetGlow(e.tier.emergency and true or false)
             if e.visible == true then
                 icon:SetAlpha(1)
             else
-                self:HealthAlpha(icon, e.threshold)
+                self:HealthAlpha(icon, e.threshold, e.unit)
             end
         end
     end
@@ -189,7 +189,7 @@ end
 -- calcolata dal client con una curva (l'addon non confronta il valore).
 -- Se le API non ci sono o non accettano il valore l'icona resta visibile
 -- a meta' trasparenza: meglio un suggerimento in piu' che uno in meno.
-function M:HealthAlpha(icon, threshold)
+function M:HealthAlpha(icon, threshold, unit)
     self.defCurves = self.defCurves or {}
     local curve = self.defCurves[threshold]
     if curve == nil and C_CurveUtil and C_CurveUtil.CreateCurve then
@@ -207,7 +207,7 @@ function M:HealthAlpha(icon, threshold)
         self.defCurves[threshold] = curve
     end
     if curve and UnitHealthPercent then
-        if pcall(function() icon:SetAlpha(UnitHealthPercent("player", true, curve)) end) then return end
+        if pcall(function() icon:SetAlpha(UnitHealthPercent(unit or "player", true, curve)) end) then return end
     end
     icon:SetAlpha(0.6)
 end

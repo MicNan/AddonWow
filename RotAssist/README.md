@@ -22,13 +22,15 @@ Assisted Combat.
 
 ## Difese in base alla vita
 
-Le spec che le dichiarano (per ora Paladin Protection) mostrano a sinistra dell'icona grande due
+Le spec che le dichiarano (Paladin Protection e i cacciatori) mostrano a sinistra dell'icona grande fino a tre
 icone con il bordo rosso, solo in combattimento:
 
 | Icona | Quando compare | Abilità (la prima pronta) |
 |---|---|---|
 | **+** cura | vita sotto il 50% | Word of Glory (con 3 Holy Power o Shining Light) |
 | **!** emergenza | vita sotto il 35% | Ardent Defender, Guardian of Ancient Kings, Divine Shield, Lay on Hands |
+
+Per i **cacciatori** (Beast Mastery, Marksmanship, Survival) c'è anche l'icona **P**: **Mend Pet** quando la vita del pet scende sotto il 40% (soglia nelle opzioni), anche negli scontri dove la vita del pet è segreta. La cura è Exhilaration (cura anche il pet), l'emergenza Survival of the Fittest e poi Aspect of the Turtle.
 
 Le soglie si cambiano in Opzioni > AddOns > RotAssist; le difese si possono spegnere.
 

@@ -1,7 +1,8 @@
 -- RotAssist - Defensives
 -- Difese in base alla vita del giocatore, per le spec che dichiarano
 -- spec.defensives = { { key, threshold = "chiaveOpzione", spells = {...},
--- emergency = true? }, ... }.
+-- emergency = true?, unit = "pet"? }, ... }. Con unit = "pet" il livello
+-- guarda la vita del pet (es. Mend Pet) e vale solo se il pet c'e' ed e' vivo.
 --
 -- Per ogni livello l'addon sceglie la PRIMA abilita' conosciuta e lanciabile
 -- (cooldown, IsSpellUsable: dati leggibili anche in combattimento). Se
@@ -41,15 +42,17 @@ function D:Collect(spec)
     local out = {}
     if not (spec and spec.defensives and ns.db.showDefensives) then return out end
     if not A.InCombat() then return out end
-    local pct = A.HealthPct("player")
     for _, tier in ipairs(spec.defensives) do
-        local spell = self:Pick(spec, tier)
+        local unit = tier.unit or "player"
+        local alive = unit == "player" or (A.UnitExists(unit) == true and A.UnitIsDead(unit) ~= true)
+        local spell = alive and self:Pick(spec, tier)
         if spell then
             local th = self:Threshold(tier)
+            local pct = A.HealthPct(unit)
             local visible
             if pct then visible = pct < th end
             if visible ~= false then
-                out[#out + 1] = { tier = tier, spell = spell, threshold = th, visible = visible }
+                out[#out + 1] = { tier = tier, spell = spell, threshold = th, visible = visible, unit = unit }
             end
         end
     end

@@ -118,6 +118,7 @@ function ns:RegisterSettings()
     local function Pct(v) return ("%d%%"):format(math.floor(v * 100 + 0.5)) end
     Slider("defHeal", L.OPT_DEF_HEAL, nil, 0.2, 0.9, 0.05, Pct)
     Slider("defSave", L.OPT_DEF_SAVE, nil, 0.1, 0.7, 0.05, Pct)
+    Slider("defPet", L.OPT_DEF_PET, nil, 0.1, 0.9, 0.05, Pct)
     Checkbox("showResource", L.OPT_RESOURCE)
     Checkbox("alertSound", L.OPT_SOUND)
     Checkbox("showKeybinds", L.OPT_KEYBINDS)

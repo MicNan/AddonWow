@@ -39,6 +39,9 @@ local S = {
     CALL_PET       = 883,
     REVIVE_PET     = 982,
     MEND_PET       = 136,
+    EXHILARATION   = 109304,
+    SURVIVAL_OF_THE_FITTEST = 264735,
+    ASPECT_OF_THE_TURTLE = 186265,
 }
 
 local KC, BS, BW, COBRA = S.KILL_COMMAND, S.BARBED_SHOT, S.BESTIAL_WRATH, S.COBRA_SHOT
@@ -53,6 +56,16 @@ ns:RegisterSpec(253, {
     filler = COBRA,
     resource = (Enum and Enum.PowerType and Enum.PowerType.Focus) or 2,
     petBar = { threshold = 0.40 },
+
+    -- Difese in base alla vita (Core\Defensives.lua): il pet con Mend Pet,
+    -- tu con Exhilaration (cura anche il pet), poi Survival of the Fittest e
+    -- Aspect of the Turtle.
+    defensives = {
+        { key = "pet", unit = "pet", threshold = "defPet", spells = { 136 } },
+        { key = "heal", threshold = "defHeal", spells = { 109304 } },
+        { key = "save", threshold = "defSave", emergency = true, spells = { 264735, 186265 } },
+    },
+
 
     -- Hero talent: il primo talento conosciuto determina la lista usata.
     heroTalents = {

@@ -217,6 +217,30 @@ C_Spell.IsSpellUsable = function(id) if id == 186270 then return false, true end
 RA:Tick()
 print("SV PL senza Focus -> primario:", MOCK.names[RA.lastResult.primary and RA.lastResult.primary.spell] or "nessuno")
 
+-- cacciatore: cura del pet e difese
+local bm = Setup(253, "HUNTER", {466930})
+Plates(1)
+local rH, rM = UnitHealth, UnitHealthMax
+local function HDef(label)
+    RA:Tick()
+    local parts = {}
+    for _, e in ipairs(RA.Defensives:Collect(bm)) do
+        parts[#parts + 1] = ("%s:%s(%s)"):format(e.tier.key, MOCK.names[e.spell] or e.spell, e.visible == nil and "curva" or tostring(e.visible))
+    end
+    print(("cacciatore %-34s -> %s"):format(label, #parts > 0 and table.concat(parts, ", ") or "nessuna"))
+end
+HDef("vita segreta (tu e pet)")
+UnitHealth = function(u) if u == "player" then return MOCK.playerHP end return MOCK.petHP end
+UnitHealthMax = function() return 100 end
+MOCK.playerHP, MOCK.petHP = 90, 30; HDef("tu 90%, pet 30%")
+MOCK.playerHP, MOCK.petHP = 45, 90; HDef("tu 45%, pet 90%")
+MOCK.cd[109304] = { start = MOCK.now, dur = 120 }
+MOCK.playerHP, MOCK.petHP = 30, 30; HDef("tu 30%, pet 30%, Exhilaration in cd")
+MOCK.cd[109304] = nil
+MOCK.playerHP = 90; MOCK.pet.dead = true; HDef("tu 90%, pet morto")
+MOCK.pet.dead = false
+UnitHealth, UnitHealthMax = rH, rM
+
 -- blocco note dei quarti di Azta'rec
 local SF = RA.Sermon
 local function St(label)
